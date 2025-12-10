@@ -1,27 +1,13 @@
-# Backend
-backend/vendor/
-backend/.env
+###############################################
+# GLOBAL IGNORES
+###############################################
 
-# React frontend
-frontend/node_modules/
-frontend/.env
-
-# React Native
-mobile/node_modules/
-mobile/.env
-mobile/android/
-mobile/ios/
-
-# Build
-dist/
-build/
-
-# System
+# OS Files
 .DS_Store
 Thumbs.db
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -29,56 +15,94 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Build artifacts (all platforms)
+dist/
+build/
+dist-ssr/
 *.local
 
-# Editor directories and files
+# Editor / IDE
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
-
-
-# Expo
-.expo/
-web-build/
-expo-env.d.ts
-
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
 *.tsbuildinfo
 
-app-example
+# Certificates / Keys (security!)
+*.pem
+*.key
+*.p12
+*.p8
+*.jks
+*.mobileprovision
+*.orig.*
 
-# generated native folders
-/ios
-/android
+# Local environment files
+.env
+.env.*
+.env*.local
+
+
+###############################################
+# BACKEND (PHP)
+###############################################
+
+backend/vendor/
+backend/.env
+backend/logs/
+backend/storage/
+backend/cache/
+backend/.phpunit.result.cache
+
+# Composer / PHP cache
+composer.lock
+.phpunit.result.cache
+
+
+###############################################
+# FRONTEND (React)
+###############################################
+
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/build/
+frontend/dist/
+
+
+###############################################
+# MOBILE (React Native + Expo)
+###############################################
+
+mobile/node_modules/
+mobile/.env
+mobile/.env.local
+mobile/.env.*.local
+
+# Expo directories
+mobile/.expo/
+mobile/web-build/
+mobile/expo-env.d.ts
+
+# Generated Native folders
+mobile/android/
+mobile/ios/
+
+# Metro bundler
+mobile/.metro-health-check*
+
+
+###############################################
+# OTHER / MISC
+###############################################
+
+# Example or unused folder
+app-example/
+
+# Kotlin artifacts (RN Android)
+.kotlin/
