@@ -123,7 +123,7 @@ final class UserValidator
         $fullName = trim($data['fullname'] ?? '');
 
         if ($fullName === '') {
-            Json::error("Missing required fields", 400);
+            Json::error("Full name is required", 400);
         }
 
         $validFullName = $this->validateFullName($fullName);
