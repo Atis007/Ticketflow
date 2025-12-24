@@ -40,8 +40,8 @@ final class Database
             Json::error("Internal server error", 500);
         }
 
-        Json::error("Internal server error", 500);
         throw new RuntimeException("Database connection could not be established.");
+        Json::error("Internal server error", 500);
     }
 
     /** 
@@ -66,7 +66,7 @@ final class Database
         $PARAMS = [
             "HOST" => $_ENV['DB_HOST'] ?? '',
             "USER" => $_ENV['DB_USER'] ?? '',
-            "PASSWORD" => $_ENV['DB_PASS'],
+            "PASSWORD" => $_ENV['DB_PASS'] ?? '',
             "DB" => $_ENV['DB_NAME'] ?? '',
             "CHARSET" => $_ENV['DB_CHARSET'] ?? 'utf8mb4'
         ];

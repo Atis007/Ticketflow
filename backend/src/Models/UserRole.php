@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 /**
- * Central list of application roles, leveraging PHP 8.1+ backed enums.
+ * Central list of application roles, leveraging backed enums.
  */
 enum UserRole: string
 {

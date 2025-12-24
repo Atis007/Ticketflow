@@ -17,8 +17,8 @@ final class AdminController
 {
     public function registerUserAdmin(Request $request, array $params = []): void
     {
-        Logger::warning("Attempt to call register endpoint in AuthController");
-        Json::error("Call to register in AuthController is not allowed", 405);
+        Logger::warning("Attempt to call register endpoint in AdminController");
+        Json::error("Call to register in AdminController is not allowed", 405);
     }
 
     public function loginUserAdmin(Request $request, array $params = []): void
@@ -38,13 +38,12 @@ final class AdminController
             $stmt->execute();
             $loginCredentials = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if(!$loginCredentials || !password_verify($password, $loginCredentials['password'])){
+            if (!$loginCredentials || !password_verify($password, $loginCredentials['password'])) {
                 Logger::warning("Invalid login attempt for email: {$email}");
                 Json::error("Invalid email or password", 401);
             }
 
             Json::success(["message" => "Login successful"]);
-
         } catch (Exception $e) {
             Logger::error("Database error in admin login: " . $e->getMessage());
             Json::error("Internal server error", 500);
@@ -117,6 +116,14 @@ final class AdminController
         $hashed = password_hash($password, PASSWORD_BCRYPT);
         $role = UserRole::fromString($data['role'] ?? null);
 
+        $checkStmt = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+        $checkStmt->execute([':email' => $email]);
+
+        if ($checkStmt->fetch(PDO::FETCH_ASSOC)) {
+            Logger::warning("Admin attempted to create duplicate email: {$email}");
+            Json::error("Email already registered.", 409);
+        }
+
         try {
             $stmt = $pdo->prepare(
                 "INSERT INTO users (fullname, email, password, role) 
@@ -166,6 +173,11 @@ final class AdminController
                 ':id' => $id
             ]);
 
+            if ($stmt->rowCount() === 0) {
+                Logger::warning("Admin update miss for id {$id}");
+                Json::error("User not found.", 404);
+            }
+
             Json::success(["message" => "User updated"]);
         } catch (Exception $e) {
             Logger::error("AdminController update() DB error: " . $e->getMessage());
@@ -183,6 +195,11 @@ final class AdminController
         try {
             $stmt = $pdo->prepare("DELETE FROM users WHERE id = :id");
             $stmt->execute([':id' => $id]);
+
+            if ($stmt->rowCount() === 0) {
+                Logger::warning("Admin delete miss for id {$id}");
+                Json::error("User not found.", 404);
+            }
 
             Json::success(["message" => "User deleted"]);
         } catch (Exception $e) {

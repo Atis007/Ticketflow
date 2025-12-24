@@ -35,8 +35,7 @@ $router->resource("/api/categories", CategoryController::class);
 $router->resource("/api/tickets", TicketController::class);
 $router->resource("/api/payments", PaymentController::class);
 $router->resource("/api/reservations", ReservationController::class);
-$router->resource("/api/seats", EventSeatController::class);
-$router->resource("/api/admin/users", AdminController::class);*/
+$router->resource("/api/seats", EventSeatController::class);*/
 
 
 $router->run();

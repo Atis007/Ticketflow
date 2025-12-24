@@ -9,6 +9,11 @@ use App\Core\Logger;
 
 final class UserValidator
 {
+    private const LOWERCASE_REGEX = '/[a-z]/';
+    private const UPPERCASE_REGEX = '/[A-Z]/';
+    private const DIGIT_REGEX = '/[0-9]/';
+    private const SPECIAL_CHAR_REGEX = '/[!@#$%^&*()_\-+={}\[\]|:;"\'<>.,?\/~`]/';
+
     private function validateFullName(string $fullName): string
     {
         // One space between names, trim extra spaces
@@ -31,34 +36,29 @@ final class UserValidator
         string $email,
         #[\SensitiveParameter] string $password,
         #[\SensitiveParameter] string $confirmPassword
-    ): string
-    {
+    ): string {
         // Check password length
         if (strlen($password) < 8) {
             Logger::warning("Password too short in user registration for email: {$email}");
             Json::error("Password must be at least 8 characters long.", 400);
         }
 
-        $lowercaseRegex = '/[a-z]/';
-        if(!preg_match($lowercaseRegex, $password)){
+        if (!preg_match(self::LOWERCASE_REGEX, $password)) {
             Logger::warning("Password missing lowercase letter in user registration for email: {$email}");
             Json::error("Password must contain at least one lowercase letter.", 400);
         }
 
-        $uppercaseRegex = '/[A-Z]/';
-        if(!preg_match($uppercaseRegex, $password)){
+        if (!preg_match(self::UPPERCASE_REGEX, $password)) {
             Logger::warning("Password missing uppercase letter in user registration for email: {$email}");
             Json::error("Password must contain at least one uppercase letter.", 400);
         }
 
-        $digitRegex = '/[0-9]/';
-        if(!preg_match($digitRegex, $password)){
+        if (!preg_match(self::DIGIT_REGEX, $password)) {
             Logger::warning("Password missing digit in user registration for email: {$email}");
             Json::error("Password must contain at least one digit.", 400);
         }
 
-        $specialCharRegex = '/[!@#$%^&*()_\-+={}[\]|:;"\'<>,.?\/~`]/';
-        if(!preg_match($specialCharRegex, $password)){
+        if (!preg_match(self::SPECIAL_CHAR_REGEX, $password)) {
             Logger::warning("Password missing special character in user registration for email: {$email}");
             Json::error("Password must contain at least one special character.", 400);
         }
@@ -109,7 +109,7 @@ final class UserValidator
         $password = trim($data['password'] ?? '');
 
         if ($email === '' || $password === '') {
-            Logger::warning("Login attempt with missing fields in user registration");
+            Logger::warning("Login attempt with missing fields in user login for email: {$email}");
             Json::error("Missing required fields.", 400);
         }
 

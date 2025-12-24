@@ -22,7 +22,7 @@ return [
         'user' => require_env('DB_USER'),
         'pass' => require_env('DB_PASS'),
         'name' => require_env('DB_NAME'),
-        'charset' => require_env('DB_CHARSET'),
+        'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
     ],
 
     // Note: Uncomment and configure these sections as needed, and when they are needed.
