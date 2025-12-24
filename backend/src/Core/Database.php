@@ -33,12 +33,15 @@ final class Database
             ];
 
             self::$instance = new PDO($dsn, $params['USER'], $params['PASSWORD'], $pdoOptions);
+
+            return self::$instance;
         } catch (PDOException $e) {
             Logger::exception($e);
             Json::error("Internal server error", 500);
         }
 
-        throw new RuntimeException("Unexpected Database error.");
+        Json::error("Internal server error", 500);
+        throw new RuntimeException("Database connection could not be established.");
     }
 
     /** 
@@ -53,22 +56,27 @@ final class Database
             $dotenv->load();
             $loaded = true;
 
-            $timezone = $_ENV('TIMEZONE') ?? 'Europe/Belgrade';
+            $timezone = $_ENV['TIMEZONE'] ?? 'Europe/Belgrade';
             date_default_timezone_set($timezone);
         }
     }
 
-    private static function loadParams(): array{
+    private static function loadParams(): array
+    {
         $PARAMS = [
             "HOST" => $_ENV['DB_HOST'] ?? '',
             "USER" => $_ENV['DB_USER'] ?? '',
-            "PASSWORD" => $_ENV['DB_PASS'] ?? '',
+            "PASSWORD" => $_ENV['DB_PASS'],
             "DB" => $_ENV['DB_NAME'] ?? '',
             "CHARSET" => $_ENV['DB_CHARSET'] ?? 'utf8mb4'
         ];
 
-        foreach($PARAMS as $key => $value){
-            if($value === ''){
+        foreach ($PARAMS as $key => $value) {
+            if ($value === '') {
+                if ($key === 'PASSWORD') {
+                    // PASSWORD can be empty
+                    continue;
+                }
                 Logger::error("Missing env variable: $key");
                 Json::error("Internal server error", 500);
             }
