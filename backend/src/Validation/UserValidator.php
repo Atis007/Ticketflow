@@ -117,4 +117,16 @@ final class UserValidator
         // All validations passed, can return the valid inputs
         return [$validEmail, $password];
     }
+
+    public function validateUpdate(array $data): string
+    {
+        $fullName = trim($data['fullname'] ?? '');
+
+        if ($fullName === '') {
+            Json::error("Missing required fields", 400);
+        }
+
+        $validFullName = $this->validateFullName($fullName);
+        return $validFullName;
+    }
 }

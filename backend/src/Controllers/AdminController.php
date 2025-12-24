@@ -146,12 +146,11 @@ final class AdminController
 
         $data = $request->jsonBody();
 
-        $fullname = trim($data['fullname'] ?? '');
-        $role = UserRole::fromString($data['role'] ?? null);
+        // Validate fullname format using UserValidator for consistency and security
+        $validator = new UserValidator();
+        $fullname = $validator->validateUpdate($data);
 
-        if ($fullname === '') {
-            Json::error("Missing required fields", 400);
-        }
+        $role = UserRole::fromString($data['role'] ?? null);
 
         try {
             $stmt = $pdo->prepare(
