@@ -98,9 +98,10 @@ final class Router
 
     private function matchRoute(string $routePath, string $uri, array &$params): bool
     {
-        // Escape slashes
-        $pattern = preg_replace('#\{(\w+)\}#', '([^/]+)', $routePath);
-        $pattern = "#^" . $pattern . "$#";
+        // Escape route path for regex, then replace parameter placeholders with capture groups
+        $escapedRoutePath = preg_quote($routePath, '#');
+        $pattern = preg_replace('#\\\{(\w+)\\\}#', '([^/]+)', $escapedRoutePath);
+        $pattern = '#^' . $pattern . '$#';
 
         if (preg_match($pattern, $uri, $matches)) {
 
@@ -119,12 +120,12 @@ final class Router
         return false;
     }
 
-    public function resource(string $base, string $controller, array $middleware = []): void
+    public function resource(string $base, string|object $controller, array $middleware = []): void
     {
         // Remove trailing slash if present
         $base = rtrim($base, '/');
 
-        $instance = new $controller();
+        $instance = is_string($controller) ? new $controller() : $controller;
 
         // Index - Get /resource
         $this->get($base, [$instance, 'index'], $middleware);

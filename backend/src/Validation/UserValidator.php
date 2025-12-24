@@ -86,8 +86,8 @@ final class UserValidator
     public function validateRegister(array $data): array
     {
         $email = trim($data['email'] ?? '');
-        $password = trim($data['password'] ?? '');
-        $confirmPassword = trim($data['confirm_password'] ?? '');
+        $password = $data['password'] ?? '';
+        $confirmPassword = $data['confirm_password'] ?? '';
         $fullName = trim($data['full_name'] ?? '');
 
         if ($email === '' || $password === '' || $fullName === '') {
@@ -106,10 +106,10 @@ final class UserValidator
     public function validateLogin(array $data): array
     {
         $email = trim($data['email'] ?? '');
-        $password = trim($data['password'] ?? '');
+        $password = $data['password'] ?? '';
 
         if ($email === '' || $password === '') {
-            Logger::warning("Login attempt with missing fields in user login for email: {$email}");
+            Logger::warning("Login attempt with missing fields in user login");
             Json::error("Missing required fields.", 400);
         }
 

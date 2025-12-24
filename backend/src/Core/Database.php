@@ -41,7 +41,6 @@ final class Database
         }
 
         throw new RuntimeException("Database connection could not be established.");
-        Json::error("Internal server error", 500);
     }
 
     /** 

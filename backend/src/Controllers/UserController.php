@@ -77,7 +77,7 @@ final class UserController
 
             Json::success(["message" => "Login successful"]);
         } catch (Exception $e) {
-            Logger::error("Database error in admin login: " . $e->getMessage());
+            Logger::error("Database error in user login: " . $e->getMessage());
             Json::error("Internal server error", 500);
         }
     }

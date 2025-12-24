@@ -15,13 +15,13 @@ use Exception;
 
 final class AdminController
 {
-    public function registerUserAdmin(Request $request, array $params = []): void
+    public function registerAdmin(Request $request, array $params = []): void
     {
         Logger::warning("Attempt to call register endpoint in AdminController");
         Json::error("Call to register in AdminController is not allowed", 405);
     }
 
-    public function loginUserAdmin(Request $request, array $params = []): void
+    public function loginAdmin(Request $request, array $params = []): void
     {
         $pdo = Database::getConnection();
 
@@ -80,6 +80,11 @@ final class AdminController
     public function show(Request $request, array $params): void
     {
         $id = (int)$params['id'];
+
+        if ($id <= 0) {
+            Json::error("Invalid user ID", 400);
+        }
+
         $pdo = Database::getConnection();
 
         try {
@@ -149,6 +154,11 @@ final class AdminController
     public function update(Request $request, array $params): void
     {
         $id = (int)$params['id'];
+
+        if ($id <= 0) {
+            Json::error("Invalid user ID", 400);
+        }
+
         $pdo = Database::getConnection();
 
         $data = $request->jsonBody();
@@ -190,6 +200,11 @@ final class AdminController
     public function destroy(Request $request, array $params): void
     {
         $id = (int)$params['id'];
+
+        if ($id <= 0) {
+            Json::error("Invalid user ID", 400);
+        }
+
         $pdo = Database::getConnection();
 
         try {

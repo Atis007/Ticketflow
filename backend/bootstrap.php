@@ -25,7 +25,7 @@ if (!empty($_ENV['TIMEZONE'])) {
 // Load configuration file if it exists
 $configPath = APP_ROOT . '/config/config.php';
 if (file_exists($configPath)) {
-    require_once $configPath;
+    $config = require_once $configPath;
 }
 
 // Disable error display in production

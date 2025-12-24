@@ -23,13 +23,13 @@ $router = new Router();
 $admin = new AdminController();
 $user = new UserController();
 
-$router->post("/api/auth/admin/login", [$admin, "loginUserAdmin"]);
-$router->post("/api/auth/admin/register", [$admin, "registerUserAdmin"]); // disabled, but route exists
+$router->post("/api/auth/admin/login", [$admin, "loginAdmin"]);
+$router->post("/api/auth/admin/register", [$admin, "registerAdmin"]); // disabled, but route exists
 $router->post("/api/auth/user/login", [$user, "loginUser"]);
 $router->post("/api/auth/user/register", [$user, "registerUser"]);
 
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
-$router->resource("/api/admin/users", AdminController::class, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->resource("/api/admin/users", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 /*$router->resource("/api/events", EventController::class);
 $router->resource("/api/categories", CategoryController::class);
 $router->resource("/api/tickets", TicketController::class);
