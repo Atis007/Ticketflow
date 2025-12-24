@@ -4,7 +4,7 @@ export default function LoginPage() {
   return (
     <section className="relative w-full overflow-hidden">
       <div className="pointer-events-none absolute top-[-20%] left-[-10%] h-130 w-130 rounded-full bg-[#7c3bed]/25 blur-[170px]"></div>
-      <div className="pointer-events-none absolute bottom-[-15%] right-[-5%] h-130 w-130 rounded-full bg-cyan/20 blur-[170px]"></div>
+      <div className="pointer-events-none absolute bottom-[-15%] right-[-5%] h-130 w-130 rounded-full bg-accent-cyan/20 blur-[170px]"></div>
 
       <div className="relative z-10 w-full rounded-[2.5rem] border border-white/10 bg-[#030819]/85 px-6 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] backdrop-blur-2xl sm:px-10 sm:py-10">
         <div className="flex flex-col items-stretch gap-10 lg:flex-row lg:gap-16">

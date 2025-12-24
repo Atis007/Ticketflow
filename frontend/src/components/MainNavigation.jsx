@@ -6,7 +6,6 @@ function MainNavigation() {
 
   function toggleExpand() {
     setIsExpanded(!isExpanded);
-    console.log("Search button clicked. Expanded:", !isExpanded);
   }
 
   return (
@@ -48,7 +47,10 @@ function MainNavigation() {
               isExpanded ? "opacity-100" : "opacity-0"
             }`}
           >
-            <form className="group relative flex items-center w-full h-16 rounded-full bg-surface-dark border border-white/10 shadow-xl focus-within:border-accent-purple/50 focus-within:ring-2 focus-within:ring-accent-purple/20 transition-all overflow-hidden">
+            <form
+              className="group relative flex items-center w-full h-16 rounded-full bg-surface-dark border border-white/10 shadow-xl focus-within:border-accent-purple/50 focus-within:ring-2 focus-within:ring-accent-purple/20 transition-all overflow-hidden"
+              aria-label="Search for events"
+            >
               <input
                 type="search"
                 className="flex-1 bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4 text-base"

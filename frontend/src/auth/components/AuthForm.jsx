@@ -16,7 +16,7 @@ export default function AuthForm({ mode, ...props }) {
         type="submit"
         className="mt-2 h-12 rounded-full bg-[#7c3bed] text-white font-bold"
       >
-        {mode === "login" ? "Log In" : "Get Started"}
+        {mode === "login" ? "Log In" : `Get Started ${props.buttonIcon}`}
       </button>
 
       <AuthSocial />
