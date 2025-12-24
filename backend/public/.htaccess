@@ -1,0 +1,23 @@
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^ index.php [L]
+
+# RewriteBase /
+
+# --- API: forward /api/* to backend/public/index.php living in /api
+# RewriteCond %{REQUEST_URI} ^/api/
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteRule ^api/(.*)$ api/index.php [L,QSA]
+
+# --- Frontend SPA: serve static assets as-is
+# RewriteCond %{REQUEST_FILENAME} -f [OR]
+# RewriteCond %{REQUEST_FILENAME} -d
+# RewriteRule ^ - [L]
+
+# Otherwise fall back to your frontend build entry point
+# RewriteRule ^ dist/index.html [L]
