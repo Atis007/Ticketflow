@@ -75,11 +75,11 @@ function MainNavigation() {
             to="/login"
             className={({
               isActive,
-            }) => ` hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all
+            }) => `hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all
             ${
               isActive
-                ? "border-primary text-primary bg-primary/10"
-                : "border-white/20 text-gray-300 hover:border-primary/50 hover:text-primary hover:bg-white/5"
+                ? " border-[#7c3bed] text-[#7c3bed] bg-[#7c3bed]/10"
+                : " border-white/20 text-gray-300 hover:border-[#7c3bed]/50 hover:text-[#7c3bed] hover:bg-white/5"
             }`}
           >
             Log In
@@ -92,8 +92,8 @@ function MainNavigation() {
             }) => `h-10 px-6 flex items-center justify-center rounded-full font-semibold transition-all shadow
             ${
               isActive
-                ? "bg-primary text-white/90 shadow-[0_0_25px_rgba(43,238,121,0.6)]"
-                : "bg-primary/90 text-white/90 hover:bg-primary hover:shadow-[0_0_35px_rgba(43,238,121,0.7)]"
+                ? "bg-[#7c3bed] font-bold text-white/90 shadow-[0_0_30px_rgba(124,59,237,0.6)]"
+                : "bg-[#7c3bed]/90 text-white/90 hover:bg-[#7c3bed] hover:shadow-[0_0_30px_rgba(124,59,237,0.55),0_0_60px_rgba(34,211,238,0.35)]"
             }`}
           >
             Register
