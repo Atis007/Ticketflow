@@ -13,7 +13,11 @@ export default function LandingPage() {
         <div className="flex flex-col gap-6 items-center">
           <h1 className="font-display font-black text-5xl sm:text-6xl lg:text-7xl leading-[1.1] tracking-tight text-white">
             {isAuthenticated ? (
-              `Welcome back, ${user.fullName}!`
+              user?.fullname ? (
+                `Welcome back, ${user.fullname}`
+              ) : (
+                "Welcome back!"
+              )
             ) : (
               <>
                 Tickets Quickly, Smoothly, Reliably.

@@ -1,7 +1,7 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import RequireGuest from "./routes/guards/RequireGuest.jsx";
-import RequireAuthentication from "./routes/guards/RequireAuth.jsx";
+import RequireAuthentication from "./routes/guards/RequireAuthentication.jsx";
 import RequireAdmin from "./routes/guards/RequireAdmin.jsx";
 
 import RootLayout from "./pages/Root.jsx";
@@ -38,20 +38,20 @@ const router = createBrowserRouter([
         ],
       },
       {
-        element: <EventsPage />,
         path: "events/:category",
+        element: <EventsPage />,
       },
       {
-        element: <EventDetailsPage />,
         path: "events/:category/:eventId",
+        element: <EventDetailsPage />,
       },
       {
+        path: "admin/dashboard",
         element: (
           <RequireAdmin>
             <AdminDashboard />
           </RequireAdmin>
         ),
-        path: "admin/dashboard",
       },
     ],
   },

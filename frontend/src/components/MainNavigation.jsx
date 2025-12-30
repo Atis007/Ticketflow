@@ -26,7 +26,7 @@ function MainNavigation() {
       <SidebarMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       <header className="relative z-30 w-full border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center gap-6">
-          <div className="-ml-19 flex items-center gap-4">
+          <div className="-ml-20 flex items-center gap-4">
             <button
               onClick={() => setMenuOpen(true)}
               className="cursor-pointer p-2 rounded-lg transition-colors text-white"
@@ -118,7 +118,7 @@ function MainNavigation() {
             }`}
                 >
                   Register
-                </NavLink>{" "}
+                </NavLink>
               </>
             )}
           </div>

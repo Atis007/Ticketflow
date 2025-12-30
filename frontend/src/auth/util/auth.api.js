@@ -2,6 +2,14 @@ import { redirect } from "react-router-dom";
 
 const authApi = import.meta.env.VITE_API_AUTH_BASE_URL;
 
+async function handleResponse(response) {
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(text || `Request failed with ${response.status}`);
+  }
+  return response.json().catch(() => ({}));
+}
+
 export async function login(payload) {
   const response = await fetch(`${authApi}user/login`, {
     method: "POST",
@@ -11,7 +19,7 @@ export async function login(payload) {
     body: JSON.stringify(payload),
   });
 
-  return response.json();
+  return handleResponse(response);
 }
 
 export async function register(payload) {
@@ -22,7 +30,7 @@ export async function register(payload) {
     },
     body: JSON.stringify(payload),
   });
-  return response.json();
+  return handleResponse(response);
 }
 
 export async function loginAdmin(payload) {
@@ -34,7 +42,7 @@ export async function loginAdmin(payload) {
     body: JSON.stringify(payload),
   });
 
-  return response.json();
+  return handleResponse(response);
 }
 
 export async function forgotPassword(email) {
@@ -46,6 +54,7 @@ export async function forgotPassword(email) {
     body: JSON.stringify({ email }),
   });
 
+  // do not leak existence; just ensure request was accepted
   if (!response.ok) {
     throw new Error("Failed to send forgot password email");
   }

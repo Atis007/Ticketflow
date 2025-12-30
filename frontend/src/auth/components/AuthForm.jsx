@@ -9,9 +9,8 @@ import AuthFooter from "./AuthFooter";
 import {
   validateLogin,
   validateRegister,
+  EMAIL_REGEX,
 } from "@/utils/validation/formValidation";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function AuthForm({ mode, ...props }) {
   const [errorMessage, setErrorMessage] = useState(null);
