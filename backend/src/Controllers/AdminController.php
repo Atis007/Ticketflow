@@ -30,7 +30,7 @@ final class AdminController
         $validator = new UserValidator();
         [$email, $password] = $validator->validateLogin($data);
 
-        $sql = "SELECT email, password FROM users WHERE email = :email AND role = :role LIMIT 1";
+        $sql = "SELECT email, password, fullname FROM users WHERE email = :email AND role = :role LIMIT 1";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':email', $email);
         $stmt->bindValue(':role', UserRole::ADMIN->value);
@@ -43,7 +43,14 @@ final class AdminController
                 Json::error("Invalid email or password", 401);
             }
 
-            Json::success(["message" => "Login successful"]);
+            Json::success([
+                "message" => "Login for Admin is successful.",
+                "user" => [
+                    "email" => $email,
+                    "fullName" => $loginCredentials['fullname'],
+                    "role" => UserRole::ADMIN->value,
+                ]
+            ]);
         } catch (Exception $e) {
             Logger::error("Database error in admin login: " . $e->getMessage());
             Json::error("Internal server error", 500);
