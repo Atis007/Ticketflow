@@ -23,16 +23,10 @@ export default function LoginPage() {
           <div className="flex flex-1 justify-center lg:justify-end">
             <div className="relative w-full max-w-110 overflow-hidden rounded-[2rem] border border-white/10 bg-surface-dark/80 p-8 shadow-[0_25px_80px_rgba(2,6,23,0.7)] backdrop-blur-xl">
               <div className="absolute left-0 top-0 h-1 w-full bg-linear-to-r from-[#7c3bed] via-accent-cyan to-[#7c3bed] opacity-60"></div>
-              <div className="mb-8 text-center text-white lg:text-left">
-                <h2 className="text-3xl font-bold">Log In</h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Enter your credentials to access your profile, events, and
-                  more.
-                </p>
-              </div>
-
               <AuthForm
                 mode="login"
+                headerText="Log In"
+                headerParagraph="Enter your credentials to access your profile, events, and more."
                 labelEmail="Email Address"
                 iconEmail="mail"
                 idEmail="login-email"
@@ -43,9 +37,7 @@ export default function LoginPage() {
                 iconPassword="lock"
                 idPassword="login-password"
                 namePassword="password"
-                typePassword="password"
                 placeholderPassword="Enter your password"
-                iconVisibility="visibility_off"
                 buttonText="Log In"
                 buttonIcon="arrow_forward"
               />

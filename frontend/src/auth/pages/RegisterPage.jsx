@@ -3,7 +3,6 @@ import AuthForm from "../components/AuthForm";
 const HERO_IMAGE_URL =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuDlnENu-52-qOkmUatRw-9SHQpqEyt15dkayo_of32mnK7O01p_ETEWBROTLWXdPfk5zKsxB7lqzFc47j-XHGTaNvld57_DMHkFad11ReKwKTWo4mooMrl0L-_IOc4RGzsVJeu7EN0KiAeeynhq2FzUmJCEKCBbVDUPTno1ESfIGnksOIFJ68u1qXcgiimaRvkJvLlInsvhT_HLkD-TJqfPovuGRCQxZSZMn-153U0iv87tWgMbD-d3OSNsBuf_v3wO-4LfzOaDFUmb";
 
-
 export default function RegisterPage() {
   return (
     <section className="relative w-full overflow-hidden">
@@ -50,17 +49,10 @@ export default function RegisterPage() {
           <div className="relative w-full bg-background-dark/90">
             <div className="flex items-center justify-center px-6 py-12">
               <div className="w-full max-w-120">
-                <div className="mb-10 text-center lg:text-left">
-                  <h1 className="font-display text-4xl font-bold text-white">
-                    Create Account
-                  </h1>
-                  <p className="mt-2 text-slate-400">
-                    Enter your details to access the platform.
-                  </p>
-                </div>
-
                 <AuthForm
                   mode="register"
+                  headerText="Create Account"
+                  headerParagraph="Enter your details to access the platform."
                   labelFullName="Full Name"
                   iconFullName="person"
                   idFullName="register-fullname"
@@ -77,14 +69,11 @@ export default function RegisterPage() {
                   iconPassword="lock"
                   idPassword="register-password"
                   namePassword="password"
-                  typePassword="password"
                   placeholderPassword="Enter your password"
                   labelPasswordAgain="Confirm Password"
                   idPasswordAgain="register-password-confirm"
                   namePasswordAgain="passwordConfirmation"
-                  typePasswordAgain="password"
                   placeholderPasswordAgain="Confirm your password"
-                  iconVisibility="visibility_off"
                   buttonText="Get Started"
                   buttonIcon="arrow_forward"
                 />
