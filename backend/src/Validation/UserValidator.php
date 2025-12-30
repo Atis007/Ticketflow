@@ -24,7 +24,7 @@ final class UserValidator
 
         // Regex – one space between first and last name, only letters (including accented)
         if (!preg_match(self::NAME_REGEX, $fullName)) {
-            Json::error("Full name must contain at least two names (separated by a single space) and may use '-' only.", 400);
+            Json::error("Full name must contain at least two names (separated by a single space) and may only use '-'.", 400);
         }
 
         return $fullName;
