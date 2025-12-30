@@ -13,6 +13,7 @@ final class UserValidator
     private const UPPERCASE_REGEX = '/[A-Z]/';
     private const DIGIT_REGEX = '/[0-9]/';
     private const SPECIAL_CHAR_REGEX = '/[!@#$%^&*()_\-+={}\[\]|:;"\'<>.,?\/~`]/';
+    private const NAME_REGEX = '/^\p{L}+(?:-\p{L}+)*(?: \p{L}+(?:-\p{L}+)*)+$/u';
 
     private function validateFullName(string $fullName): string
     {
@@ -20,13 +21,13 @@ final class UserValidator
         $fullName = preg_replace('/\s+/', ' ', $fullName);
 
         // Check length
-        if (mb_strlen($fullName) < 7) {
-            Json::error("Full name must be at least 7 characters long.", 400);
+        if (mb_strlen($fullName) < 5) {
+            Json::error("Enter your full name.", 400);
         }
 
         // Regex – one space between first and last name, only letters (including accented)
-        if (!preg_match('/^[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+ [A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+$/u', $fullName)) {
-            Json::error("Full name must contain only letters and a single space between first and last name.", 400);
+        if (!preg_match(self::NAME_REGEX, $fullName)) {
+            Json::error("Full name may contain letters, spaces and '-' only.", 400);
         }
 
         return $fullName;
@@ -83,19 +84,26 @@ final class UserValidator
         return $email;
     }
 
+    private function normalizeFullName(string $fullName): string
+    {
+        return preg_replace('/\s+/', ' ', trim($fullName));
+    }
+
     public function validateRegister(array $data): array
     {
         $email = trim($data['email'] ?? '');
         $password = $data['password'] ?? '';
-        $confirmPassword = $data['confirm_password'] ?? '';
-        $fullName = trim($data['full_name'] ?? '');
+        $confirmPassword = $data['passwordConfirmation'] ?? '';
+        $fullName = trim($data['fullname'] ?? '');
 
-        if ($email === '' || $password === '' || $fullName === '') {
+        if ($email === '' || $password === '' || $fullName === '' || $confirmPassword === '') {
             Logger::warning("Registration attempt with missing fields in user registration");
             Json::error("Missing required fields.", 400);
         }
 
-        $validFullName = $this->validateFullName($fullName);
+        $normalizedFullName = $this->normalizeFullName($fullName);
+
+        $validFullName = $this->validateFullName($normalizedFullName);
         $validPassword = $this->validatePassword($email, $password, $confirmPassword);
         $validEmail = $this->validateEmail($email);
 
