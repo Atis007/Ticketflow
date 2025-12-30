@@ -17,17 +17,14 @@ final class UserValidator
 
     private function validateFullName(string $fullName): string
     {
-        // One space between names, trim extra spaces
-        $fullName = preg_replace('/\s+/', ' ', $fullName);
-
         // Check length
         if (mb_strlen($fullName) < 5) {
-            Json::error("Enter your full name.", 400);
+            Json::error("Full name must be at least 5 characters long.", 400);
         }
 
         // Regex – one space between first and last name, only letters (including accented)
         if (!preg_match(self::NAME_REGEX, $fullName)) {
-            Json::error("Full name may contain letters, spaces and '-' only.", 400);
+            Json::error("Full name must contain at least two names (separated by a single space) and may use '-' only.", 400);
         }
 
         return $fullName;
@@ -94,14 +91,14 @@ final class UserValidator
         $email = trim($data['email'] ?? '');
         $password = $data['password'] ?? '';
         $confirmPassword = $data['passwordConfirmation'] ?? '';
-        $fullName = trim($data['fullname'] ?? '');
+        $fullName = $data['fullname'] ?? '';
+        
+        $normalizedFullName = $this->normalizeFullName($fullName);
 
-        if ($email === '' || $password === '' || $fullName === '' || $confirmPassword === '') {
+        if ($email === '' || $password === '' || $normalizedFullName === '' || $confirmPassword === '') {
             Logger::warning("Registration attempt with missing fields in user registration");
             Json::error("Missing required fields.", 400);
         }
-
-        $normalizedFullName = $this->normalizeFullName($fullName);
 
         $validFullName = $this->validateFullName($normalizedFullName);
         $validPassword = $this->validatePassword($email, $password, $confirmPassword);
