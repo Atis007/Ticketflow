@@ -22,7 +22,7 @@ export default function LandingPage() {
               <>
                 Tickets Quickly, Smoothly, Reliably.
                 <br />
-                <span className="text-transparent bg-clip-text bg-linear-to-r from-accent-purple via-accent-cyan to-primary">
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-accent-purple via-accent-cyan to-[#2bee79]">
                   Your Journey Starts Here.
                 </span>
               </>

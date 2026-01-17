@@ -16,7 +16,7 @@ export default function AuthFields(props) {
           <span className="text-sm font-medium text-slate-300">
             {props.labelFullName}
           </span>
-          <div className="flex h-12 items-center rounded-full border border-[#1E293B] bg-[#0F1629]/90 px-4">
+          <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
             <span className="material-symbols-outlined text-slate-500">
               {props.iconFullName}
             </span>
@@ -37,7 +37,7 @@ export default function AuthFields(props) {
         <span className="text-sm font-medium text-slate-300">
           {props.labelEmail}
         </span>
-        <div className="flex h-12 items-center rounded-full border border-[#1E293B] bg-[#0F1629]/90 px-4">
+        <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
           <span className="material-symbols-outlined text-slate-500">
             {props.iconEmail}
           </span>
@@ -64,7 +64,7 @@ export default function AuthFields(props) {
             )}
           </div>
 
-          <div className="flex h-12 items-center rounded-full border border-[#1E293B] bg-[#0F1629]/90 px-4">
+          <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
             <span className="material-symbols-outlined text-slate-500">
               {props.iconPassword}
             </span>
@@ -96,7 +96,7 @@ export default function AuthFields(props) {
           <span className="text-sm font-medium text-slate-300">
             {props.labelPasswordAgain}
           </span>
-          <div className="flex h-12 items-center rounded-full border border-[#1E293B] bg-[#0F1629]/90 px-4">
+          <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
             <span className="material-symbols-outlined text-slate-500">
               {props.iconPassword}
             </span>

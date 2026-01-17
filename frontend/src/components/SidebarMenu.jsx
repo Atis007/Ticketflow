@@ -1,4 +1,8 @@
+import { useCategories } from "../categories/CategoryContext";
+import { Link } from "react-router-dom";
+
 export default function SidebarMenu({ open, onClose }) {
+  const { categories, loading } = useCategories();
   return (
     <>
       {/* Backdrop */}
@@ -12,8 +16,8 @@ export default function SidebarMenu({ open, onClose }) {
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 z-50 h-full w-80 bg-surface-dark border-r border-white/10
-        transform transition-transform duration-300 ease-in-out
-        ${open ? "translate-x-0" : "-translate-x-full"}`}
+          transform transition-transform duration-300 ease-in-out overflow-hidden flex flex-col
+          ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-surface-dark/95 backdrop-blur border-b border-white/10 p-5 flex items-center justify-between">
@@ -27,36 +31,45 @@ export default function SidebarMenu({ open, onClose }) {
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-
+        {loading && (
+          <div className="p-4 text-sm text-slate-400">
+            Loading categories...
+          </div>
+        )}
         {/* Content */}
-        <div className="p-4 space-y-2 overflow-y-auto">
-          <details className="group">
-            <summary className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 cursor-pointer select-none text-gray-300 hover:text-white transition-colors">
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-accent-cyan">
-                  music_note
+        <div className="p-4 space-y-2 overflow-y-auto flex-1 scrollbar-soft">
+          {categories.map((category) => (
+            <details
+              key={category.id}
+              className="group rounded-xl hover:bg-white/5 transition-colors"
+            >
+              <summary className="flex items-center justify-between p-3 cursor-pointer select-none text-gray-300 hover:text-white transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-accent-cyan">
+                    {category.icon}
+                  </span>
+                  <span className="font-medium">{category.name}</span>
+                </div>
+
+                <span className="material-symbols-outlined text-gray-500 group-open:rotate-180 transition-transform">
+                  expand_more
                 </span>
-                <span className="font-medium">Music</span>
+              </summary>
+
+              <div className="pl-12 pr-2 py-2 space-y-1">
+                {category.subcategories?.map((sub) => (
+                  <Link
+                    key={sub.id}
+                    to={`/events/${sub.slug}`}
+                    className="block py-1.5 px-3 rounded-lg text-sm text-gray-400 hover:text-primary hover:bg-white/5 transition-colors"
+                    onClick={onClose}
+                  >
+                    {sub.name}
+                  </Link>
+                ))}
               </div>
-              <span className="material-symbols-outlined text-gray-500 group-open:rotate-180 transition-transform">
-                expand_more
-              </span>
-            </summary>
-
-            <div className="pl-12 pr-2 py-2 space-y-1">
-              <a className="block py-1.5 px-3 rounded-lg text-sm text-gray-400 hover:text-primary hover:bg-white/5 transition-colors">
-                Concerts
-              </a>
-              <a className="block py-1.5 px-3 rounded-lg text-sm text-gray-400 hover:text-primary hover:bg-white/5 transition-colors">
-                Festivals
-              </a>
-              <a className="block py-1.5 px-3 rounded-lg text-sm text-gray-400 hover:text-primary hover:bg-white/5 transition-colors">
-                Live Music
-              </a>
-            </div>
-          </details>
-
-          {/* Ide más category-k ugyanígy */}
+            </details>
+          ))}
         </div>
       </aside>
     </>

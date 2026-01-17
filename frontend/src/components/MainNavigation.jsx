@@ -24,7 +24,7 @@ function MainNavigation() {
   return (
     <>
       <SidebarMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <header className="relative z-30 w-full border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
+      <header className="fixed inset-x-0 top-0 z-30 w-full border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center gap-6">
           <div className="-ml-20 flex items-center gap-4">
             <button
@@ -84,7 +84,7 @@ function MainNavigation() {
 
                 <button
                   onClick={logoutHandler}
-                  className="cursor-pointer hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all border-white/20 text-gray-300 hover:border-[#7c3bed]/50 hover:text-[#7c3bed] hover:bg-white/5"
+                  className="cursor-pointer hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all border-white/20 text-gray-300 hover:border-primary hover:border-opacity-50 hover:text-primary hover:bg-white/5"
                 >
                   Logout
                 </button>
@@ -100,8 +100,8 @@ function MainNavigation() {
                   }) => `hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all
             ${
               isActive
-                ? " border-[#7c3bed] text-[#7c3bed] bg-[#7c3bed]/10"
-                : " border-white/20 text-gray-300 hover:border-[#7c3bed]/50 hover:text-[#7c3bed] hover:bg-white/5"
+                ? " border-primary text-primary bg-primary/10"
+                : " border-white/20 text-gray-300 hover:border-primary hover:border-opacity-50 hover:text-primary hover:bg-white/5"
             }`}
                 >
                   Log In
@@ -113,8 +113,8 @@ function MainNavigation() {
                   }) => `h-10 px-6 flex items-center justify-center rounded-full font-semibold transition-all shadow
             ${
               isActive
-                ? "bg-[#7c3bed] font-bold text-white/90 shadow-[0_0_30px_rgba(124,59,237,0.6)]"
-                : "bg-[#7c3bed]/90 text-white/90 hover:bg-[#7c3bed] hover:shadow-[0_0_30px_rgba(124,59,237,0.55),0_0_60px_rgba(34,211,238,0.35)]"
+                ? "bg-primary font-bold text-white/90 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.6)]"
+                : "bg-primary/90 text-white/90 hover:bg-primary hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.55),0_0_60px_rgba(var(--color-accent-cyan-rgb),0.35)]"
             }`}
                 >
                   Register
@@ -124,6 +124,7 @@ function MainNavigation() {
           </div>
         </div>
       </header>
+      <div className="h-20" aria-hidden="true" />
     </>
   );
 }

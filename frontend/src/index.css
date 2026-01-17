@@ -19,6 +19,7 @@
     display: inline-flex;
     white-space: nowrap;
     direction: ltr;
+    font-feature-settings: "liga";
     -webkit-font-feature-settings: "liga";
     -webkit-font-smoothing: antialiased;
     font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
@@ -29,12 +30,26 @@
   --font-display: "Unbounded", "sans-serif";
   --font-body: "Spline Sans", "Outfit", "sans-serif";
 
-  --color-primary: #2bee79; /* primary CTA, main actions, success */
-  --color-primary-dark: #1fa855; /* primary hover / active */
+  --color-primary: #7c3bed; /* primary CTA, main actions */
+  --color-primary-dark: #6a2ccf; /* primary hover / active */
   --color-accent-purple: #7c3aed; /* secondary actions, feature highlights */
   --color-accent-cyan: #22d3ee; /* links, info, technical accents */
   --color-background-dark: #020617; /* app / page background */
   --color-surface-dark: #050a1a; /* cards, modals, surfaces */
+  --color-surface-ink: #030819; /* deep panels */
+  --color-surface-mid: #0f1629; /* inputs */
+  --color-surface-contrast: #2a243d; /* subtle chip backgrounds */
+
+  --color-primary-rgb: 124, 59, 237;
+  --color-primary-dark-rgb: 106, 44, 207;
+  --color-accent-purple-rgb: 124, 58, 237;
+  --color-accent-cyan-rgb: 34, 211, 238;
+  --color-background-rgb: 2, 6, 23;
+  --color-surface-dark-rgb: 5, 10, 26;
+  --color-surface-ink-rgb: 3, 8, 25;
+  --color-surface-mid-rgb: 15, 22, 41;
+  --color-surface-contrast-rgb: 42, 36, 61;
+  --color-muted-2: #a692c8; /* muted lavender text */
 
   --radius-default: 1rem;
   --radius-lg: 1.5rem;
@@ -43,12 +58,12 @@
   --radius-full: 9999px;
 
   /* UI states */
-  /*--color-hover: var(--color-primary-dark); /* hover state */
-  /*--color-focus: var(--color-accent-cyan); /* focus ring / outline */
-  /*--color-active: var(--color-primary-dark); /* active / pressed */
-  /*--color-disabled: #334155; /* disabled text / controls */
-  /*--color-border: #1e293b; /* default borders / dividers */
-  /*--color-muted: #64748b; /* secondary text / placeholders */
+  --color-hover: var(--color-primary-dark);
+  --color-focus: var(--color-accent-cyan);
+  --color-active: var(--color-primary-dark);
+  --color-disabled: #334155;
+  --color-border: #1e293b;
+  --color-muted: #64748b;
 }
 
 @layer utilities {
@@ -76,6 +91,38 @@
   }
 
   .neon-shadow {
-    box-shadow: 0 0 20px rgba(43, 238, 121, 0.3);
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.28);
+  }
+
+  .scrollbar-soft {
+    scrollbar-color: rgba(var(--color-primary-rgb), 0.4) rgba(var(--color-surface-dark-rgb), 0.9);
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-soft::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .scrollbar-soft::-webkit-scrollbar-track {
+    background: rgba(var(--color-surface-dark-rgb), 0.9);
+    border-radius: 12px;
+  }
+
+  .scrollbar-soft::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--color-primary-rgb), 0.7),
+      rgba(var(--color-accent-cyan-rgb), 0.55)
+    );
+    border-radius: 12px;
+    border: 2px solid rgba(var(--color-surface-dark-rgb), 0.9);
+  }
+
+  .scrollbar-soft::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--color-primary-rgb), 0.9),
+      rgba(var(--color-accent-cyan-rgb), 0.7)
+    );
   }
 }

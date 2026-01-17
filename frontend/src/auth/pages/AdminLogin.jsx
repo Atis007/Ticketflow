@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
                 </div>
               </div>
 
-              <div className="absolute left-0 top-0 h-1 w-full bg-linear-to-r from-[#7c3bed] via-accent-cyan to-[#7c3bed] opacity-60"></div>
+              <div className="absolute left-0 top-0 h-1 w-full bg-linear-to-r from-primary via-accent-cyan to-primary opacity-60"></div>
               <AuthForm
                 mode="admin-login"
                 headerText="Admin Login"
