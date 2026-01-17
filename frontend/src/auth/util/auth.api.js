@@ -1,6 +1,6 @@
 import { redirect } from "react-router-dom";
 
-const authApi = import.meta.env.VITE_API_AUTH_BASE_URL;
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 async function handleResponse(response) {
   if (!response.ok) {
@@ -11,7 +11,7 @@ async function handleResponse(response) {
 }
 
 export async function login(payload) {
-  const response = await fetch(`${authApi}user/login`, {
+  const response = await fetch(`${baseUrl}auth/user/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -23,7 +23,7 @@ export async function login(payload) {
 }
 
 export async function register(payload) {
-  const response = await fetch(`${authApi}user/register`, {
+  const response = await fetch(`${baseUrl}auth/user/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -34,7 +34,7 @@ export async function register(payload) {
 }
 
 export async function loginAdmin(payload) {
-  const response = await fetch(`${authApi}admin/login`, {
+  const response = await fetch(`${baseUrl}auth/admin/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -46,7 +46,7 @@ export async function loginAdmin(payload) {
 }
 
 export async function forgotPassword(email) {
-  const response = await fetch(`${authApi}user/forgot-password`, {
+  const response = await fetch(`${baseUrl}auth/user/forgot-password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

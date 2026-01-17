@@ -116,9 +116,9 @@ export default function AuthForm({ mode, ...props }) {
 
         <button
           type="submit"
-          className="mt-2 h-12 rounded-full bg-[#7c3bed] text-white font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 ease-out
+          className="mt-2 h-12 rounded-full bg-primary text-white font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 ease-out
     transform hover:-translate-y-0.5
-    hover:shadow-[0_0_30px_rgba(124,59,237,0.55)]
+    hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.55)]
     active:translate-y-0
     group"
         >

@@ -6,12 +6,12 @@ const HERO_IMAGE_URL =
 export default function RegisterPage() {
   return (
     <section className="relative w-full overflow-hidden">
-      <div className="pointer-events-none absolute top-0 right-[-15%] h-105 w-105 rounded-full bg-[#7c3bed]/20 blur-[150px]"></div>
-      <div className="pointer-events-none absolute bottom-[-10%] left-[-15%] h-80 w-80 rounded-full bg-accent-cyan/15 blur-[140px]"></div>
+      <div className="pointer-events-none absolute top-0 right-[-15%] h-105 w-105 rounded-full bg-[rgba(var(--color-primary-rgb),0.2)] blur-[150px]"></div>
+      <div className="pointer-events-none absolute bottom-[-10%] left-[-15%] h-80 w-80 rounded-full bg-[rgba(var(--color-accent-cyan-rgb),0.15)] blur-[140px]"></div>
 
-      <div className="relative z-10 w-full overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#030819]/80 backdrop-blur-xl shadow-[0_40px_120px_rgba(2,6,23,0.55)]">
+      <div className="relative z-10 w-full overflow-hidden rounded-[2.5rem] border border-white/10 bg-[rgba(var(--color-surface-ink-rgb),0.8)] backdrop-blur-xl shadow-[0_40px_120px_rgba(var(--color-background-rgb),0.55)]">
         <div className="flex min-h-180 flex-col lg:flex-row">
-          <aside className="relative hidden w-full overflow-hidden border-b border-white/10 bg-[#050A1A] lg:flex lg:w-1/2">
+          <aside className="relative hidden w-full overflow-hidden border-b border-white/10 bg-surface-dark lg:flex lg:w-1/2">
             <div
               className="absolute inset-0 opacity-60 mix-blend-overlay"
               style={{
@@ -23,7 +23,7 @@ export default function RegisterPage() {
             <div className="absolute inset-0 bg-linear-to-t from-background via-background-dark/60 to-transparent"></div>
             <div className="relative z-10 flex w-full flex-col justify-end p-16 text-left">
               <div className="mb-10 text-white">
-                <div className="mb-6 flex size-12 items-center justify-center rounded-full border border-white/20 bg-[#7c3bed]/10 text-[#7c3bed] backdrop-blur-sm">
+                <div className="mb-6 flex size-12 items-center justify-center rounded-full border border-white/20 bg-[rgba(var(--color-primary-rgb),0.1)] text-primary backdrop-blur-sm">
                   <span
                     className="material-symbols-outlined text-2xl"
                     aria-hidden="true"
@@ -31,10 +31,10 @@ export default function RegisterPage() {
                     auto_awesome
                   </span>
                 </div>
-                <h2 className="font-display text-4xl font-bold leading-tight drop-shadow-[0_0_25px_rgba(124,59,237,0.45)]">
+                <h2 className="font-display text-4xl font-bold leading-tight drop-shadow-[0_0_25px_rgba(var(--color-primary-rgb),0.45)]">
                   One account.
                   <br />
-                  <span className="bg-linear-to-r from-[#7c3bed] to-accent-cyan bg-clip-text text-transparent">
+                  <span className="bg-linear-to-r from-primary to-accent-cyan bg-clip-text text-transparent">
                     Multiple roles.
                   </span>
                 </h2>
