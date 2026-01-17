@@ -33,7 +33,7 @@ $router->post("/api/auth/user/register", [$user, "registerUser"]);
 // Public category route, no authentication required
 $router->get("/api/categories", [$category, "index"]);
 // Admin category routes, authentication and admin role required
-$router->resource("/api/admin/categories", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->resource("/api/admin/categories", $category, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
 $router->resource("/api/admin/users", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
