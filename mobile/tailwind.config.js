@@ -1,10 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./App.js", "./components/**/*.{js,jsx}"],
+  content: ["./App.{js,jsx}", "./**/*.{js,jsx}"],
   presets: [require("nativewind/preset")],
-  theme: {
-    extend: {},
-  },
+  theme: {},
   plugins: [],
 };
-

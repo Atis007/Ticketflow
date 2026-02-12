@@ -129,18 +129,28 @@ final class Router
         $instance = is_string($controller) ? new $controller() : $controller;
 
         // Index - Get /resource
-        $this->get($base, [$instance, 'index'], $middleware);
+        if (is_callable([$instance, 'index'])) {
+            $this->get($base, [$instance, 'index'], $middleware);
+        }
 
         // Show – GET /resource/{id}
-        $this->get($base . '/{id}', [$instance, 'show'], $middleware);
+        if (is_callable([$instance, 'show'])) {
+            $this->get($base . '/{id}', [$instance, 'show'], $middleware);
+        }
 
         // Create – POST /resource
-        $this->post($base, [$instance, 'store'], $middleware);
+        if (is_callable([$instance, 'store'])) {
+            $this->post($base, [$instance, 'store'], $middleware);
+        }
 
         // Update – PUT /resource/{id}
-        $this->put($base . '/{id}', [$instance, 'update'], $middleware);
+        if (is_callable([$instance, 'update'])) {
+            $this->put($base . '/{id}', [$instance, 'update'], $middleware);
+        }
 
         // Delete – DELETE /resource/{id}
-        $this->delete($base . '/{id}', [$instance, 'destroy'], $middleware);
+        if (is_callable([$instance, 'destroy'])) {
+            $this->delete($base . '/{id}', [$instance, 'destroy'], $middleware);
+        }
     }
 }
