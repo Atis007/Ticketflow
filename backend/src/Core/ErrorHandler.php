@@ -8,6 +8,9 @@ use Throwable;
 
 final class ErrorHandler
 {
+    /**
+     * Handles register.
+     */
     public static function register(): void
     {
         set_exception_handler(function (Throwable $e): void {

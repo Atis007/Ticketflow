@@ -8,8 +8,15 @@ use App\Core\Router;
 use App\Core\CORS;
 use App\Core\ErrorHandler;
 use App\Controllers\AdminController;
+use App\Controllers\AdminCategoryController;
+use App\Controllers\AdminDashboardController;
+use App\Controllers\AdminEventController;
+use App\Controllers\AdminLogController;
+use App\Controllers\AdminSecurityController;
 use App\Controllers\CategoryController;
+use App\Controllers\EventController;
 use App\Controllers\UserController;
+use App\Controllers\VerificationController;
 use App\Middleware\AuthMiddleware;
 
 header('Content-Type: application/json');
@@ -22,21 +29,62 @@ CORS::handle();
 $router = new Router();
 
 $admin = new AdminController();
+$adminCategory = new AdminCategoryController();
+$adminDashboard = new AdminDashboardController();
+$adminEvent = new AdminEventController();
+$adminLog = new AdminLogController();
+$adminSecurity = new AdminSecurityController();
 $user = new UserController();
 $category = new CategoryController();
+$event = new EventController();
+$verification = new VerificationController();
 
 $router->post("/api/auth/admin/login", [$admin, "loginAdmin"]);
 $router->post("/api/auth/admin/register", [$admin, "registerAdmin"]); // disabled, but route exists
 $router->post("/api/auth/user/login", [$user, "loginUser"]);
 $router->post("/api/auth/user/register", [$user, "registerUser"]);
+$router->post("/api/auth/forgot-password", [$user, "forgotPassword"]);
+$router->post("/api/auth/reset-password", [$user, "resetPassword"]);
+$router->post("/api/auth/logout", [$user, "logout"]);
+$router->post("/api/auth/verify-email/send", [$verification, "sendVerification"]);
+$router->post("/api/auth/verify-email/resend", [$verification, "resendVerification"]);
+$router->post("/api/auth/verify-email/confirm", [$verification, "confirmVerification"]);
 
 // Public category route, no authentication required
 $router->get("/api/categories", [$category, "index"]);
-// Admin category routes, authentication and admin role required
-$router->resource("/api/admin/categories", $category, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
-
+$router->get('/api/events/{subcategory_slug}', [$event, 'indexBySubcategory']);
+$router->get('/api/events/{subcategory_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug'], [AuthMiddleware::verified()]);
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
 $router->resource("/api/admin/users", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->patch('/api/admin/users/{id}/disable', [$admin, 'disableUser'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->patch('/api/admin/users/{id}/enable', [$admin, 'enableUser'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->patch('/api/admin/users/bulk-disable', [$admin, 'bulkDisable'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->patch('/api/admin/users/bulk-enable', [$admin, 'bulkEnable'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$router->get('/api/admin/events', [$adminEvent, 'index'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->patch('/api/admin/events/{id}/toggle-active', [$adminEvent, 'toggleActive'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$router->get('/api/admin/categories', [$adminCategory, 'index'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->post('/api/admin/categories', [$adminCategory, 'store'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->put('/api/admin/categories/{id}', [$adminCategory, 'update'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->delete('/api/admin/categories/{id}', [$adminCategory, 'destroy'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->post('/api/admin/subcategories', [$adminCategory, 'storeSubcategory'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->put('/api/admin/subcategories/{id}', [$adminCategory, 'updateSubcategory'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->delete('/api/admin/subcategories/{id}', [$adminCategory, 'destroySubcategory'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$router->get('/api/admin/logs/device', [$adminLog, 'deviceLogs'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->get('/api/admin/logs/admin', [$adminLog, 'adminLogs'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->get('/api/admin/logs/event-changes', [$adminLog, 'eventChanges'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$router->get('/api/admin/security/incidents', [$adminSecurity, 'incidents'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->get('/api/admin/security/blocks', [$adminSecurity, 'blocks'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->post('/api/admin/security/blocks/ip', [$adminSecurity, 'createIpBlock'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->post('/api/admin/security/blocks/{id}/lift', [$adminSecurity, 'liftBlock'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->post('/api/admin/security/incidents/{id}/escalate', [$adminSecurity, 'escalateIncident'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->post('/api/admin/security/incidents/{id}/resolve', [$adminSecurity, 'resolveIncident'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$router->get('/api/admin/health/summary', [$adminDashboard, 'healthSummary'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->get('/api/admin/sync/changes', [$adminDashboard, 'syncChanges'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 /*$router->resource("/api/events", EventController::class);
 $router->resource("/api/categories", CategoryController::class);
 $router->resource("/api/tickets", TicketController::class);

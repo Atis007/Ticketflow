@@ -6,10 +6,12 @@ const CategoryContext = createContext(null);
 export function CategoryProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchCategories()
       .then((data) => {
+        setError(null);
         const sorted = [...data].sort((a, b) => {
           if (a.slug === "other") return 1;
           if (b.slug === "other") return -1;
@@ -19,13 +21,13 @@ export function CategoryProvider({ children }) {
       })
       .catch((error) => {
         setCategories([]);
-        throw new Error("Failed to load categories: " + error.message);
+        setError("Failed to load categories: " + error.message);
       })
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <CategoryContext.Provider value={{ categories, loading }}>
+    <CategoryContext.Provider value={{ categories, loading, error }}>
       {children}
     </CategoryContext.Provider>
   );

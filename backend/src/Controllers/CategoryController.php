@@ -12,6 +12,9 @@ use PDO;
 
 final class CategoryController
 {
+    /**
+     * Handles index.
+     */
     public function index(Request $request, array $params = []): void
     {
         try {

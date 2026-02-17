@@ -12,6 +12,9 @@ enum UserRole: string
     case ADMIN = 'admin';
     case USER = 'user';
 
+    /**
+     * Handles from string.
+     */
     public static function fromString(?string $value): self
     {
         if ($value === null) {
