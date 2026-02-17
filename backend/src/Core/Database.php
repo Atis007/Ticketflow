@@ -13,6 +13,9 @@ final class Database
 {
     private static ?PDO $instance = null;
 
+    /**
+     * Returns connection.
+     */
     public static function getConnection(): PDO
     {
         if (self::$instance !== null) {
@@ -23,8 +26,19 @@ final class Database
 
         $params = self::loadParams();
 
+        if (!extension_loaded('pdo_pgsql')) {
+            Logger::error('Missing required PHP extension: pdo_pgsql');
+            Json::error('Server is not configured for PostgreSQL connections', 500);
+        }
+
         try {
-            $dsn = sprintf("mysql:host=%s;dbname=%s;charset=%s", $params['HOST'], $params['DB'], $params['CHARSET']);
+            $dsn = sprintf(
+                'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s',
+                $params['HOST'],
+                $params['PORT'],
+                $params['DB'],
+                $params['SSLMODE']
+            );
 
             $pdoOptions = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -33,6 +47,7 @@ final class Database
             ];
 
             self::$instance = new PDO($dsn, $params['USER'], $params['PASSWORD'], $pdoOptions);
+            self::$instance->exec('SET TIME ZONE ' . self::$instance->quote($params['TIMEZONE']));
 
             return self::$instance;
         } catch (PDOException $e) {
@@ -60,14 +75,19 @@ final class Database
         }
     }
 
+    /**
+     * Handles load params.
+     */
     private static function loadParams(): array
     {
         $PARAMS = [
             "HOST" => $_ENV['DB_HOST'] ?? '',
+            "PORT" => $_ENV['DB_PORT'] ?? '',
             "USER" => $_ENV['DB_USER'] ?? '',
             "PASSWORD" => $_ENV['DB_PASS'] ?? '',
             "DB" => $_ENV['DB_NAME'] ?? '',
-            "CHARSET" => $_ENV['DB_CHARSET'] ?? 'utf8mb4'
+            "SSLMODE" => $_ENV['DB_SSLMODE'] ?? '',
+            "TIMEZONE" => $_ENV['TIMEZONE'] ?? '',
         ];
 
         foreach ($PARAMS as $key => $value) {

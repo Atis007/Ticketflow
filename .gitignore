@@ -51,6 +51,7 @@ dist-ssr/
 # BACKEND (PHP)
 ###############################################
 
+backend/phpqrcode/
 backend/vendor/
 backend/.env
 backend/logs/
@@ -101,6 +102,9 @@ mobile/.metro-health-check*
 ###############################################
 docs/
 
+# Local planning/agent notes (not tracked)
+agents/
+.agents/
 ###############################################
 # OTHER / MISC
 ###############################################

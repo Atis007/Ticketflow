@@ -15,6 +15,9 @@ final class UserValidator
     private const SPECIAL_CHAR_REGEX = '/[!@#$%^&*()_\-+={}\[\]|:;"\'<>.,?\/~`]/';
     private const NAME_REGEX = '/^\p{L}+(?:-\p{L}+)*(?: \p{L}+(?:-\p{L}+)*)+$/u';
 
+    /**
+     * Validates full name input.
+     */
     private function validateFullName(string $fullName): string
     {
         // Check length
@@ -30,6 +33,9 @@ final class UserValidator
         return $fullName;
     }
 
+    /**
+     * Validates password input.
+     */
     private function validatePassword(
         string $email,
         #[\SensitiveParameter] string $password,
@@ -70,6 +76,9 @@ final class UserValidator
         return $password;
     }
 
+    /**
+     * Validates email input.
+     */
     private function validateEmail(string $email): string
     {
         // Validate email format
@@ -81,11 +90,17 @@ final class UserValidator
         return $email;
     }
 
+    /**
+     * Handles normalize full name.
+     */
     private function normalizeFullName(string $fullName): string
     {
         return preg_replace('/\s+/', ' ', trim($fullName));
     }
 
+    /**
+     * Validates register input.
+     */
     public function validateRegister(array $data): array
     {
         $email = trim($data['email'] ?? '');
@@ -108,6 +123,9 @@ final class UserValidator
         return [$validEmail, $validPassword, $validFullName];
     }
 
+    /**
+     * Validates login input.
+     */
     public function validateLogin(array $data): array
     {
         $email = trim($data['email'] ?? '');
@@ -121,5 +139,39 @@ final class UserValidator
         $validEmail = $this->validateEmail($email);
         // All validations passed, can return the valid inputs
         return [$validEmail, $password];
+    }
+
+    /**
+     * Validates forgot password input.
+     */
+    public function validateForgotPassword(array $data): array
+    {
+        $email = trim($data['email'] ?? '');
+
+        if ($email === '') {
+            Logger::warning('Forgot password attempt with missing email');
+            Json::error('Missing required fields.', 400);
+        }
+
+        $validEmail = $this->validateEmail($email);
+        return [$validEmail];
+    }
+
+    /**
+     * Validates reset password input.
+     */
+    public function validateResetPassword(array $data): array
+    {
+        $token = trim((string) ($data['token'] ?? ''));
+        $password = (string) ($data['password'] ?? '');
+        $confirmPassword = (string) ($data['passwordConfirmation'] ?? '');
+
+        if ($token === '' || $password === '' || $confirmPassword === '') {
+            Logger::warning('Reset password attempt with missing fields');
+            Json::error('Missing required fields.', 400);
+        }
+
+        $validPassword = $this->validatePassword('password-reset-flow', $password, $confirmPassword);
+        return [$token, $validPassword];
     }
 }

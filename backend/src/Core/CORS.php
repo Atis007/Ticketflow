@@ -6,6 +6,9 @@ namespace App\Core;
 
 class CORS
 {
+    /**
+     * Handles middleware checks for authentication and roles.
+     */
     public static function handle(): void
     {
         // ----- CORS -----

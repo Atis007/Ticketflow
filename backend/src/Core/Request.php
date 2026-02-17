@@ -12,6 +12,9 @@ use JsonException;
  */
 final readonly class Request
 {
+    /**
+     * Initializes class dependencies.
+     */
     public function __construct(
         public string $method,
         public string $uri,
@@ -21,6 +24,9 @@ final readonly class Request
         public array $query
     ) {}
 
+    /**
+     * Builds a request instance from PHP globals.
+     */
     public static function fromGlobals(): self
     {
         $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -49,6 +55,9 @@ final readonly class Request
         return $this->body[$key] ?? $default;
     }
 
+    /**
+     * Returns a normalized request header value.
+     */
     public function header(string $name): ?string
     {
         $normalized = strtolower($name);
@@ -56,6 +65,9 @@ final readonly class Request
         return $this->headers[$normalized] ?? null;
     }
 
+    /**
+     * Extracts the bearer token from Authorization header.
+     */
     public function bearerToken(): ?string
     {
         $authHeader = $this->header('authorization');
@@ -67,6 +79,9 @@ final readonly class Request
         return $token === '' ? null : $token;
     }
 
+    /**
+     * Handles normalize path.
+     */
     private static function normalizePath(string $uri): string
     {
         $path = parse_url($uri, PHP_URL_PATH) ?? '/';

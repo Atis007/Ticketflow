@@ -5,6 +5,9 @@ namespace App\Helpers;
 
 final class Json
 {
+    /**
+     * Handles success.
+     */
     public static function success(array $data = [], int $code = 200): never
     {
         self::respond([
@@ -13,6 +16,9 @@ final class Json
         ], $code);
     }
 
+    /**
+     * Handles error.
+     */
     public static function error(string $msg, int $code = 400): never
     {
         self::respond([
@@ -21,6 +27,9 @@ final class Json
         ], $code);
     }
 
+    /**
+     * Handles respond.
+     */
     private static function respond(array $payload, int $code): never
     {
         http_response_code($code);

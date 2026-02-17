@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Core\Database;
 use App\Core\Logger;
 use App\Core\Request;
 use App\Helpers\Json;
 use App\Models\UserRole;
+use App\Services\AuthSessionService;
 
 final class AuthMiddleware
 {
@@ -16,21 +18,16 @@ final class AuthMiddleware
      */
     public static function handle(Request $request, array $requiredRoles = []): void
     {
-        $token = $request->bearerToken();
-
-        if ($token === null) {
-            Logger::warning('Missing or invalid Authorization header');
-            Json::error('Unauthorized', 401);
-        }
-
-        // TODO: Replace with a proper JWT verification service
-        $payload = self::mockPayload($token);
+        $payload = self::authenticate($request);
 
         if ($requiredRoles !== []) {
             self::assertRole($payload, $requiredRoles);
         }
     }
 
+    /**
+     * Returns middleware for authenticated-only routes.
+     */
     public static function auth(): callable
     {
         return static function (Request $request): void {
@@ -38,6 +35,9 @@ final class AuthMiddleware
         };
     }
 
+    /**
+     * Returns middleware for admin-only routes.
+     */
     public static function admin(): callable
     {
         return static function (Request $request): void {
@@ -46,7 +46,42 @@ final class AuthMiddleware
     }
 
     /**
-     * @param array{id: int, email: string, role: UserRole} $payload
+     * Returns middleware for authenticated and verified-user routes.
+     */
+    public static function verified(): callable
+    {
+        return static function (Request $request): void {
+            $payload = self::authenticate($request);
+
+            if (($payload['is_verified'] ?? false) !== true) {
+                Logger::warning('Verified account required for this endpoint.');
+                Json::error('Email verification required', 403);
+            }
+        };
+    }
+
+    /**
+     * Returns the authenticated payload for the current bearer token.
+     *
+     * @return array{id: int, email: string, role: UserRole, is_verified: bool}
+     */
+    public static function authenticatedPayload(Request $request): array
+    {
+        return self::authenticate($request);
+    }
+
+    /**
+     * Returns the authenticated user id from the current bearer token.
+     */
+    public static function authenticatedUserId(Request $request): int
+    {
+        $payload = self::authenticate($request);
+
+        return (int) $payload['id'];
+    }
+
+    /**
+     * @param array{id: int, email: string, role: UserRole, is_verified: bool} $payload
      * @param UserRole[] $requiredRoles
      */
     private static function assertRole(array $payload, array $requiredRoles): void
@@ -66,13 +101,29 @@ final class AuthMiddleware
         }
     }
 
-    private static function mockPayload(string $token): array
+    /**
+     * Resolves and validates the current authenticated token payload.
+     *
+     * @return array{id: int, email: string, role: UserRole, is_verified: bool}
+     */
+    private static function authenticate(Request $request): array
     {
-        // Keep the mock deterministic for now to simplify local testing
-        return [
-            'id' => 1,
-            'email' => 'user@test.com',
-            'role' => str_contains($token, 'admin') ? UserRole::ADMIN : UserRole::USER
-        ];
+        $token = $request->bearerToken();
+
+        if ($token === null) {
+            Logger::warning('Missing or invalid Authorization header');
+            Json::error('Unauthorized', 401);
+        }
+
+        $pdo = Database::getConnection();
+        $payload = (new AuthSessionService())->authenticateToken($pdo, $token);
+
+        if ($payload === null) {
+            Logger::warning('Invalid, expired, or revoked token');
+            Json::error('Unauthorized', 401);
+        }
+
+        return $payload;
     }
+
 }
