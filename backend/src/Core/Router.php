@@ -13,26 +13,49 @@ final class Router
      */
     private array $routes = [];
 
+    /**
+     * Returns get.
+     */
     public function get(string $path, callable $handler, array $middleware = []): void
     {
         $this->addRoute('GET', $path, $handler, $middleware);
     }
 
+    /**
+     * Handles post.
+     */
     public function post(string $path, callable $handler, array $middleware = []): void
     {
         $this->addRoute('POST', $path, $handler, $middleware);
     }
 
+    /**
+     * Handles put.
+     */
     public function put(string $path, callable $handler, array $middleware = []): void
     {
         $this->addRoute('PUT', $path, $handler, $middleware);
     }
 
+    /**
+     * Registers a PATCH route.
+     */
+    public function patch(string $path, callable $handler, array $middleware = []): void
+    {
+        $this->addRoute('PATCH', $path, $handler, $middleware);
+    }
+
+    /**
+     * Handles delete.
+     */
     public function delete(string $path, callable $handler, array $middleware = []): void
     {
         $this->addRoute('DELETE', $path, $handler, $middleware);
     }
 
+    /**
+     * Handles add route.
+     */
     private function addRoute(string $method, string $path, callable $handler, array $middleware): void
     {
         $this->routes[$method][] = [
@@ -42,6 +65,9 @@ final class Router
         ];
     }
 
+    /**
+     * Handles run.
+     */
     public function run(): void
     {
         $request = Request::fromGlobals();
@@ -97,6 +123,9 @@ final class Router
         return $allowed;
     }
 
+    /**
+     * Handles match route.
+     */
     private function matchRoute(string $routePath, string $uri, array &$params): bool
     {
         // Escape route path for regex, then replace parameter placeholders with capture groups
@@ -121,6 +150,9 @@ final class Router
         return false;
     }
 
+    /**
+     * Handles resource.
+     */
     public function resource(string $base, string|object $controller, array $middleware = []): void
     {
         // Remove trailing slash if present
