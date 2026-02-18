@@ -14,6 +14,7 @@ import {
 
 export default function AuthForm({ mode, ...props }) {
   const [errorMessage, setErrorMessage] = useState(null);
+  const isAdmin = mode === "admin-login";
 
   const navigate = useNavigate();
   const auth = useAuth();
@@ -92,6 +93,10 @@ export default function AuthForm({ mode, ...props }) {
     }
   };
 
+  const submitToneClass = isAdmin
+    ? "bg-danger hover:bg-danger-hover hover:shadow-glow-danger"
+    : "bg-primary-strong hover:bg-primary-strong-hover hover:shadow-glow-primary";
+
   return (
     <>
       <div className="mb-10 text-center">
@@ -99,7 +104,7 @@ export default function AuthForm({ mode, ...props }) {
           {props.headerText}
         </h1>
         {props.headerParagraph && (
-          <p className="mt-2 text-slate-400">{props.headerParagraph}</p>
+          <p className="mt-2 text-text-soft text-sm">{props.headerParagraph}</p>
         )}
       </div>
       <form
@@ -108,7 +113,7 @@ export default function AuthForm({ mode, ...props }) {
         className="flex flex-col gap-4"
       >
         {errorMessage !== null && (
-          <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200">
+          <div className="mb-4 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-danger-soft">
             {errorMessage}
           </div>
         )}
@@ -116,11 +121,7 @@ export default function AuthForm({ mode, ...props }) {
 
         <button
           type="submit"
-          className="mt-2 h-12 rounded-full bg-primary text-white font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 ease-out
-    transform hover:-translate-y-0.5
-    hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.55)]
-    active:translate-y-0
-    group"
+          className={`group mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg text-white font-semibold transition-all duration-300 ease-out active:translate-y-0 ${submitToneClass}`}
         >
           {mode === "login" && (
             <span className="transition-all duration-300 ease-out group-hover:tracking-wide">

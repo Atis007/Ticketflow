@@ -113,9 +113,9 @@ function MainNavigation() {
                   }) => `h-10 px-6 flex items-center justify-center rounded-full font-semibold transition-all shadow
             ${
               isActive
-                ? "bg-primary font-bold text-white/90 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.6)]"
-                : "bg-primary/90 text-white/90 hover:bg-primary hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.55),0_0_60px_rgba(var(--color-accent-cyan-rgb),0.35)]"
-            }`}
+                ? "bg-primary font-bold text-white/90 shadow-glow-primary-strong"
+                : "bg-primary/90 text-white/90 hover:bg-primary hover:shadow-glow-primary-cyan"
+             }`}
                 >
                   Register
                 </NavLink>

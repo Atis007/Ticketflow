@@ -4,7 +4,7 @@ export default function EventCard({ event }) {
   return (
     <Link
       to={`/events/${event.categorySlug}/${event.slug || event.id}`}
-      className="group relative flex flex-col gap-4 rounded-3xl bg-surface-dark p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.18)] border border-white/5"
+      className="group relative flex flex-col gap-4 rounded-3xl border border-white/5 bg-surface-dark p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-glow-primary-card"
     >
       <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-background-dark/50">
         <img

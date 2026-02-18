@@ -7,17 +7,23 @@ export default function AdminLoginPage() {
       <div>
         <div className="flex flex-col items-stretch gap-10 lg:flex-row lg:gap-16">
           <div className="flex flex-1 justify-center">
-            <div className="relative w-full max-w-110 overflow-hidden rounded-[2rem] border border-white/10 bg-surface-dark/80 p-8 shadow-[0_25px_80px_rgba(2,6,23,0.7)] backdrop-blur-xl">
-              <div className="mb-6 text-center text-slate-300">
+            <div className="shadow-auth-panel relative w-full max-w-110 overflow-hidden rounded-[2rem] border border-border-strong bg-surface-dark/80 p-8 backdrop-blur-xl">
+              <div className="mb-6 text-center text-text-soft">
                 <p className="font-semibold text-white">
                   If you are not here as an admin, please go to
                 </p>
                 <div className="mt-2">
-                  <Link to="/login" className="text-white underline">
+                  <Link
+                    to="/login"
+                    className="font-medium text-accent-cyan transition-colors hover:text-accent-purple"
+                  >
                     Login
                   </Link>
                   <span className="mx-1">or</span>
-                  <Link to="/register" className="text-white underline">
+                  <Link
+                    to="/register"
+                    className="font-medium text-accent-cyan transition-colors hover:text-accent-purple"
+                  >
                     Register
                   </Link>
                 </div>
