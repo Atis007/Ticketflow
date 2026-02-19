@@ -134,6 +134,7 @@ final class AdminController
         }
 
         $whereSql = $where === [] ? '' : 'WHERE ' . implode(' AND ', $where);
+        $timezone = $this->appTimezone();
 
         try {
             $countStmt = $pdo->prepare("SELECT COUNT(*) FROM users u {$whereSql}");
@@ -147,7 +148,7 @@ final class AdminController
                         u.role,
                         u.is_active,
                         u.is_disabled,
-                        TO_CHAR(u.created_at, 'YYYY.MM.DD HH24:MI:SS') AS created_at,
+                        TO_CHAR(timezone(:tz, u.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                         (SELECT COUNT(*) FROM events e WHERE e.created_by = u.id) AS owned_events_count
                     FROM users u
                     {$whereSql}
@@ -155,6 +156,7 @@ final class AdminController
                     LIMIT :limit OFFSET :offset";
 
             $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':tz', $timezone, PDO::PARAM_STR);
             foreach ($bind as $k => $v) {
                 $type = is_bool($v) ? PDO::PARAM_BOOL : PDO::PARAM_STR;
                 $stmt->bindValue($k, $v, $type);
@@ -512,5 +514,13 @@ final class AdminController
             Logger::error('Bulk enable failed: ' . $e->getMessage());
             Json::error('Failed to enable users', 500);
         }
+    }
+
+    private function appTimezone(): string
+    {
+        $value = (string) ($_ENV['TIMEZONE'] ?? 'UTC');
+        $sanitized = preg_replace('/[^A-Za-z0-9_\/+\-]/', '', $value) ?? 'UTC';
+
+        return $sanitized !== '' ? $sanitized : 'UTC';
     }
 }

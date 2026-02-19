@@ -1,23 +1,49 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import SidebarMenu from "@/components/SidebarMenu";
+import AsyncState from "@/components/AsyncState";
 import EventDetailsHero from "@/events/EventDetailsHero";
 import EventLineupGrid from "@/events/EventLineupGrid";
 import EventTabs from "@/events/EventTabs";
 import EventTicketCard from "@/events/EventTicketCard";
 import EventOrganizerCard from "@/events/EventOrganizerCard";
 import EventRelatedGrid from "@/events/EventRelatedGrid";
-import { getEventDetail } from "@/events/mockEventDetails";
+import { useEventDetails } from "@/events/hooks/useEventDetails";
 
 export default function EventDetailsPage() {
-  const { eventId } = useParams();
+  const { categorySlug, eventSlug } = useParams();
   const [menuOpen, setMenuOpen] = useState(false);
+  const detailsQuery = useEventDetails(categorySlug, eventSlug);
+  const event = detailsQuery.event;
 
-  const event = useMemo(() => {
-    // If a real data source exists, replace this selection with an API call using `slug`.
-    return getEventDetail(eventId);
-  }, [eventId]);
+  if (detailsQuery.isPending && !event) {
+    return (
+      <div className="mx-auto mt-20 w-full max-w-5xl">
+        <AsyncState message="Loading event details..." />
+      </div>
+    );
+  }
+
+  if (detailsQuery.isError) {
+    return (
+      <div className="mx-auto mt-20 w-full max-w-5xl">
+        <AsyncState
+          type="error"
+          message={detailsQuery.error?.message || "Failed to load event details."}
+          onRetry={() => detailsQuery.refetch()}
+        />
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="mx-auto mt-20 w-full max-w-5xl">
+        <AsyncState message="Event not found." />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -30,8 +56,8 @@ export default function EventDetailsPage() {
               <span>/</span>
               <Link to="/events" className="hover:text-white">Events</Link>
               <span>/</span>
-              <span className="text-white">{event.title}</span>
-            </div>
+                <span className="text-white">{event.title}</span>
+              </div>
             <button
               className="inline-flex lg:hidden items-center gap-2 rounded-full border border-white/10 bg-surface-dark px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-primary/50 hover:text-primary"
               onClick={() => setMenuOpen(true)}

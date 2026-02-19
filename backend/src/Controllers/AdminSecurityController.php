@@ -22,28 +22,52 @@ final class AdminSecurityController
     {
         $pdo = Database::getConnection();
         [$page, $pageSize, $offset] = $this->pagination($request);
+        $timezone = $this->appTimezone();
 
         $status = trim((string) ($request->query['status'] ?? ''));
-        $where = '';
+        $search = trim((string) ($request->query['search'] ?? ''));
+        $where = [];
         $bind = [];
 
         if ($status !== '') {
-            $where = 'WHERE si.status = :status';
+            $where[] = 'si.status = :status';
             $bind[':status'] = $status;
         }
 
+        if ($search !== '') {
+            $where[] = '(si.incident_type::text ILIKE :search OR si.ip::text ILIKE :search OR si.email::text ILIKE :search OR si.status::text ILIKE :search OR si.severity::text ILIKE :search OR si.action_taken::text ILIKE :search OR si.attempt_count::text ILIKE :search)';
+            $bind[':search'] = '%' . $search . '%';
+        }
+
+        $whereSql = $where === [] ? '' : 'WHERE ' . implode(' AND ', $where);
+
         try {
-            $count = $pdo->prepare("SELECT COUNT(*) FROM security_incidents si {$where}");
+            $count = $pdo->prepare("SELECT COUNT(*) FROM security_incidents si {$whereSql}");
             $count->execute($bind);
             $total = (int) $count->fetchColumn();
 
             $stmt = $pdo->prepare(
-                "SELECT si.*
+                "SELECT si.id,
+                        si.incident_type,
+                        si.ip::text AS ip,
+                        si.email,
+                        si.attempt_count,
+                        si.severity,
+                        si.status,
+                        si.action_taken,
+                        TO_CHAR(timezone(:tz, si.last_seen_at), 'YYYY-MM-DD HH24:MI:SS') AS last_seen_at,
+                        TO_CHAR(timezone(:tz, si.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                        TO_CHAR(timezone(:tz, si.updated_at), 'YYYY-MM-DD HH24:MI:SS') AS updated_at,
+                        CASE
+                            WHEN si.resolved_at IS NULL THEN NULL
+                            ELSE TO_CHAR(timezone(:tz, si.resolved_at), 'YYYY-MM-DD HH24:MI:SS')
+                        END AS resolved_at
                  FROM security_incidents si
-                 {$where}
+                 {$whereSql}
                  ORDER BY si.last_seen_at DESC
                  LIMIT :limit OFFSET :offset"
             );
+            $stmt->bindValue(':tz', $timezone, PDO::PARAM_STR);
             foreach ($bind as $k => $v) {
                 $stmt->bindValue($k, $v, PDO::PARAM_STR);
             }
@@ -73,16 +97,58 @@ final class AdminSecurityController
     {
         $pdo = Database::getConnection();
         [$page, $pageSize, $offset] = $this->pagination($request);
+        $timezone = $this->appTimezone();
+        $search = trim((string) ($request->query['search'] ?? ''));
+
+        $whereSql = '';
+        $bind = [];
+        if ($search !== '') {
+            $whereSql = 'WHERE sb.ip::text ILIKE :search OR sb.reason::text ILIKE :search OR sb.status::text ILIKE :search OR sb.created_source::text ILIKE :search OR sb.created_by::text ILIKE :search';
+            $bind[':search'] = '%' . $search . '%';
+        }
 
         try {
-            $total = (int) $pdo->query('SELECT COUNT(*) FROM security_blocks')->fetchColumn();
+            if ($whereSql === '') {
+                $total = (int) $pdo->query('SELECT COUNT(*) FROM security_blocks')->fetchColumn();
+            } else {
+                $countStmt = $pdo->prepare("SELECT COUNT(*) FROM security_blocks sb {$whereSql}");
+                foreach ($bind as $k => $v) {
+                    $countStmt->bindValue($k, $v, PDO::PARAM_STR);
+                }
+                $countStmt->execute();
+                $total = (int) $countStmt->fetchColumn();
+            }
 
             $stmt = $pdo->prepare(
-                "SELECT *
-                 FROM security_blocks
-                 ORDER BY created_at DESC
+                "SELECT sb.id,
+                        sb.block_type,
+                        sb.ip::text AS ip,
+                        sb.user_id,
+                        sb.reason,
+                        sb.status,
+                        sb.is_permanent,
+                        sb.created_source,
+                        sb.created_by,
+                        sb.lifted_by,
+                        CASE
+                            WHEN sb.blocked_until IS NULL THEN NULL
+                            ELSE TO_CHAR(timezone(:tz, sb.blocked_until), 'YYYY-MM-DD HH24:MI:SS')
+                        END AS blocked_until,
+                        CASE
+                            WHEN sb.lifted_at IS NULL THEN NULL
+                            ELSE TO_CHAR(timezone(:tz, sb.lifted_at), 'YYYY-MM-DD HH24:MI:SS')
+                        END AS lifted_at,
+                        TO_CHAR(timezone(:tz, sb.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                        TO_CHAR(timezone(:tz, sb.updated_at), 'YYYY-MM-DD HH24:MI:SS') AS updated_at
+                 FROM security_blocks sb
+                 {$whereSql}
+                 ORDER BY sb.created_at DESC
                  LIMIT :limit OFFSET :offset"
             );
+            $stmt->bindValue(':tz', $timezone, PDO::PARAM_STR);
+            foreach ($bind as $k => $v) {
+                $stmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
             $stmt->bindValue(':limit', $pageSize, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
@@ -274,5 +340,13 @@ final class AdminSecurityController
         $offset = ($page - 1) * $pageSize;
 
         return [$page, $pageSize, $offset];
+    }
+
+    private function appTimezone(): string
+    {
+        $value = (string) ($_ENV['TIMEZONE'] ?? 'UTC');
+        $sanitized = preg_replace('/[^A-Za-z0-9_\/+\-]/', '', $value) ?? 'UTC';
+
+        return $sanitized !== '' ? $sanitized : 'UTC';
     }
 }

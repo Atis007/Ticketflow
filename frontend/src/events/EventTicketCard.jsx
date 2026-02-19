@@ -48,7 +48,7 @@ export default function EventTicketCard({ tickets }) {
         <span className="text-text-muted">Total</span>
         <span className="text-white text-2xl font-bold">$130</span>
       </div>
-      <button className="w-full bg-primary hover:bg-color-hover hover:shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.4)] transition-all duration-300 text-white font-bold py-4 rounded-full text-lg tracking-wide flex items-center justify-center gap-2">
+      <button className="w-full bg-primary hover:bg-color-hover hover:shadow-glow-primary-soft transition-all duration-300 text-white font-bold py-4 rounded-full text-lg tracking-wide flex items-center justify-center gap-2">
         <span className="material-symbols-outlined">confirmation_number</span>
         Checkout
       </button>

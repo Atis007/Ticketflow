@@ -1,7 +1,7 @@
 const LOWERCASE_REGEX = /[a-z]/;
 const UPPERCASE_REGEX = /[A-Z]/;
 const DIGIT_REGEX = /[0-9]/;
-const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_\-+={}\[\]|:;"\'<>.,?\/~`]/;
+const SPECIAL_CHAR_REGEX = /[^\p{L}\p{N}\s]/u;
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_REGEX = /^\p{L}+(?:-\p{L}+)*(?: \p{L}+(?:-\p{L}+)*)+$/u;
 

@@ -2,11 +2,14 @@ import { Link } from "react-router-dom";
 
 export default function AuthFooter({ mode }) {
   return (
-    <p className="text-center text-sm text-slate-400">
+    <p className="text-center text-sm text-text-soft">
       {mode === "login" && (
         <>
           Don't have an account?{" "}
-          <Link to="/register" className="text-white underline">
+          <Link
+            to="/register"
+            className="font-medium text-accent-cyan transition-colors hover:text-accent-purple"
+          >
             Register
           </Link>
         </>
@@ -14,7 +17,10 @@ export default function AuthFooter({ mode }) {
       {mode === "register" && (
         <>
           Already have an account?{" "}
-          <Link to="/login" className="text-white underline">
+          <Link
+            to="/login"
+            className="font-medium text-accent-cyan transition-colors hover:text-accent-purple"
+          >
             Log in
           </Link>
         </>

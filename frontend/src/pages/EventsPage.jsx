@@ -1,16 +1,19 @@
 import { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import EventCard from "@/events/EventCard";
 import EventFilters from "@/events/EventFilters";
 import EventHero from "@/events/EventHero";
 import SidebarMenu from "@/components/SidebarMenu";
-import { events, heroFeature } from "@/events/mockEvents";
-import { useCategories } from "@/categories/CategoryContext";
+import AsyncState from "@/components/AsyncState";
+import { heroFeature } from "@/events/mockEvents";
+import { useCategories } from "@/categories/useCategories";
+import { useEvents } from "@/events/hooks/useEvents";
 
 export default function EventsPage() {
-  const { category: categorySlug } = useParams();
+  const { categorySlug } = useParams();
   const { categories } = useCategories();
+  const eventsQuery = useEvents(categorySlug);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -23,19 +26,17 @@ export default function EventsPage() {
 
   const filteredEvents = useMemo(() => {
     const normalizedQuery = searchTerm.trim().toLowerCase();
+    const source = eventsQuery.events;
 
-    return events.filter((event) => {
-      const matchesCategory = categorySlug
-        ? event.categorySlug === categorySlug
-        : true;
+    return source.filter((event) => {
       const matchesQuery = normalizedQuery
         ? event.title.toLowerCase().includes(normalizedQuery) ||
           event.location.toLowerCase().includes(normalizedQuery)
         : true;
 
-      return matchesCategory && matchesQuery;
+      return matchesQuery;
     });
-  }, [categorySlug, searchTerm]);
+  }, [eventsQuery.events, searchTerm]);
 
   const capitalizedCategory = headingCategory
     .split(" ")
@@ -89,9 +90,26 @@ export default function EventsPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {eventsQuery.isPending && !eventsQuery.data ? (
+                  <AsyncState className="col-span-full" message="Loading events..." />
+                ) : null}
+
+                {eventsQuery.isError ? (
+                  <AsyncState
+                    type="error"
+                    className="col-span-full"
+                    message={eventsQuery.error?.message || "Failed to load events."}
+                    onRetry={() => eventsQuery.refetch()}
+                  />
+                ) : null}
+
                 {filteredEvents.map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}
+
+                {!eventsQuery.isPending && !eventsQuery.isError && filteredEvents.length === 0 ? (
+                  <AsyncState className="col-span-full" message="No events found for this category." />
+                ) : null}
               </div>
 
               <div className="mt-2 flex justify-center">

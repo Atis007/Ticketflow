@@ -45,19 +45,20 @@ final class AdminDashboardController
     {
         $sinceRaw = trim((string) ($request->query['since'] ?? ''));
         $since = $sinceRaw !== '' ? $sinceRaw : '1970-01-01T00:00:00+00:00';
+        $timezone = $this->appTimezone();
 
         $pdo = Database::getConnection();
         try {
             $changes = [
-                'users' => $this->fetchChanged($pdo, 'SELECT id, fullname, email, role, is_active, is_disabled, created_at FROM users WHERE created_at > :since ORDER BY created_at ASC', $since),
-                'events' => $this->fetchChanged($pdo, 'SELECT id, title, slug, is_active, created_at FROM events WHERE created_at > :since ORDER BY created_at ASC', $since),
-                'categories' => $this->fetchChanged($pdo, 'SELECT id, name, slug, icon, created_at FROM categories WHERE created_at > :since ORDER BY created_at ASC', $since),
-                'subcategories' => $this->fetchChanged($pdo, 'SELECT id, category_id, name, slug, created_at FROM subcategories WHERE created_at > :since ORDER BY created_at ASC', $since),
-                'adminLogs' => $this->fetchChanged($pdo, 'SELECT id, admin_id, action, entity_type, entity_id, created_at FROM admin_logs WHERE created_at > :since ORDER BY created_at ASC', $since),
-                'deviceLogs' => $this->fetchChanged($pdo, 'SELECT id, user_id, ip, action, created_at FROM device_logs WHERE created_at > :since ORDER BY created_at ASC', $since),
-                'eventChanges' => $this->fetchChanged($pdo, 'SELECT id, event_id, field, changed_at FROM event_changes WHERE changed_at > :since ORDER BY changed_at ASC', $since),
-                'securityIncidents' => $this->fetchChanged($pdo, 'SELECT id, incident_type, status, severity, updated_at FROM security_incidents WHERE updated_at > :since ORDER BY updated_at ASC', $since),
-                'securityBlocks' => $this->fetchChanged($pdo, 'SELECT id, block_type, status, is_permanent, updated_at FROM security_blocks WHERE updated_at > :since ORDER BY updated_at ASC', $since),
+                'users' => $this->fetchChanged($pdo, "SELECT id, fullname, email, role, is_active, is_disabled, TO_CHAR(timezone(:tz, created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at FROM users WHERE created_at > :since ORDER BY created_at ASC", $since, $timezone),
+                'events' => $this->fetchChanged($pdo, "SELECT id, title, slug, is_active, TO_CHAR(timezone(:tz, created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at FROM events WHERE created_at > :since ORDER BY created_at ASC", $since, $timezone),
+                'categories' => $this->fetchChanged($pdo, "SELECT id, name, slug, icon, TO_CHAR(timezone(:tz, created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at FROM categories WHERE created_at > :since ORDER BY created_at ASC", $since, $timezone),
+                'subcategories' => $this->fetchChanged($pdo, "SELECT id, category_id, name, slug, TO_CHAR(timezone(:tz, created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at FROM subcategories WHERE created_at > :since ORDER BY created_at ASC", $since, $timezone),
+                'adminLogs' => $this->fetchChanged($pdo, "SELECT id, admin_id, action, entity_type, entity_id, TO_CHAR(timezone(:tz, created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at FROM admin_logs WHERE created_at > :since ORDER BY created_at ASC", $since, $timezone),
+                'deviceLogs' => $this->fetchChanged($pdo, "SELECT id, user_id, ip, action, TO_CHAR(timezone(:tz, created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at FROM device_logs WHERE created_at > :since ORDER BY created_at ASC", $since, $timezone),
+                'eventChanges' => $this->fetchChanged($pdo, "SELECT id, event_id, field, TO_CHAR(timezone(:tz, changed_at), 'YYYY-MM-DD HH24:MI:SS') AS changed_at FROM event_changes WHERE changed_at > :since ORDER BY changed_at ASC", $since, $timezone),
+                'securityIncidents' => $this->fetchChanged($pdo, "SELECT id, incident_type, status, severity, TO_CHAR(timezone(:tz, updated_at), 'YYYY-MM-DD HH24:MI:SS') AS updated_at FROM security_incidents WHERE updated_at > :since ORDER BY updated_at ASC", $since, $timezone),
+                'securityBlocks' => $this->fetchChanged($pdo, "SELECT id, block_type, status, is_permanent, TO_CHAR(timezone(:tz, updated_at), 'YYYY-MM-DD HH24:MI:SS') AS updated_at FROM security_blocks WHERE updated_at > :since ORDER BY updated_at ASC", $since, $timezone),
             ];
 
             Json::success([
@@ -75,12 +76,23 @@ final class AdminDashboardController
      *
      * @return array<int, array<string, mixed>>
      */
-    private function fetchChanged(PDO $pdo, string $sql, string $since): array
+    private function fetchChanged(PDO $pdo, string $sql, string $since, string $timezone): array
     {
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([':since' => $since]);
+        $stmt->execute([
+            ':since' => $since,
+            ':tz' => $timezone,
+        ]);
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return is_array($rows) ? $rows : [];
+    }
+
+    private function appTimezone(): string
+    {
+        $value = (string) ($_ENV['TIMEZONE'] ?? 'UTC');
+        $sanitized = preg_replace('/[^A-Za-z0-9_\/+\-]/', '', $value) ?? 'UTC';
+
+        return $sanitized !== '' ? $sanitized : 'UTC';
     }
 }

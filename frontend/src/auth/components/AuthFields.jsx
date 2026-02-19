@@ -8,16 +8,22 @@ export default function AuthFields(props) {
   const [passwordRepeatVisible, setPasswordRepeatVisible] = useState(false);
   const isRegister = props.mode === "register";
   const isLogin = props.mode === "login" || props.mode === "admin-login";
+  const isAdmin = props.mode === "admin-login";
+  const focusTone = isAdmin
+    ? "focus-within:border-danger focus-within:ring-danger"
+    : "focus-within:border-accent-cyan focus-within:ring-accent-cyan";
 
   return (
     <>
       {isRegister && (
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-slate-300">
+          <span className="text-sm font-medium text-text-soft">
             {props.labelFullName}
           </span>
-          <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
-            <span className="material-symbols-outlined text-slate-500">
+          <div
+            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+          >
+            <span className="material-symbols-outlined text-text-muted-strong">
               {props.iconFullName}
             </span>
             <input
@@ -26,7 +32,7 @@ export default function AuthFields(props) {
               type={props.typeFullName}
               placeholder={props.placeholderFullName}
               autoComplete="name"
-              className="flex-1 bg-transparent px-3 text-white focus:outline-none"
+              className="flex-1 bg-transparent px-3 text-text-bright placeholder:text-text-muted-strong focus:outline-none"
               required
             />
           </div>
@@ -34,11 +40,13 @@ export default function AuthFields(props) {
       )}
 
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-slate-300">
+        <span className="text-sm font-medium text-text-soft">
           {props.labelEmail}
         </span>
-        <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
-          <span className="material-symbols-outlined text-slate-500">
+        <div
+          className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+        >
+          <span className="material-symbols-outlined text-text-muted-strong">
             {props.iconEmail}
           </span>
           <input
@@ -47,7 +55,7 @@ export default function AuthFields(props) {
             type={props.typeEmail}
             placeholder={props.placeholderEmail}
             autoComplete="email"
-            className="flex-1 bg-transparent px-3 text-white focus:outline-none"
+            className="flex-1 bg-transparent px-3 text-text-bright placeholder:text-text-muted-strong focus:outline-none"
             required
           />
         </div>
@@ -55,17 +63,22 @@ export default function AuthFields(props) {
 
       {props.mode !== "forgot-password" && (
         <label className="flex flex-col gap-2">
-          <div className="flex justify-between text-sm text-slate-300">
+          <div className="flex justify-between text-sm text-text-soft">
             <span>{props.labelPassword}</span>
             {props.mode === "login" && (
-              <Link to="/forgot-password" className="text-accent-cyan text-xs">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-accent-purple hover:text-accent-cyan transition-colors"
+              >
                 Forgot Password?
               </Link>
             )}
           </div>
 
-          <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
-            <span className="material-symbols-outlined text-slate-500">
+          <div
+            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+          >
+            <span className="material-symbols-outlined text-text-muted-strong">
               {props.iconPassword}
             </span>
             <input
@@ -80,7 +93,7 @@ export default function AuthFields(props) {
                   ? "current-password"
                   : undefined
               }
-              className="flex-1 bg-transparent px-3 text-white focus:outline-none"
+              className="flex-1 bg-transparent px-3 text-text-bright placeholder:text-text-muted-strong focus:outline-none"
               required
             />
             <HideButton
@@ -93,11 +106,13 @@ export default function AuthFields(props) {
 
       {isRegister && (
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-slate-300">
+          <span className="text-sm font-medium text-text-soft">
             {props.labelPasswordAgain}
           </span>
-          <div className="flex h-12 items-center rounded-full border border-border bg-[rgba(var(--color-surface-mid-rgb),0.9)] px-4">
-            <span className="material-symbols-outlined text-slate-500">
+          <div
+            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+          >
+            <span className="material-symbols-outlined text-text-muted-strong">
               {props.iconPassword}
             </span>
             <input
@@ -106,7 +121,7 @@ export default function AuthFields(props) {
               type={passwordRepeatVisible ? "text" : "password"}
               placeholder={props.placeholderPasswordAgain}
               autoComplete="new-password"
-              className="flex-1 bg-transparent px-3 text-white focus:outline-none"
+              className="flex-1 bg-transparent px-3 text-text-bright placeholder:text-text-muted-strong focus:outline-none"
               required
             />
             <HideButton

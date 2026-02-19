@@ -1,24 +1,18 @@
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../auth/context/AuthContext";
 
 import SidebarMenu from "@/components/SidebarMenu";
 
 function MainNavigation() {
-  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
 
   function toggleExpand() {
     setIsExpanded(!isExpanded);
-  }
-
-  function logoutHandler() {
-    logout();
-    navigate("/");
   }
 
   return (
@@ -82,12 +76,15 @@ function MainNavigation() {
                   </span>
                 </button>
 
-                <button
-                  onClick={logoutHandler}
-                  className="cursor-pointer hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all border-white/20 text-gray-300 hover:border-primary hover:border-opacity-50 hover:text-primary hover:bg-white/5"
+                <NavLink
+                  to={isAdmin ? "/admin/dashboard" : "/profile"}
+                  className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-all hover:border-primary hover:text-primary hover:bg-white/5"
+                  aria-label={isAdmin ? "Go to admin dashboard" : "Go to profile"}
                 >
-                  Logout
-                </button>
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    account_circle
+                  </span>
+                </NavLink>
               </>
             )}
 
@@ -113,9 +110,9 @@ function MainNavigation() {
                   }) => `h-10 px-6 flex items-center justify-center rounded-full font-semibold transition-all shadow
             ${
               isActive
-                ? "bg-primary font-bold text-white/90 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.6)]"
-                : "bg-primary/90 text-white/90 hover:bg-primary hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.55),0_0_60px_rgba(var(--color-accent-cyan-rgb),0.35)]"
-            }`}
+                ? "bg-primary font-bold text-white/90 shadow-glow-primary-strong"
+                : "bg-primary/90 text-white/90 hover:bg-primary hover:shadow-glow-primary-cyan"
+             }`}
                 >
                   Register
                 </NavLink>

@@ -1,4 +1,4 @@
-import { useCategories } from "@/categories/CategoryContext";
+import { useCategories } from "@/categories/useCategories";
 import { Link } from "react-router-dom";
 
 export default function EventSidebar() {

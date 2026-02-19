@@ -6,12 +6,12 @@ const HERO_IMAGE_URL =
 export default function RegisterPage() {
   return (
     <section className="relative w-full overflow-hidden">
-      <div className="pointer-events-none absolute top-0 right-[-15%] h-105 w-105 rounded-full bg-[rgba(var(--color-primary-rgb),0.2)] blur-[150px]"></div>
-      <div className="pointer-events-none absolute bottom-[-10%] left-[-15%] h-80 w-80 rounded-full bg-[rgba(var(--color-accent-cyan-rgb),0.15)] blur-[140px]"></div>
+      <div className="pointer-events-none absolute top-0 right-[-15%] h-105 w-105 rounded-full bg-[rgba(var(--color-primary-rgb),0.18)] blur-[150px]"></div>
+      <div className="pointer-events-none absolute bottom-[-10%] left-[-15%] h-80 w-80 rounded-full bg-[rgba(var(--color-accent-cyan-rgb),0.12)] blur-[140px]"></div>
 
-      <div className="relative z-10 w-full overflow-hidden rounded-[2.5rem] border border-white/10 bg-[rgba(var(--color-surface-ink-rgb),0.8)] backdrop-blur-xl shadow-[0_40px_120px_rgba(var(--color-background-rgb),0.55)]">
+      <div className="shadow-auth-shell-lg relative z-10 w-full overflow-hidden rounded-[2.5rem] border border-border-strong bg-[rgba(var(--color-surface-ink-rgb),0.8)] backdrop-blur-xl">
         <div className="flex min-h-180 flex-col lg:flex-row">
-          <aside className="relative hidden w-full overflow-hidden border-b border-white/10 bg-surface-dark lg:flex lg:w-1/2">
+          <aside className="relative hidden w-full overflow-hidden border-b border-border-strong bg-surface-dark lg:flex lg:w-1/2">
             <div
               className="absolute inset-0 opacity-60 mix-blend-overlay"
               style={{
@@ -31,14 +31,14 @@ export default function RegisterPage() {
                     auto_awesome
                   </span>
                 </div>
-                <h2 className="font-display text-4xl font-bold leading-tight drop-shadow-[0_0_25px_rgba(var(--color-primary-rgb),0.45)]">
+                <h2 className="drop-shadow-primary-card font-display text-4xl font-bold leading-tight">
                   One account.
                   <br />
                   <span className="bg-linear-to-r from-primary to-accent-cyan bg-clip-text text-transparent">
                     Multiple roles.
                   </span>
                 </h2>
-                <p className="mt-4 max-w-md text-lg text-slate-300">
+                <p className="mt-4 max-w-md text-lg text-text-soft">
                   Access events, organize your own, and manage everything in one
                   place.
                 </p>

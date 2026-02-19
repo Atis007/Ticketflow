@@ -1,29 +1,56 @@
-import { createContext, useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { fetchCategories } from "./category.api";
+import { CategoryContext } from "./categoryContext.shared";
 
-const CategoryContext = createContext(null);
+let categoriesCache = null;
+let categoriesRequestPromise = null;
+
+function sortCategories(data) {
+  return [...data].sort((a, b) => {
+    if (a.slug === "other") return 1;
+    if (b.slug === "other") return -1;
+    return a.name.localeCompare(b.name);
+  });
+}
 
 export function CategoryProvider({ children }) {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(() => categoriesCache ?? []);
+  const [loading, setLoading] = useState(() => categoriesCache === null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchCategories()
+    let isMounted = true;
+
+    if (categoriesCache !== null) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    if (categoriesRequestPromise === null) {
+      categoriesRequestPromise = fetchCategories().then(sortCategories);
+    }
+
+    categoriesRequestPromise
       .then((data) => {
+        if (!isMounted) return;
+        categoriesCache = data;
+        setCategories(data);
         setError(null);
-        const sorted = [...data].sort((a, b) => {
-          if (a.slug === "other") return 1;
-          if (b.slug === "other") return -1;
-          return a.name.localeCompare(b.name);
-        });
-        setCategories(sorted);
       })
       .catch((error) => {
+        if (!isMounted) return;
         setCategories([]);
         setError("Failed to load categories: " + error.message);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!isMounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -31,13 +58,4 @@ export function CategoryProvider({ children }) {
       {children}
     </CategoryContext.Provider>
   );
-}
-
-export function useCategories() {
-  const context = useContext(CategoryContext);
-  if (!context) {
-    throw new Error("useCategories must be used within a CategoryProvider");
-  }
-
-  return context;
 }
