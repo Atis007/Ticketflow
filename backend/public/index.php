@@ -46,14 +46,15 @@ $router->post("/api/auth/user/register", [$user, "registerUser"]);
 $router->post("/api/auth/forgot-password", [$user, "forgotPassword"]);
 $router->post("/api/auth/reset-password", [$user, "resetPassword"]);
 $router->post("/api/auth/logout", [$user, "logout"]);
+$router->get("/api/auth/me", [$user, "currentUser"], [AuthMiddleware::auth()]);
 $router->post("/api/auth/verify-email/send", [$verification, "sendVerification"]);
 $router->post("/api/auth/verify-email/resend", [$verification, "resendVerification"]);
 $router->post("/api/auth/verify-email/confirm", [$verification, "confirmVerification"]);
 
 // Public category route, no authentication required
 $router->get("/api/categories", [$category, "index"]);
-$router->get('/api/events/{subcategory_slug}', [$event, 'indexBySubcategory']);
-$router->get('/api/events/{subcategory_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug'], [AuthMiddleware::verified()]);
+$router->get('/api/events/{category_slug}', [$event, 'indexBySubcategory']);
+$router->get('/api/events/{category_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug']);
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
 $router->resource("/api/admin/users", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 $router->patch('/api/admin/users/{id}/disable', [$admin, 'disableUser'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);

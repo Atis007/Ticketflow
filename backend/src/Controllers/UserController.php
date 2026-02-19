@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Core\Logger;
 use App\Core\Request;
 use App\Helpers\Json;
+use App\Middleware\AuthMiddleware;
 use App\Models\UserRole;
 use App\Services\AuthSessionService;
 use App\Services\PasswordResetService;
@@ -162,6 +163,54 @@ final class UserController
             ]);
         } catch (Exception $e) {
             Logger::error('Database error in logout: ' . $e->getMessage());
+            Json::error('Internal server error', 500);
+        }
+    }
+
+    /**
+     * Returns the currently authenticated user profile from bearer token session.
+     */
+    public function currentUser(Request $request, array $params = []): void
+    {
+        $payload = AuthMiddleware::authenticatedPayload($request);
+        $userId = (int) ($payload['id'] ?? 0);
+
+        if ($userId <= 0) {
+            Json::error('Unauthorized', 401);
+        }
+
+        try {
+            $pdo = Database::getConnection();
+            $stmt = $pdo->prepare(
+                'SELECT id, email, fullname, role, is_active, is_disabled
+                 FROM users
+                 WHERE id = :id
+                 LIMIT 1'
+            );
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!is_array($user)) {
+                Json::error('Unauthorized', 401);
+            }
+
+            $role = UserRole::tryFrom((string) ($user['role'] ?? ''));
+            if ($role === null) {
+                Json::error('Unauthorized', 401);
+            }
+
+            Json::success([
+                'user' => [
+                    'id' => (int) $user['id'],
+                    'email' => (string) $user['email'],
+                    'fullName' => (string) $user['fullname'],
+                    'role' => $role->value,
+                    'isVerified' => (bool) ($user['is_active'] ?? false),
+                    'isDisabled' => (bool) ($user['is_disabled'] ?? false),
+                ],
+            ]);
+        } catch (Exception $e) {
+            Logger::error('Current user fetch failed: ' . $e->getMessage());
             Json::error('Internal server error', 500);
         }
     }

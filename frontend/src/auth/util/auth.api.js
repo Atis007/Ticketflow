@@ -1,6 +1,11 @@
-import { redirect } from "react-router-dom";
-
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+function endpoint(path) {
+  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+
+  return `${normalizedBase}${normalizedPath}`;
+}
 
 async function handleResponse(response) {
   if (!response.ok) {
@@ -11,7 +16,7 @@ async function handleResponse(response) {
 }
 
 export async function login(payload) {
-  const response = await fetch(`${baseUrl}auth/user/login`, {
+  const response = await fetch(endpoint("auth/user/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -23,7 +28,7 @@ export async function login(payload) {
 }
 
 export async function register(payload) {
-  const response = await fetch(`${baseUrl}auth/user/register`, {
+  const response = await fetch(endpoint("auth/user/register"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -34,7 +39,7 @@ export async function register(payload) {
 }
 
 export async function loginAdmin(payload) {
-  const response = await fetch(`${baseUrl}auth/admin/login`, {
+  const response = await fetch(endpoint("auth/admin/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -46,7 +51,7 @@ export async function loginAdmin(payload) {
 }
 
 export async function forgotPassword(email) {
-  const response = await fetch(`${baseUrl}auth/user/forgot-password`, {
+  const response = await fetch(endpoint("auth/forgot-password"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -60,44 +65,25 @@ export async function forgotPassword(email) {
   }
 }
 
-export function getTokenDuration() {
-  const storedExpiration = localStorage.getItem("expiration");
-  const expirationDate = new Date(storedExpiration);
-  const now = new Date();
-  const duration = expirationDate.getTime() - now.getTime(); //getting the difference in milliseconds
-  // if duration is negative, or maybe 0 the token has expired, so we can remove it from local storage,
-  // and the user will be logged out
-  return duration;
+export async function logout(token) {
+  const response = await fetch(endpoint("auth/logout"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  return handleResponse(response);
 }
 
-export function getAuthToken() {
-  const token = localStorage.getItem("token");
+export async function currentUser(token) {
+  const response = await fetch(endpoint("auth/me"), {
+    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
 
-  // no token, user not logged in, return null
-  if (!token) {
-    return null;
-  }
-
-  const tokenDuration = getTokenDuration();
-
-  // had a token, but time is up
-  if (tokenDuration <= 0) {
-    return "EXPIRED";
-  }
-
-  return token;
-}
-
-export function tokenLoader() {
-  return getAuthToken();
-}
-
-export function checkAuthLoader() {
-  const token = getAuthToken();
-
-  if (!token) {
-    return redirect("/login"); //user not logged in-> redirect to auth page
-  }
-
-  return null; //user logged in-> allow access to the route
+  return handleResponse(response);
 }

@@ -56,6 +56,7 @@ final class AdminEventController
         }
 
         $whereSql = $where === [] ? '' : 'WHERE ' . implode(' AND ', $where);
+        $timezone = $this->appTimezone();
 
         try {
             $countStmt = $pdo->prepare(
@@ -76,7 +77,7 @@ final class AdminEventController
                         e.is_free,
                         e.price,
                         e.created_by,
-                        TO_CHAR(e.starts_at, 'YYYY.MM.DD HH24:MI:SS') AS starts_at,
+                        TO_CHAR(timezone(:tz, e.starts_at), 'YYYY-MM-DD HH24:MI:SS') AS starts_at,
                         c.name AS category_name,
                         s.name AS subcategory_name,
                         u.fullname AS owner_name
@@ -89,6 +90,7 @@ final class AdminEventController
                     LIMIT :limit OFFSET :offset";
 
             $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':tz', $timezone, PDO::PARAM_STR);
             foreach ($bind as $k => $v) {
                 $type = is_bool($v) ? PDO::PARAM_BOOL : (is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
                 $stmt->bindValue($k, $v, $type);
@@ -169,5 +171,13 @@ final class AdminEventController
         $offset = ($page - 1) * $pageSize;
 
         return [$page, $pageSize, $offset];
+    }
+
+    private function appTimezone(): string
+    {
+        $value = (string) ($_ENV['TIMEZONE'] ?? 'UTC');
+        $sanitized = preg_replace('/[^A-Za-z0-9_\/+\-]/', '', $value) ?? 'UTC';
+
+        return $sanitized !== '' ? $sanitized : 'UTC';
     }
 }

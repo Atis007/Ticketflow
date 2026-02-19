@@ -14,13 +14,13 @@ use PDO;
 final class EventController
 {
     /**
-     * Lists active events for a subcategory slug.
+     * Lists active events for a category or subcategory slug.
      */
     public function indexBySubcategory(Request $request, array $params = []): void
     {
-        $subcategorySlug = trim((string) ($params['subcategory_slug'] ?? ''));
-        if ($subcategorySlug === '') {
-            Json::error('Subcategory slug is required', 400);
+        $scopeSlug = trim((string) (($params['category_slug'] ?? $params['subcategory_slug']) ?? ''));
+        if ($scopeSlug === '') {
+            Json::error('Category slug is required', 400);
         }
 
         try {
@@ -42,34 +42,34 @@ final class EventController
                  FROM events e
                  INNER JOIN subcategories s ON s.id = e.subcategory_id
                  INNER JOIN categories c ON c.id = e.category_id
-                 WHERE s.slug = :subcategory_slug
-                   AND e.is_active = TRUE
+                 WHERE (c.slug = :scope_slug OR s.slug = :scope_slug)
+                    AND e.is_active = TRUE
                  ORDER BY e.starts_at ASC"
             );
 
-            $stmt->execute([':subcategory_slug' => $subcategorySlug]);
+            $stmt->execute([':scope_slug' => $scopeSlug]);
             $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             Json::success([
-                'subcategorySlug' => $subcategorySlug,
+                'scopeSlug' => $scopeSlug,
                 'events' => $events,
             ]);
         } catch (Exception $e) {
-            Logger::error('Failed to list events by subcategory: ' . $e->getMessage());
+            Logger::error('Failed to list events by scope slug: ' . $e->getMessage());
             Json::error('Internal server error', 500);
         }
     }
 
     /**
-     * Returns event detail by subcategory slug and event slug.
+     * Returns event detail by category/subcategory slug and event slug.
      */
     public function showBySubcategoryAndSlug(Request $request, array $params = []): void
     {
-        $subcategorySlug = trim((string) ($params['subcategory_slug'] ?? ''));
+        $scopeSlug = trim((string) (($params['category_slug'] ?? $params['subcategory_slug']) ?? ''));
         $eventSlug = trim((string) ($params['event_slug'] ?? ''));
 
-        if ($subcategorySlug === '' || $eventSlug === '') {
-            Json::error('Subcategory slug and event slug are required', 400);
+        if ($scopeSlug === '' || $eventSlug === '') {
+            Json::error('Category slug and event slug are required', 400);
         }
 
         try {
@@ -100,14 +100,14 @@ final class EventController
                  FROM events e
                  INNER JOIN subcategories s ON s.id = e.subcategory_id
                  INNER JOIN categories c ON c.id = e.category_id
-                 WHERE s.slug = :subcategory_slug
-                   AND e.slug = :event_slug
-                   AND e.is_active = TRUE
+                 WHERE (c.slug = :scope_slug OR s.slug = :scope_slug)
+                    AND e.slug = :event_slug
+                    AND e.is_active = TRUE
                  LIMIT 1"
             );
 
             $stmt->execute([
-                ':subcategory_slug' => $subcategorySlug,
+                ':scope_slug' => $scopeSlug,
                 ':event_slug' => $eventSlug,
             ]);
 
@@ -118,7 +118,7 @@ final class EventController
 
             Json::success(['event' => $event]);
         } catch (Exception $e) {
-            Logger::error('Failed to fetch event detail by slug: ' . $e->getMessage());
+            Logger::error('Failed to fetch event detail by scope/event slug: ' . $e->getMessage());
             Json::error('Internal server error', 500);
         }
     }

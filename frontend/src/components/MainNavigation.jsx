@@ -1,24 +1,18 @@
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../auth/context/AuthContext";
 
 import SidebarMenu from "@/components/SidebarMenu";
 
 function MainNavigation() {
-  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
 
   function toggleExpand() {
     setIsExpanded(!isExpanded);
-  }
-
-  function logoutHandler() {
-    logout();
-    navigate("/");
   }
 
   return (
@@ -82,12 +76,15 @@ function MainNavigation() {
                   </span>
                 </button>
 
-                <button
-                  onClick={logoutHandler}
-                  className="cursor-pointer hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all border-white/20 text-gray-300 hover:border-primary hover:border-opacity-50 hover:text-primary hover:bg-white/5"
+                <NavLink
+                  to={isAdmin ? "/admin/dashboard" : "/profile"}
+                  className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-all hover:border-primary hover:text-primary hover:bg-white/5"
+                  aria-label={isAdmin ? "Go to admin dashboard" : "Go to profile"}
                 >
-                  Logout
-                </button>
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    account_circle
+                  </span>
+                </NavLink>
               </>
             )}
 

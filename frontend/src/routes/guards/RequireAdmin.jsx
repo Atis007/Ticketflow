@@ -4,9 +4,18 @@ import { useAuth } from "@/auth/context/AuthContext";
 const ADMIN_ROLE = "admin";
 
 export default function RequireAdmin({ children }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthLoading, isAuthenticated, isAdmin, user } = useAuth();
 
-  if (!isAuthenticated || user?.role !== ADMIN_ROLE) {
+  if (isAuthLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/admin-login" replace />;
+  }
+
+  const normalizedRole = typeof user?.role === "string" ? user.role.toLowerCase() : "";
+  if (!isAdmin && normalizedRole !== ADMIN_ROLE) {
     return <Navigate to="/" replace />;
   }
 

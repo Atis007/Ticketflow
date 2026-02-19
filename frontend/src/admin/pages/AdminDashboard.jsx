@@ -1,5 +1,3 @@
-export default function AdminDashboard() {
-  return (
-    <div>AdminDashboard</div>
-  )
-}
+import DashboardPage from "./DashboardPage";
+
+export default DashboardPage;

@@ -7,9 +7,6 @@ function withTrailingSlash(url = "") {
 export async function fetchCategories() {
   const res = await fetch(`${withTrailingSlash(baseUrl)}categories`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
   });
 
   if (!res.ok) {

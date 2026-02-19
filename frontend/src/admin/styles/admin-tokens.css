@@ -1,0 +1,208 @@
+/* ===================================
+   TICKETFLOW ADMIN DESIGN TOKENS
+   Enterprise-grade admin interface
+   =================================== */
+
+@theme {
+  --admin-bg-base: #0a0e1a;
+  --admin-bg-elevated: #0f1320;
+  --admin-bg-sidebar: #070b14;
+  --admin-bg-card: #141821;
+  --admin-bg-card-hover: #181c28;
+
+  --admin-surface-input: #1a1f2e;
+  --admin-surface-input-focus: #1f2533;
+  --admin-surface-table-header: #0d1117;
+  --admin-surface-table-row-hover: #151a24;
+  --admin-surface-selected: rgba(124, 59, 237, 0.08);
+
+  --admin-text-primary: #f8fafc;
+  --admin-text-secondary: #cbd5e1;
+  --admin-text-muted: #94a3b8;
+  --admin-text-disabled: #64748b;
+
+  --admin-border: #1e293b;
+  --admin-border-subtle: #172033;
+  --admin-border-focus: #7c3aed;
+  --admin-divider: #1a2332;
+
+  --admin-interactive-primary: #7c3aed;
+  --admin-interactive-primary-hover: #6d28d9;
+  --admin-interactive-primary-active: #5b21b6;
+  --admin-interactive-secondary: #22d3ee;
+  --admin-interactive-secondary-hover: #06b6d4;
+
+  --admin-status-success: #10b981;
+  --admin-status-success-bg: rgba(16, 185, 129, 0.1);
+  --admin-status-success-border: rgba(16, 185, 129, 0.2);
+
+  --admin-status-warning: #f59e0b;
+  --admin-status-warning-bg: rgba(245, 158, 11, 0.1);
+  --admin-status-warning-border: rgba(245, 158, 11, 0.2);
+
+  --admin-status-error: #ef4444;
+  --admin-status-error-bg: rgba(239, 68, 68, 0.1);
+  --admin-status-error-border: rgba(239, 68, 68, 0.2);
+
+  --admin-status-info: #3b82f6;
+  --admin-status-info-bg: rgba(59, 130, 246, 0.1);
+  --admin-status-info-border: rgba(59, 130, 246, 0.2);
+
+  --admin-status-neutral: #6b7280;
+  --admin-status-neutral-bg: rgba(107, 114, 128, 0.1);
+  --admin-status-neutral-border: rgba(107, 114, 128, 0.2);
+
+  --admin-font-display: "Unbounded", sans-serif;
+  --admin-font-body: "Spline Sans", "Outfit", sans-serif;
+
+  --admin-text-display: 1.875rem;
+  --admin-text-title: 1.5rem;
+  --admin-text-heading: 1.25rem;
+  --admin-text-subheading: 1.125rem;
+  --admin-text-body: 0.9375rem;
+  --admin-text-small: 0.875rem;
+  --admin-text-caption: 0.8125rem;
+  --admin-text-micro: 0.75rem;
+
+  --admin-weight-normal: 400;
+  --admin-weight-medium: 500;
+  --admin-weight-semibold: 600;
+  --admin-weight-bold: 700;
+
+  --admin-leading-tight: 1.25;
+  --admin-leading-normal: 1.5;
+  --admin-leading-relaxed: 1.75;
+
+  --admin-space-1: 0.25rem;
+  --admin-space-2: 0.5rem;
+  --admin-space-3: 0.75rem;
+  --admin-space-4: 1rem;
+  --admin-space-5: 1.25rem;
+  --admin-space-6: 1.5rem;
+  --admin-space-8: 2rem;
+  --admin-space-10: 2.5rem;
+  --admin-space-12: 3rem;
+  --admin-space-16: 4rem;
+
+  --admin-radius-sm: 0.375rem;
+  --admin-radius-md: 0.5rem;
+  --admin-radius-lg: 0.75rem;
+  --admin-radius-xl: 1rem;
+  --admin-radius-full: 9999px;
+
+  --admin-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --admin-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --admin-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
+  --admin-glow-primary: 0 0 20px rgba(124, 59, 237, 0.15);
+  --admin-glow-secondary: 0 0 20px rgba(34, 211, 238, 0.15);
+  --admin-glow-focus: 0 0 0 3px rgba(124, 59, 237, 0.12);
+
+  --admin-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  --admin-z-base: 0;
+  --admin-z-sidebar: 100;
+  --admin-z-sticky: 200;
+  --admin-z-dropdown: 300;
+  --admin-z-modal-backdrop: 400;
+  --admin-z-modal: 500;
+  --admin-z-toast: 600;
+
+  --admin-sidebar-width: 280px;
+  --admin-sidebar-collapsed-width: 72px;
+  --admin-header-height: 64px;
+  --admin-content-max-width: 1600px;
+
+  --admin-table-row-height: 52px;
+  --admin-table-row-height-compact: 44px;
+  --admin-table-header-height: 48px;
+}
+
+@layer utilities {
+  .admin-card-elevated {
+    background: var(--admin-bg-card);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-sm);
+  }
+
+  .admin-card-elevated:hover {
+    background: var(--admin-bg-card-hover);
+    border-color: var(--admin-border-focus);
+  }
+
+  .admin-focus-ring {
+    outline: none;
+    transition: box-shadow var(--admin-transition-fast);
+  }
+
+  .admin-focus-ring:focus-visible {
+    box-shadow: var(--admin-glow-focus);
+    border-color: var(--admin-border-focus);
+  }
+
+  .admin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(124, 59, 237, 0.3) transparent;
+  }
+
+  .admin-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .admin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .admin-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(124, 59, 237, 0.3);
+    border-radius: var(--admin-radius-full);
+  }
+
+  .admin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 59, 237, 0.5);
+  }
+
+  .admin-table-cell-truncate {
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--admin-bg-card) 0%,
+      var(--admin-surface-input) 50%,
+      var(--admin-bg-card) 100%
+    );
+    background-size: 200% 100%;
+    animation: admin-skeleton-wave 1.5s ease-in-out infinite;
+  }
+
+  @keyframes admin-skeleton-wave {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-skeleton {
+      animation: none;
+    }
+
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

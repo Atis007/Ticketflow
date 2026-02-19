@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import AuthFields from "./AuthFields";
 import AuthSocial from "./AuthSocial";
 import AuthFooter from "./AuthFooter";
+import AsyncState from "@/components/AsyncState";
 
 import {
   validateLogin,
@@ -14,6 +15,7 @@ import {
 
 export default function AuthForm({ mode, ...props }) {
   const [errorMessage, setErrorMessage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isAdmin = mode === "admin-login";
 
   const navigate = useNavigate();
@@ -46,6 +48,7 @@ export default function AuthForm({ mode, ...props }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage(null);
+    setIsSubmitting(true);
 
     const formData = new FormData(event.target);
     const credentials = Object.fromEntries(formData.entries());
@@ -55,12 +58,14 @@ export default function AuthForm({ mode, ...props }) {
 
     if (msg) {
       setErrorMessage(msg);
+      setIsSubmitting(false);
       return;
     }
 
     const action = actions[mode];
     if (!action) {
       setErrorMessage("Invalid action.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -69,6 +74,7 @@ export default function AuthForm({ mode, ...props }) {
       try {
         await action(credentials.email);
       } finally {
+        setIsSubmitting(false);
         navigate("/login?reset=sent");
       }
       return;
@@ -88,8 +94,10 @@ export default function AuthForm({ mode, ...props }) {
       } else {
         setErrorMessage(response?.error ?? "Authentication failed.");
       }
-    } catch (error) {
+    } catch {
       setErrorMessage("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -112,15 +120,12 @@ export default function AuthForm({ mode, ...props }) {
         onSubmit={handleSubmit}
         className="flex flex-col gap-4"
       >
-        {errorMessage !== null && (
-          <div className="mb-4 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-danger-soft">
-            {errorMessage}
-          </div>
-        )}
+        {errorMessage !== null ? <AsyncState type="error" message={errorMessage} className="mb-4" /> : null}
         <AuthFields mode={mode} {...props} />
 
         <button
           type="submit"
+          disabled={isSubmitting}
           className={`group mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg text-white font-semibold transition-all duration-300 ease-out active:translate-y-0 ${submitToneClass}`}
         >
           {mode === "login" && (
@@ -151,6 +156,10 @@ export default function AuthForm({ mode, ...props }) {
               Reset Password
             </span>
           )}
+
+          {isSubmitting ? (
+            <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+          ) : null}
         </button>
 
         {mode !== "admin-login" && mode !== "forgot-password" && (

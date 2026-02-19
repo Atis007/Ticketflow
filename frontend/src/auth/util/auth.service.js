@@ -1,4 +1,4 @@
-import * as authApi from "../util/auth.api.js";
+import * as authApi from "./auth.api.js";
 
 export async function loginService(credentials) {
   return authApi.login(credentials);
@@ -11,4 +11,12 @@ export async function loginAdminService(credentials) {
 }
 export async function forgotPasswordService(email) {
   return authApi.forgotPassword(email);
+}
+
+export async function logoutService(token) {
+  return authApi.logout(token);
+}
+
+export async function currentUserService(token) {
+  return authApi.currentUser(token);
 }
