@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Core\ErrorHandler;
 use Dotenv\Dotenv;
+use App\Config\AppConfig;
 
 use App\Core\Logger;
 
@@ -23,10 +24,7 @@ if (!empty($_ENV['TIMEZONE'])) {
 }
 
 // Load configuration file if it exists
-$configPath = APP_ROOT . '/config/config.php';
-if (file_exists($configPath)) {
-    $config = require_once $configPath;
-}
+AppConfig::load();
 
 // Disable error display in production
 ini_set('display_errors', '0');

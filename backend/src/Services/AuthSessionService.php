@@ -30,7 +30,8 @@ final class AuthSessionService
 
         $stmt = $pdo->prepare(
             'INSERT INTO auth_sessions (user_id, token_hash, expires_at, user_agent, ip, platform, device_name, last_used_at)
-             VALUES (:user_id, :token_hash, :expires_at, :user_agent, :ip, :platform, :device_name, NOW())'
+             VALUES (:user_id, :token_hash, :expires_at, :user_agent, :ip, :platform, :device_name, NOW())
+             RETURNING id'
         );
 
         $stmt->execute([
@@ -43,7 +44,10 @@ final class AuthSessionService
             ':device_name' => $this->trimOrNull($deviceName),
         ]);
 
+        $sessionId = (int) $stmt->fetchColumn();
+
         return [
+            'session_id' => $sessionId,
             'token' => $token,
             'expires_at' => $expiresAt,
         ];

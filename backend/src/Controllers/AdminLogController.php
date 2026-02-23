@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Core\Logger;
 use App\Core\Request;
 use App\Helpers\Json;
+use DateTimeImmutable;
 use Exception;
 use PDO;
 
@@ -19,13 +20,20 @@ final class AdminLogController
     public function deviceLogs(Request $request, array $params = []): void
     {
         $this->listByQuery(
-            "SELECT dl.id, dl.user_id, u.email, dl.user_agent, dl.ip, dl.action,
+            "SELECT dl.id, dl.user_id, u.email, dl.user_agent, dl.ip, dl.action, dl.platform, dl.device_type, dl.outcome,
                     TO_CHAR(timezone(:tz, dl.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at
              FROM device_logs dl
              LEFT JOIN users u ON u.id = dl.user_id",
             'created_at',
-            ['email', 'user_agent', 'ip', 'action', 'created_at'],
-            $request
+            ['email', 'user_agent', 'ip', 'action', 'platform', 'device_type', 'outcome', 'created_at'],
+            $request,
+            [
+                'action' => 'action',
+                'ip' => 'ip',
+                'device_type' => 'device_type',
+                'platform' => 'platform',
+                'outcome' => 'outcome',
+            ]
         );
     }
 
@@ -41,7 +49,11 @@ final class AdminLogController
              LEFT JOIN users u ON u.id = al.admin_id",
             'created_at',
             ['admin_email', 'action', 'entity_type', 'entity_id', 'created_at'],
-            $request
+            $request,
+            [
+                'action' => 'action',
+                'outcome' => 'metadata->>\'outcome\'',
+            ]
         );
     }
 
@@ -59,14 +71,23 @@ final class AdminLogController
              LEFT JOIN users u ON u.id = ec.changed_by",
             'changed_at',
             ['event_title', 'changed_by_email', 'field', 'old_value', 'new_value', 'changed_at'],
-            $request
+            $request,
+            [
+                'field' => 'field',
+            ]
         );
     }
 
     /**
      * Performs paginated log listing for a base query.
      */
-    private function listByQuery(string $baseSql, string $defaultOrderField, array $searchColumns, Request $request): void
+    private function listByQuery(
+        string $baseSql,
+        string $defaultOrderField,
+        array $searchColumns,
+        Request $request,
+        array $exactFilters = []
+    ): void
     {
         $pdo = Database::getConnection();
         $page = max(1, (int) ($request->query['page'] ?? 1));
@@ -79,7 +100,7 @@ final class AdminLogController
             $safeOrderField = 'created_at';
         }
 
-        $whereSql = '';
+        $whereParts = [];
         $bind = [];
         if ($search !== '' && $searchColumns !== []) {
             $conditions = [];
@@ -93,10 +114,47 @@ final class AdminLogController
             }
 
             if ($conditions !== []) {
-                $whereSql = ' WHERE ' . implode(' OR ', $conditions);
+                $whereParts[] = '(' . implode(' OR ', $conditions) . ')';
                 $bind[':search'] = '%' . $search . '%';
             }
         }
+
+        foreach ($exactFilters as $queryKey => $columnExpression) {
+            $raw = trim((string) ($request->query[$queryKey] ?? ''));
+            if ($raw === '') {
+                continue;
+            }
+
+            $safeQueryKey = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $queryKey) ?? '';
+            if ($safeQueryKey === '') {
+                continue;
+            }
+
+            if (preg_match('/^[a-zA-Z0-9_]+$/', (string) $columnExpression) !== 1 &&
+                !str_contains((string) $columnExpression, 'metadata->>')) {
+                continue;
+            }
+
+            $paramName = ':f_' . $safeQueryKey;
+            $whereParts[] = "t.{$columnExpression}::text = {$paramName}";
+            $bind[$paramName] = $raw;
+        }
+
+        $dateFrom = trim((string) ($request->query['dateFrom'] ?? ''));
+        if ($dateFrom !== '') {
+            $normalizedFrom = $this->normalizeDateInput($dateFrom, 'dateFrom');
+            $whereParts[] = "t.{$safeOrderField}::timestamp >= :date_from";
+            $bind[':date_from'] = $normalizedFrom;
+        }
+
+        $dateTo = trim((string) ($request->query['dateTo'] ?? ''));
+        if ($dateTo !== '') {
+            $normalizedTo = $this->normalizeDateInput($dateTo, 'dateTo');
+            $whereParts[] = "t.{$safeOrderField}::timestamp <= :date_to";
+            $bind[':date_to'] = $normalizedTo;
+        }
+
+        $whereSql = $whereParts === [] ? '' : ' WHERE ' . implode(' AND ', $whereParts);
 
         try {
             $countStmt = $pdo->prepare('SELECT COUNT(*) FROM (' . $baseSql . ') t' . $whereSql);
@@ -139,5 +197,14 @@ final class AdminLogController
         $sanitized = preg_replace('/[^A-Za-z0-9_\/+\-]/', '', $value) ?? 'UTC';
 
         return $sanitized !== '' ? $sanitized : 'UTC';
+    }
+
+    private function normalizeDateInput(string $value, string $field): string
+    {
+        try {
+            return (new DateTimeImmutable($value))->format('Y-m-d H:i:s');
+        } catch (Exception) {
+            Json::error('Invalid ' . $field . ' datetime format', 400);
+        }
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Config\AppConfig;
 use App\Core\Logger;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -106,17 +107,7 @@ final class MailService
             return self::$config;
         }
 
-        if (!defined('APP_ROOT')) {
-            throw new RuntimeException('APP_ROOT is not defined');
-        }
-
-        $configPath = APP_ROOT . '/config/config.php';
-        if (!file_exists($configPath)) {
-            throw new RuntimeException('Configuration file not found');
-        }
-
-        $loaded = require $configPath;
-        self::$config = is_array($loaded) ? $loaded : [];
+        self::$config = AppConfig::all();
 
         return self::$config;
     }
