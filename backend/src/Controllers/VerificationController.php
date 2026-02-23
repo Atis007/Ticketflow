@@ -9,6 +9,7 @@ use App\Core\Logger;
 use App\Core\Request;
 use App\Helpers\Json;
 use App\Services\AuthSessionService;
+use App\Services\ClientIpResolver;
 use App\Services\VerificationService;
 use Exception;
 
@@ -73,7 +74,8 @@ final class VerificationController
                 $pdo,
                 $token,
                 $request->header('user-agent'),
-                $_SERVER['REMOTE_ADDR'] ?? null
+                (new ClientIpResolver())->resolve($request),
+                $request
             );
 
             Json::success([

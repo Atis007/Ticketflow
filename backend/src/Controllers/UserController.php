@@ -7,10 +7,13 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Core\Logger;
 use App\Core\Request;
+use App\Core\RequestContext;
 use App\Helpers\Json;
 use App\Middleware\AuthMiddleware;
 use App\Models\UserRole;
 use App\Services\AuthSessionService;
+use App\Services\ClientIpResolver;
+use App\Services\DeviceLogService;
 use App\Services\PasswordResetService;
 use App\Services\SecurityService;
 use App\Services\VerificationService;
@@ -26,6 +29,7 @@ final class UserController
     public function registerUser(Request $request, array $params = []): void
     {
         $pdo = Database::getConnection();
+        $deviceLogService = new DeviceLogService();
 
         $data = $request->jsonBody();
 
@@ -63,6 +67,8 @@ final class UserController
                 Logger::error('Verification email send failed after registration: ' . $mailException->getMessage());
             }
 
+            $deviceLogService->logAuthEvent($pdo, $request, 'auth.user.register.success', 'success', $userId, null);
+
             Json::success([
                 "message" => "Registration successful. Please verify your email.",
                 "userId" => $userId,
@@ -85,9 +91,12 @@ final class UserController
         $validator = new UserValidator();
         [$email, $password] = $validator->validateLogin($data);
 
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $ipResolver = new ClientIpResolver();
+        $ip = $ipResolver->resolve($request) ?? '127.0.0.1';
+        $deviceLogService = new DeviceLogService();
         $security = new SecurityService();
         if ($security->isIpBlocked($pdo, $ip)) {
+            $deviceLogService->logAuthEvent($pdo, $request, 'auth.user.login.blocked', 'blocked', null, null);
             Json::error('Too many attempts. Try again later.', 429);
         }
 
@@ -103,7 +112,8 @@ final class UserController
             $loginCredentials = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$loginCredentials || !password_verify($password, $loginCredentials['password'])) {
-                $security->trackFailedLogin($pdo, $ip, $email);
+                $security->trackFailedLogin($pdo, $ip, $email, $this->securityContext());
+                $deviceLogService->logAuthEvent($pdo, $request, 'auth.user.login.failed', 'failed', null, null);
                 Logger::warning("Invalid login attempt for email: {$email}");
                 Json::error("Invalid email or password", 401);
             }
@@ -120,9 +130,18 @@ final class UserController
                 $pdo,
                 (int) $loginCredentials['id'],
                 $request->header('user-agent'),
-                $_SERVER['REMOTE_ADDR'] ?? null,
+                $ip,
                 $request->header('x-client-platform') ?? 'web',
                 $request->header('x-device-name')
+            );
+
+            $deviceLogService->logAuthEvent(
+                $pdo,
+                $request,
+                'auth.user.login.success',
+                'success',
+                (int) $loginCredentials['id'],
+                (int) ($session['session_id'] ?? 0)
             );
 
             Json::success([
@@ -226,7 +245,7 @@ final class UserController
 
         try {
             $pdo = Database::getConnection();
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $ip = (new ClientIpResolver())->resolve($request) ?? '127.0.0.1';
             $security = new SecurityService();
 
             if ($security->isIpBlocked($pdo, $ip)) {
@@ -235,7 +254,7 @@ final class UserController
                 ]);
             }
 
-            $security->trackForgotPasswordRequest($pdo, $ip, $email);
+            $security->trackForgotPasswordRequest($pdo, $ip, $email, $this->securityContext());
 
             $service = new PasswordResetService();
             $service->requestReset($pdo, $email);
@@ -275,5 +294,26 @@ final class UserController
             Logger::error('Reset password flow failed: ' . $e->getMessage());
             Json::error('Internal server error', 500);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function securityContext(): array
+    {
+        $context = RequestContext::current();
+
+        return [
+            'request_id' => $context?->requestId,
+            'request_path' => $context?->path,
+            'request_method' => $context?->method,
+            'platform' => $context?->platform,
+            'source' => 'backend',
+            'outcome' => 'failed',
+            'app_env' => (string) ($_ENV['APP_ENV'] ?? 'unknown'),
+            'app_region' => (string) ($_ENV['APP_REGION'] ?? 'unknown'),
+            'app_version' => (string) ($_ENV['APP_VERSION'] ?? 'unknown'),
+            'app_commit_hash' => (string) ($_ENV['APP_COMMIT_HASH'] ?? 'unknown'),
+        ];
     }
 }

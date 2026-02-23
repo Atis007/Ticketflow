@@ -35,7 +35,7 @@ final class SecurityService
     /**
      * Tracks failed login attempts and creates temporary IP block on threshold.
      */
-    public function trackFailedLogin(PDO $pdo, string $ip, string $email): void
+    public function trackFailedLogin(PDO $pdo, string $ip, string $email, ?array $context = null): void
     {
         $incident = $this->upsertIncident(
             $pdo,
@@ -43,7 +43,8 @@ final class SecurityService
             'failed_login:ip:' . $ip . ':15m',
             $ip,
             $email,
-            self::FAILED_LOGIN_THRESHOLD
+            self::FAILED_LOGIN_THRESHOLD,
+            $context
         );
 
         if ((int) ($incident['attempt_count'] ?? 0) >= self::FAILED_LOGIN_THRESHOLD) {
@@ -55,7 +56,7 @@ final class SecurityService
     /**
      * Tracks forgot-password request abuse and creates temporary IP block on threshold.
      */
-    public function trackForgotPasswordRequest(PDO $pdo, string $ip, string $email): void
+    public function trackForgotPasswordRequest(PDO $pdo, string $ip, string $email, ?array $context = null): void
     {
         $incident = $this->upsertIncident(
             $pdo,
@@ -63,7 +64,8 @@ final class SecurityService
             'forgot_password_spam:ip:' . $ip . ':15m',
             $ip,
             $email,
-            self::FORGOT_PASSWORD_THRESHOLD
+            self::FORGOT_PASSWORD_THRESHOLD,
+            $context
         );
 
         if ((int) ($incident['attempt_count'] ?? 0) >= self::FORGOT_PASSWORD_THRESHOLD) {
@@ -77,8 +79,13 @@ final class SecurityService
      *
      * @return array<string, mixed>
      */
-    private function upsertIncident(PDO $pdo, string $incidentType, string $fingerprint, string $ip, string $email, int $threshold): array
+    private function upsertIncident(PDO $pdo, string $incidentType, string $fingerprint, string $ip, string $email, int $threshold, ?array $context = null): array
     {
+        $details = ['window' => '15m'];
+        if (is_array($context) && $context !== []) {
+            $details['context'] = $this->sanitizeContext($context);
+        }
+
         $stmt = $pdo->prepare(
             "INSERT INTO security_incidents (
                 incident_type, fingerprint, ip, email, threshold_count, details
@@ -87,9 +94,10 @@ final class SecurityService
              )
              ON CONFLICT (fingerprint) WHERE status = 'open'
              DO UPDATE SET
-                attempt_count = security_incidents.attempt_count + 1,
-                last_seen_at = NOW(),
-                updated_at = NOW()
+                 attempt_count = security_incidents.attempt_count + 1,
+                 last_seen_at = NOW(),
+                 details = COALESCE(security_incidents.details, '{}'::jsonb) || EXCLUDED.details,
+                 updated_at = NOW()
              RETURNING id, attempt_count"
         );
 
@@ -99,11 +107,47 @@ final class SecurityService
             ':ip' => $ip,
             ':email' => $email,
             ':threshold_count' => $threshold,
-            ':details' => json_encode(['window' => '15m'], JSON_UNESCAPED_UNICODE),
+            ':details' => json_encode($details, JSON_UNESCAPED_UNICODE),
         ]);
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return is_array($row) ? $row : [];
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    private function sanitizeContext(array $context): array
+    {
+        $allowed = [
+            'request_id',
+            'request_path',
+            'request_method',
+            'platform',
+            'source',
+            'outcome',
+            'app_env',
+            'app_region',
+            'app_version',
+            'app_commit_hash',
+            'device_log_id',
+        ];
+
+        $sanitized = [];
+        foreach ($allowed as $key) {
+            if (!array_key_exists($key, $context)) {
+                continue;
+            }
+
+            $value = $context[$key];
+            if (is_scalar($value) || $value === null) {
+                $sanitized[$key] = $value;
+            }
+        }
+
+        return $sanitized;
     }
 
     /**

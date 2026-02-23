@@ -6,6 +6,7 @@ namespace App\Services;
 
 use PDO;
 use RuntimeException;
+use App\Core\Request;
 
 final class VerificationService
 {
@@ -19,6 +20,7 @@ final class VerificationService
         private readonly MailService $mailService = new MailService(),
         private readonly EmailTemplateService $templateService = new EmailTemplateService(),
         private readonly AuthSessionService $sessionService = new AuthSessionService(),
+        private readonly DeviceLogService $deviceLogService = new DeviceLogService(),
     ) {}
 
     /**
@@ -47,7 +49,7 @@ final class VerificationService
      *
      * Marks token as used and issues a logged-in session token.
      */
-    public function confirmToken(PDO $pdo, string $token, ?string $userAgent, ?string $ip): array
+    public function confirmToken(PDO $pdo, string $token, ?string $userAgent, ?string $ip, ?Request $request = null): array
     {
         $stmt = $pdo->prepare(
             'SELECT ev.id, ev.user_id, ev.used, ev.expires_at, u.email, u.fullname, u.role, u.is_active
@@ -105,7 +107,19 @@ final class VerificationService
             'web'
         );
 
+        if ($request !== null) {
+            $this->deviceLogService->logAuthEvent(
+                $pdo,
+                $request,
+                'auth.verify_email.confirm.success',
+                'success',
+                (int) $row['user_id'],
+                (int) ($session['session_id'] ?? 0)
+            );
+        }
+
         return [
+            'session_id' => (int) ($session['session_id'] ?? 0),
             'token' => $session['token'],
             'expires_at' => $session['expires_at'],
             'user' => [

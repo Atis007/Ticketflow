@@ -71,6 +71,10 @@ final class Router
     public function run(): void
     {
         $request = Request::fromGlobals();
+        $requestContext = RequestContextFactory::fromRequest($request);
+        RequestContext::setCurrent($requestContext);
+        header('X-Request-Id: ' . $requestContext->requestId);
+
         $method = $request->method;
         $uri = $request->path;
 

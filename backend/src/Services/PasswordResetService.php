@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Config\AppConfig;
 use PDO;
 use RuntimeException;
 
@@ -172,16 +173,6 @@ final class PasswordResetService
      */
     private function config(): array
     {
-        if (!defined('APP_ROOT')) {
-            return [];
-        }
-
-        $configPath = APP_ROOT . '/config/config.php';
-        if (!file_exists($configPath)) {
-            return [];
-        }
-
-        $loaded = require $configPath;
-        return is_array($loaded) ? $loaded : [];
+        return AppConfig::all();
     }
 }
