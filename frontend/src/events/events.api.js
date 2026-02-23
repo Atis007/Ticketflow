@@ -8,12 +8,31 @@ function endpoint(path) {
 }
 
 async function handleResponse(response) {
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(text || `Request failed with ${response.status}`);
+  const raw = await response.text().catch(() => "");
+  let payload = null;
+
+  if (raw) {
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      payload = null;
+    }
   }
 
-  return response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload?.error || payload?.message || `Request failed with ${response.status}`;
+    throw new Error(message);
+  }
+
+  if (payload && payload.success === false) {
+    throw new Error(payload.error || "Request failed");
+  }
+
+  if (payload && Object.prototype.hasOwnProperty.call(payload, "data")) {
+    return payload.data;
+  }
+
+  return payload || {};
 }
 
 export async function getEventsByCategorySlug(categorySlug) {
@@ -26,6 +45,14 @@ export async function getEventsByCategorySlug(categorySlug) {
 
 export async function getEventDetailsByCategorySlug(categorySlug, eventSlug) {
   const response = await fetch(endpoint(`events/${encodeURIComponent(categorySlug)}/${encodeURIComponent(eventSlug)}`), {
+    method: "GET",
+  });
+
+  return handleResponse(response);
+}
+
+export async function getEventById(id) {
+  const response = await fetch(endpoint(`events/${encodeURIComponent(id)}`), {
     method: "GET",
   });
 

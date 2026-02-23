@@ -22,3 +22,37 @@ export function toggleEventActive({ token, id }) {
     method: "PATCH",
   });
 }
+
+export function getEventById({ token, id, signal }) {
+  return request(`events/${id}`, {
+    token,
+    signal,
+  });
+}
+
+export function createEvent({ token, payload, signal }) {
+  return request("events", {
+    token,
+    signal,
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateEventPut({ token, id, payload, signal }) {
+  return request(`events/${id}`, {
+    token,
+    signal,
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export function updateEventPatch({ token, id, payload, signal }) {
+  return request(`events/${id}`, {
+    token,
+    signal,
+    method: "PATCH",
+    body: payload,
+  });
+}
