@@ -128,26 +128,63 @@ final class Router
      */
     private function matchRoute(string $routePath, string $uri, array &$params): bool
     {
-        // Escape route path for regex, then replace parameter placeholders with capture groups
-        $escapedRoutePath = preg_quote($routePath, '#');
-        $pattern = preg_replace('#\\\{(\w+)\\\}#', '([^/]+)', $escapedRoutePath);
-        $pattern = '#^' . $pattern . '$#';
-
-        if (preg_match($pattern, $uri, $matches)) {
-
-            array_shift($matches);
-
-            preg_match_all('#\{(\w+)\}#', $routePath, $paramNames);
-            $paramNames = $paramNames[1];
-
-            foreach ($paramNames as $index => $name) {
-                $params[$name] = $matches[$index];
-            }
-
-            return true;
+        [$pattern, $paramNames] = $this->compileRoutePattern($routePath);
+        if (!preg_match($pattern, $uri, $matches)) {
+            return false;
         }
 
-        return false;
+        foreach ($paramNames as $name) {
+            if (isset($matches[$name])) {
+                $params[$name] = $matches[$name];
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Compiles a route definition to a regex pattern.
+     *
+     * Supports:
+     * - {param} default single-segment match
+     * - {param:regex} typed match with custom regex
+     *
+     * @return array{0:string,1:string[]}
+     */
+    private function compileRoutePattern(string $routePath): array
+    {
+        $pattern = '#^';
+        $paramNames = [];
+        $cursor = 0;
+
+        preg_match_all('/\{(\w+)(?::([^}]+))?\}/', $routePath, $placeholderMatches, PREG_OFFSET_CAPTURE);
+
+        $fullMatches = $placeholderMatches[0] ?? [];
+        foreach ($fullMatches as $index => $fullMatch) {
+            $placeholder = (string) $fullMatch[0];
+            $position = (int) $fullMatch[1];
+
+            $literalPart = substr($routePath, $cursor, $position - $cursor);
+            $pattern .= preg_quote($literalPart, '#');
+
+            $name = (string) ($placeholderMatches[1][$index][0] ?? '');
+            if ($name === '') {
+                $cursor = $position + strlen($placeholder);
+                continue;
+            }
+
+            $regex = (string) ($placeholderMatches[2][$index][0] ?? '');
+            $segmentPattern = $regex !== '' ? $regex : '[^/]+';
+
+            $paramNames[] = $name;
+            $pattern .= '(?P<' . $name . '>' . $segmentPattern . ')';
+            $cursor = $position + strlen($placeholder);
+        }
+
+        $pattern .= preg_quote(substr($routePath, $cursor), '#');
+        $pattern .= '$#';
+
+        return [$pattern, $paramNames];
     }
 
     /**
