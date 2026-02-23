@@ -76,7 +76,7 @@ export function useEventDetails(categorySlug, eventSlug) {
   });
 
   const event = useMemo(() => {
-    const payload = query.data?.data?.event;
+    const payload = query.data?.event;
     return adaptDetail(payload);
   }, [query.data]);
 

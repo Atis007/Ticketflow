@@ -24,7 +24,7 @@ function toCardModel(item) {
   return {
     id: item.id,
     slug: item.slug,
-    categorySlug: item.category_slug,
+    categorySlug: item.subcategory_slug || item.category_slug,
     title: item.title,
     image: item.image || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80",
     dateLabel: formatDateLabel(item.starts_at),
@@ -45,7 +45,7 @@ export function useEvents(categorySlug) {
   });
 
   const events = useMemo(() => {
-    const rows = query.data?.data?.events;
+    const rows = query.data?.events;
     if (!Array.isArray(rows)) {
       return [];
     }
