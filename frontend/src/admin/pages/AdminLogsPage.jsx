@@ -5,8 +5,10 @@ import { useAuth } from "@/auth/context/AuthContext";
 import { adminQueryKeys, getAdminLogs } from "../api";
 import { formatAdminDateTime } from "../utils/dateTime";
 import {
+  AdminButton,
   AdminInput,
   AdminPage,
+  AdminSelect,
   DataGrid,
   DataGridPagination,
   EmptyState,
@@ -24,6 +26,12 @@ export default function AdminLogsPage() {
   const setPagination = grid.setPagination;
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    action: "",
+    outcome: "",
+    dateFrom: "",
+    dateTo: "",
+  });
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -43,13 +51,40 @@ export default function AdminLogsPage() {
     return () => clearTimeout(timeoutId);
   }, [searchInput, setPagination]);
 
+  const updateFilter = (key, value) => {
+    setFilters((previous) => {
+      if (previous[key] === value) {
+        return previous;
+      }
+
+      setPagination((previousPagination) => ({ ...previousPagination, pageIndex: 0 }));
+      return { ...previous, [key]: value };
+    });
+  };
+
+  const resetFilters = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    setFilters({
+      action: "",
+      outcome: "",
+      dateFrom: "",
+      dateTo: "",
+    });
+    setPagination({ pageIndex: 0, pageSize: grid.pagination.pageSize });
+  };
+
   const queryParams = useMemo(
     () => ({
       page: grid.pagination.pageIndex + 1,
       pageSize: grid.pagination.pageSize,
       search: searchQuery || undefined,
+      action: filters.action || undefined,
+      outcome: filters.outcome || undefined,
+      dateFrom: filters.dateFrom || undefined,
+      dateTo: filters.dateTo || undefined,
     }),
-    [grid.pagination.pageIndex, grid.pagination.pageSize, searchQuery],
+    [filters.action, filters.dateFrom, filters.dateTo, filters.outcome, grid.pagination.pageIndex, grid.pagination.pageSize, searchQuery],
   );
 
   const logsQuery = useQuery({
@@ -68,6 +103,28 @@ export default function AdminLogsPage() {
   };
 
   const rows = rawItems;
+
+  const outcomeFromRow = (row) => {
+    const metadata = row?.metadata;
+    if (!metadata) {
+      return "unknown";
+    }
+
+    if (typeof metadata === "object") {
+      return metadata.outcome || "unknown";
+    }
+
+    if (typeof metadata === "string") {
+      try {
+        const parsed = JSON.parse(metadata);
+        return parsed?.outcome || "unknown";
+      } catch {
+        return "unknown";
+      }
+    }
+
+    return "unknown";
+  };
 
   const columns = useMemo(
     () => [
@@ -103,6 +160,20 @@ export default function AdminLogsPage() {
         enableSorting: false,
         meta: { align: "right" },
       },
+      {
+        id: "outcome",
+        header: "Outcome",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const value = outcomeFromRow(row.original);
+          const variant = value === "success" ? "success" : value === "failed" ? "error" : "warning";
+          return (
+            <StatusBadge variant={variant} size="sm">
+              {value}
+            </StatusBadge>
+          );
+        },
+      },
     ],
     [],
   );
@@ -119,6 +190,33 @@ export default function AdminLogsPage() {
             icon={<span className="material-symbols-outlined text-lg">search</span>}
             className="w-full lg:max-w-sm xl:max-w-md lg:flex-1"
           />
+          <AdminInput
+            placeholder="Action"
+            value={filters.action}
+            onChange={(event) => updateFilter("action", event.target.value)}
+            className="w-full sm:w-auto sm:min-w-56"
+          />
+          <AdminSelect value={filters.outcome} onChange={(event) => updateFilter("outcome", event.target.value)} className="w-full sm:w-auto sm:min-w-40">
+            <option value="">All outcomes</option>
+            <option value="success">success</option>
+            <option value="failed">failed</option>
+            <option value="blocked">blocked</option>
+          </AdminSelect>
+          <AdminInput
+            type="datetime-local"
+            value={filters.dateFrom}
+            onChange={(event) => updateFilter("dateFrom", event.target.value)}
+            className="w-full sm:w-auto sm:min-w-52"
+          />
+          <AdminInput
+            type="datetime-local"
+            value={filters.dateTo}
+            onChange={(event) => updateFilter("dateTo", event.target.value)}
+            className="w-full sm:w-auto sm:min-w-52"
+          />
+          <AdminButton variant="ghost" onClick={resetFilters} className="w-full sm:w-auto">
+            Reset
+          </AdminButton>
         </ToolbarRow>
 
         <div className="admin-card-elevated overflow-hidden">

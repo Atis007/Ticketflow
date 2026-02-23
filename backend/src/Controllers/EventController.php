@@ -15,6 +15,7 @@ use App\Services\EventChangeLogService;
 use DateTimeImmutable;
 use Exception;
 use PDO;
+use PDOException;
 
 final class EventController
 {
@@ -52,7 +53,7 @@ final class EventController
         }
 
         if ($monthFilter !== '') {
-            $monthStart = DateTimeImmutable::createFromFormat('Y-m', $monthFilter);
+            $monthStart = DateTimeImmutable::createFromFormat('!Y-m-d', $monthFilter . '-01');
             if (!$monthStart instanceof DateTimeImmutable) {
                 Json::error('Invalid month format. Use YYYY-MM.', 400);
             }
@@ -126,7 +127,7 @@ final class EventController
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
 
-            Json::success([
+            $payload = [
                 'items' => $stmt->fetchAll(PDO::FETCH_ASSOC),
                 'pagination' => [
                     'page' => $page,
@@ -134,7 +135,10 @@ final class EventController
                     'total' => $total,
                     'totalPages' => $pageSize > 0 ? (int) ceil($total / $pageSize) : 1,
                 ],
-            ]);
+            ];
+
+            $this->respondNotModifiedIfEtagMatches($request, $payload);
+            Json::success($payload);
         } catch (Exception $e) {
             Logger::error('Failed to list events: ' . $e->getMessage());
             Json::error('Internal server error', 500);
@@ -297,6 +301,8 @@ final class EventController
                 'id' => $eventId,
                 'message' => 'Event created successfully',
             ], 201);
+        } catch (PDOException $e) {
+            $this->handleEventWritePdoException($e);
         } catch (Exception $e) {
             Logger::error('Failed to create event: ' . $e->getMessage());
             Json::error('Internal server error', 500);
@@ -551,6 +557,8 @@ final class EventController
                 'id' => $id,
                 'message' => 'Event updated successfully',
             ]);
+        } catch (PDOException $e) {
+            $this->handleEventWritePdoException($e);
         } catch (Exception $e) {
             Logger::error('Failed to update event: ' . $e->getMessage());
             Json::error('Internal server error', 500);
@@ -854,5 +862,51 @@ final class EventController
         }
 
         return trim((string) $value);
+    }
+
+    private function handleEventWritePdoException(PDOException $e): void
+    {
+        $sqlState = (string) $e->getCode();
+        $message = $e->getMessage();
+
+        if ($sqlState === '23505') {
+            if (str_contains($message, 'uq_events_subcategory_slug')) {
+                Json::error('An event with this slug already exists in the selected subcategory.', 409);
+            }
+
+            if (str_contains($message, 'events_slug_key')) {
+                Json::error('An event with this slug already exists.', 409);
+            }
+
+            if (str_contains($message, 'events_subcategory_id_key')) {
+                Json::error('Schema conflict: only one event is currently allowed per subcategory. Please contact support.', 409);
+            }
+
+            Json::error('Duplicate event data detected. Please review slug/title uniqueness.', 409);
+        }
+
+        Logger::error('Event write PDO error [' . $sqlState . ']: ' . $message);
+        Json::error('Internal server error', 500);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function respondNotModifiedIfEtagMatches(Request $request, array $payload): void
+    {
+        $serialized = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        if (!is_string($serialized)) {
+            return;
+        }
+
+        $etag = 'W/"' . sha1($serialized) . '"';
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('ETag: ' . $etag);
+
+        $ifNoneMatch = trim((string) ($request->header('if-none-match') ?? ''));
+        if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
+            http_response_code(304);
+            exit;
+        }
     }
 }
