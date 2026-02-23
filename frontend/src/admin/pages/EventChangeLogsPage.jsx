@@ -5,8 +5,10 @@ import { useAuth } from "@/auth/context/AuthContext";
 import { adminQueryKeys, getEventChangeLogs } from "../api";
 import { formatAdminDateTime } from "../utils/dateTime";
 import {
+  AdminButton,
   AdminInput,
   AdminPage,
+  AdminSelect,
   DataGrid,
   DataGridPagination,
   EmptyState,
@@ -24,6 +26,11 @@ export default function EventChangeLogsPage() {
   const setPagination = grid.setPagination;
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    field: "",
+    dateFrom: "",
+    dateTo: "",
+  });
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -43,13 +50,38 @@ export default function EventChangeLogsPage() {
     return () => clearTimeout(timeoutId);
   }, [searchInput, setPagination]);
 
+  const updateFilter = (key, value) => {
+    setFilters((previous) => {
+      if (previous[key] === value) {
+        return previous;
+      }
+
+      setPagination((previousPagination) => ({ ...previousPagination, pageIndex: 0 }));
+      return { ...previous, [key]: value };
+    });
+  };
+
+  const resetFilters = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    setFilters({
+      field: "",
+      dateFrom: "",
+      dateTo: "",
+    });
+    setPagination({ pageIndex: 0, pageSize: grid.pagination.pageSize });
+  };
+
   const queryParams = useMemo(
     () => ({
       page: grid.pagination.pageIndex + 1,
       pageSize: grid.pagination.pageSize,
       search: searchQuery || undefined,
+      field: filters.field || undefined,
+      dateFrom: filters.dateFrom || undefined,
+      dateTo: filters.dateTo || undefined,
     }),
-    [grid.pagination.pageIndex, grid.pagination.pageSize, searchQuery],
+    [filters.dateFrom, filters.dateTo, filters.field, grid.pagination.pageIndex, grid.pagination.pageSize, searchQuery],
   );
 
   const logsQuery = useQuery({
@@ -127,6 +159,34 @@ export default function EventChangeLogsPage() {
             icon={<span className="material-symbols-outlined text-lg">search</span>}
             className="w-full lg:max-w-sm xl:max-w-md lg:flex-1"
           />
+          <AdminSelect value={filters.field} onChange={(event) => updateFilter("field", event.target.value)} className="w-full sm:w-auto sm:min-w-48">
+            <option value="">All fields</option>
+            <option value="title">title</option>
+            <option value="slug">slug</option>
+            <option value="category_id">category_id</option>
+            <option value="subcategory_id">subcategory_id</option>
+            <option value="starts_at">starts_at</option>
+            <option value="ends_at">ends_at</option>
+            <option value="is_active">is_active</option>
+            <option value="is_free">is_free</option>
+            <option value="price">price</option>
+            <option value="capacity">capacity</option>
+          </AdminSelect>
+          <AdminInput
+            type="datetime-local"
+            value={filters.dateFrom}
+            onChange={(event) => updateFilter("dateFrom", event.target.value)}
+            className="w-full sm:w-auto sm:min-w-52"
+          />
+          <AdminInput
+            type="datetime-local"
+            value={filters.dateTo}
+            onChange={(event) => updateFilter("dateTo", event.target.value)}
+            className="w-full sm:w-auto sm:min-w-52"
+          />
+          <AdminButton variant="ghost" onClick={resetFilters} className="w-full sm:w-auto">
+            Reset
+          </AdminButton>
         </ToolbarRow>
 
         <div className="admin-card-elevated overflow-hidden">

@@ -15,6 +15,7 @@ use App\Controllers\AdminLogController;
 use App\Controllers\AdminSecurityController;
 use App\Controllers\CategoryController;
 use App\Controllers\EventController;
+use App\Controllers\PurchaseController;
 use App\Controllers\UserController;
 use App\Controllers\VerificationController;
 use App\Middleware\AuthMiddleware;
@@ -37,6 +38,7 @@ $adminSecurity = new AdminSecurityController();
 $user = new UserController();
 $category = new CategoryController();
 $event = new EventController();
+$purchase = new PurchaseController();
 $verification = new VerificationController();
 
 $router->post("/api/auth/admin/login", [$admin, "loginAdmin"]);
@@ -54,12 +56,13 @@ $router->post("/api/auth/verify-email/confirm", [$verification, "confirmVerifica
 // Public category route, no authentication required
 $router->get("/api/categories", [$category, "index"]);
 $router->get('/api/events', [$event, 'index']);
-$router->get('/api/events/{id:\\d+}', [$event, 'show']);
+$router->get('/api/events/{id:\d+}', [$event, 'show']);
 $router->post('/api/events', [$event, 'store'], [AuthMiddleware::auth()]);
-$router->put('/api/events/{id:\\d+}', [$event, 'update'], [AuthMiddleware::auth()]);
-$router->patch('/api/events/{id:\\d+}', [$event, 'update'], [AuthMiddleware::auth()]);
+$router->put('/api/events/{id:\d+}', [$event, 'update'], [AuthMiddleware::auth()]);
+$router->patch('/api/events/{id:\d+}', [$event, 'update'], [AuthMiddleware::auth()]);
 $router->get('/api/events/{category_slug}', [$event, 'indexBySubcategory']);
 $router->get('/api/events/{category_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug']);
+$router->post('/api/purchases/simulate', [$purchase, 'simulate'], [AuthMiddleware::auth()]);
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
 $router->resource("/api/admin/users", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 $router->patch('/api/admin/users/{id}/disable', [$admin, 'disableUser'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);

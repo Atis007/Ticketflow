@@ -123,7 +123,6 @@ final class AdminSecurityController
                 "SELECT sb.id,
                         sb.block_type,
                         sb.ip::text AS ip,
-                        sb.user_id,
                         sb.reason,
                         sb.status,
                         sb.is_permanent,

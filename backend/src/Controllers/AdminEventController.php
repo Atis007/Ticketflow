@@ -102,7 +102,7 @@ final class AdminEventController
 
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            Json::success([
+            $payload = [
                 'items' => $items,
                 'pagination' => [
                     'page' => $page,
@@ -110,7 +110,10 @@ final class AdminEventController
                     'total' => $total,
                     'totalPages' => $pageSize > 0 ? (int) ceil($total / $pageSize) : 1,
                 ],
-            ]);
+            ];
+
+            $this->respondNotModifiedIfEtagMatches($request, $payload);
+            Json::success($payload);
         } catch (Exception $e) {
             Logger::error('Admin event list failed: ' . $e->getMessage());
             Json::error('Failed to fetch events', 500);
@@ -197,5 +200,26 @@ final class AdminEventController
         $sanitized = preg_replace('/[^A-Za-z0-9_\/+\-]/', '', $value) ?? 'UTC';
 
         return $sanitized !== '' ? $sanitized : 'UTC';
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function respondNotModifiedIfEtagMatches(Request $request, array $payload): void
+    {
+        $serialized = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        if (!is_string($serialized)) {
+            return;
+        }
+
+        $etag = 'W/"' . sha1($serialized) . '"';
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('ETag: ' . $etag);
+
+        $ifNoneMatch = trim((string) ($request->header('if-none-match') ?? ''));
+        if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
+            http_response_code(304);
+            exit;
+        }
     }
 }

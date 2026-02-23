@@ -93,6 +93,11 @@ final class AdminLogController
         $page = max(1, (int) ($request->query['page'] ?? 1));
         $pageSize = max(1, min(100, (int) ($request->query['pageSize'] ?? 20)));
         $offset = ($page - 1) * $pageSize;
+        $cursor = trim((string) ($request->query['cursor'] ?? ''));
+        if ($cursor !== '') {
+            $page = 1;
+            $offset = 0;
+        }
         $search = trim((string) ($request->query['search'] ?? ''));
         $timezone = $this->appTimezone();
         $safeOrderField = preg_replace('/[^a-zA-Z0-9_]/', '', $defaultOrderField) ?? '';
@@ -154,6 +159,12 @@ final class AdminLogController
             $bind[':date_to'] = $normalizedTo;
         }
 
+        if ($cursor !== '') {
+            $normalizedCursor = $this->normalizeDateInput($cursor, 'cursor');
+            $whereParts[] = "t.{$safeOrderField}::timestamp < :cursor";
+            $bind[':cursor'] = $normalizedCursor;
+        }
+
         $whereSql = $whereParts === [] ? '' : ' WHERE ' . implode(' AND ', $whereParts);
 
         try {
@@ -176,18 +187,50 @@ final class AdminLogController
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
 
-            Json::success([
-                'items' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $nextCursor = null;
+            if (is_array($items) && $items !== []) {
+                $lastItem = $items[count($items) - 1];
+                $nextCursor = isset($lastItem[$safeOrderField]) ? (string) $lastItem[$safeOrderField] : null;
+            }
+
+            $payload = [
+                'items' => $items,
                 'pagination' => [
                     'page' => $page,
                     'pageSize' => $pageSize,
                     'total' => $total,
                     'totalPages' => $pageSize > 0 ? (int) ceil($total / $pageSize) : 1,
                 ],
-            ]);
+                'nextCursor' => $nextCursor,
+            ];
+
+            $this->respondNotModifiedIfEtagMatches($request, $payload);
+            Json::success($payload);
         } catch (Exception $e) {
             Logger::error('Admin log list failed: ' . $e->getMessage());
             Json::error('Failed to fetch log data', 500);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function respondNotModifiedIfEtagMatches(Request $request, array $payload): void
+    {
+        $serialized = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        if (!is_string($serialized)) {
+            return;
+        }
+
+        $etag = 'W/"' . sha1($serialized) . '"';
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('ETag: ' . $etag);
+
+        $ifNoneMatch = trim((string) ($request->header('if-none-match') ?? ''));
+        if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
+            http_response_code(304);
+            exit;
         }
     }
 
