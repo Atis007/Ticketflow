@@ -10,6 +10,7 @@ use App\Core\Request;
 use App\Helpers\Json;
 use App\Middleware\AuthMiddleware;
 use App\Services\AdminAuditService;
+use App\Services\EventChangeLogService;
 use Exception;
 use PDO;
 
@@ -129,6 +130,14 @@ final class AdminEventController
 
         $pdo = Database::getConnection();
         try {
+            $beforeStmt = $pdo->prepare('SELECT is_active FROM events WHERE id = :id LIMIT 1');
+            $beforeStmt->execute([':id' => $id]);
+            $before = $beforeStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!is_array($before)) {
+                Json::error('Event not found', 404);
+            }
+
             $stmt = $pdo->prepare(
                 'UPDATE events
                  SET is_active = NOT is_active
@@ -141,6 +150,15 @@ final class AdminEventController
             if (!is_array($row)) {
                 Json::error('Event not found', 404);
             }
+
+            (new EventChangeLogService())->logSingleChange(
+                $pdo,
+                $id,
+                $adminId,
+                'is_active',
+                (bool) ($before['is_active'] ?? false),
+                (bool) $row['is_active']
+            );
 
             (new AdminAuditService())->log(
                 $pdo,
