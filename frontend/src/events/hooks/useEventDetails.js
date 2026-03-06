@@ -40,12 +40,44 @@ function toArrayDescription(value) {
   return [];
 }
 
+function toNumberPrice(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  const normalized = String(value).replace(/[^0-9.]/g, "");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function resolvePurchaseMeta(eventPayload, fallback) {
+  const rawPrice = eventPayload?.price ?? null;
+  const fallbackPrice = fallback?.tickets?.[0]?.price ?? null;
+  const price = toNumberPrice(rawPrice) ?? toNumberPrice(fallbackPrice) ?? 0;
+  const isFree = typeof eventPayload?.is_free === "boolean"
+    ? eventPayload.is_free
+    : price <= 0;
+
+  return {
+    eventId: eventPayload?.id ?? null,
+    isFree,
+    price,
+    currency: "RSD",
+  };
+}
+
 function adaptDetail(eventPayload) {
   if (!eventPayload || typeof eventPayload !== "object") {
     return null;
   }
 
   const fallback = getEventDetail(eventPayload.slug);
+
+  const purchase = resolvePurchaseMeta(eventPayload, fallback);
 
   return {
     ...fallback,
@@ -64,6 +96,7 @@ function adaptDetail(eventPayload) {
     tickets: fallback.tickets,
     lineup: fallback.lineup,
     similar: fallback.similar,
+    purchase,
   };
 }
 

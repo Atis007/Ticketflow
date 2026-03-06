@@ -17,6 +17,7 @@ use App\Services\DeviceLogService;
 use App\Services\PasswordResetService;
 use App\Services\SecurityService;
 use App\Services\VerificationService;
+use App\Services\ImageUploadService;
 use App\Validation\UserValidator;
 use PDO;
 use Exception;
@@ -100,7 +101,7 @@ final class UserController
             Json::error('Too many attempts. Try again later.', 429);
         }
 
-        $sql = "SELECT id, email, password, fullname, is_active, is_disabled, disabled_until
+        $sql = "SELECT id, email, password, fullname, is_active, is_disabled, disabled_until, avatar_url
                 FROM users
                 WHERE email = :email AND role = :role
                 LIMIT 1";
@@ -152,6 +153,7 @@ final class UserController
                     "role" => UserRole::USER->value,
                     "isVerified" => (bool) $loginCredentials['is_active'],
                     "isDisabled" => (bool) ($loginCredentials['is_disabled'] ?? false),
+                    "avatarUrl" => $loginCredentials['avatar_url'] ?? null,
                 ],
                 "token" => $session['token'],
                 "expiresAt" => $session['expires_at']
@@ -201,7 +203,7 @@ final class UserController
         try {
             $pdo = Database::getConnection();
             $stmt = $pdo->prepare(
-                'SELECT id, email, fullname, role, is_active, is_disabled
+                'SELECT id, email, fullname, role, is_active, is_disabled, avatar_url
                  FROM users
                  WHERE id = :id
                  LIMIT 1'
@@ -226,10 +228,48 @@ final class UserController
                     'role' => $role->value,
                     'isVerified' => (bool) ($user['is_active'] ?? false),
                     'isDisabled' => (bool) ($user['is_disabled'] ?? false),
+                    'avatarUrl' => $user['avatar_url'] ?? null,
                 ],
             ]);
         } catch (Exception $e) {
             Logger::error('Current user fetch failed: ' . $e->getMessage());
+            Json::error('Internal server error', 500);
+        }
+    }
+
+    /**
+     * Uploads a profile avatar image for the authenticated user.
+     */
+    public function uploadAvatar(Request $request, array $params = []): void
+    {
+        $payload = AuthMiddleware::authenticatedPayload($request);
+        $userId = (int) ($payload['id'] ?? 0);
+
+        if ($userId <= 0) {
+            Json::error('Unauthorized', 401);
+        }
+
+        $file = $_FILES['avatar'] ?? $_FILES['image'] ?? null;
+        if (!is_array($file)) {
+            Json::error('Image file is required', 400);
+        }
+
+        $avatarPath = (new ImageUploadService())->store($file, 'avatars', 'avatar');
+
+        try {
+            $pdo = Database::getConnection();
+            $stmt = $pdo->prepare('UPDATE users SET avatar_url = :avatar_url WHERE id = :id');
+            $stmt->execute([
+                ':avatar_url' => $avatarPath,
+                ':id' => $userId,
+            ]);
+
+            Json::success([
+                'message' => 'Profile image updated',
+                'avatarUrl' => $avatarPath,
+            ]);
+        } catch (Exception $e) {
+            Logger::error('Failed to update avatar: ' . $e->getMessage());
             Json::error('Internal server error', 500);
         }
     }

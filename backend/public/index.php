@@ -16,6 +16,7 @@ use App\Controllers\AdminSecurityController;
 use App\Controllers\CategoryController;
 use App\Controllers\EventController;
 use App\Controllers\PurchaseController;
+use App\Controllers\ProfileController;
 use App\Controllers\UserController;
 use App\Controllers\VerificationController;
 use App\Middleware\AuthMiddleware;
@@ -39,6 +40,7 @@ $user = new UserController();
 $category = new CategoryController();
 $event = new EventController();
 $purchase = new PurchaseController();
+$profile = new ProfileController();
 $verification = new VerificationController();
 
 $router->post("/api/auth/admin/login", [$admin, "loginAdmin"]);
@@ -47,8 +49,9 @@ $router->post("/api/auth/user/login", [$user, "loginUser"]);
 $router->post("/api/auth/user/register", [$user, "registerUser"]);
 $router->post("/api/auth/forgot-password", [$user, "forgotPassword"]);
 $router->post("/api/auth/reset-password", [$user, "resetPassword"]);
-$router->post("/api/auth/logout", [$user, "logout"]);
+$router->post("/api/auth/logout", [$user, "logout"], [AuthMiddleware::auth()]);
 $router->get("/api/auth/me", [$user, "currentUser"], [AuthMiddleware::auth()]);
+$router->post('/api/profile/avatar', [$user, 'uploadAvatar'], [AuthMiddleware::auth()]);
 $router->post("/api/auth/verify-email/send", [$verification, "sendVerification"]);
 $router->post("/api/auth/verify-email/resend", [$verification, "resendVerification"]);
 $router->post("/api/auth/verify-email/confirm", [$verification, "confirmVerification"]);
@@ -63,6 +66,8 @@ $router->patch('/api/events/{id:\d+}', [$event, 'update'], [AuthMiddleware::auth
 $router->get('/api/events/{category_slug}', [$event, 'indexBySubcategory']);
 $router->get('/api/events/{category_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug']);
 $router->post('/api/purchases/simulate', [$purchase, 'simulate'], [AuthMiddleware::auth()]);
+$router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware::verified()]);
+$router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::verified()]);
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
 $router->resource("/api/admin/users", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 $router->patch('/api/admin/users/{id}/disable', [$admin, 'disableUser'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);

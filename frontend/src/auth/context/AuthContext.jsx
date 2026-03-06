@@ -3,11 +3,15 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
+  useConfirmVerificationMutation,
   useAdminLoginMutation,
   useForgotPasswordMutation,
   useLoginMutation,
   useLogoutMutation,
+  useResendVerificationMutation,
   useRegisterMutation,
+  useResetPasswordMutation,
+  useSendVerificationMutation,
 } from "../hooks/useAuthMutations";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { clearStoredAuth, isExpired, readStoredAuth, writeStoredAuth } from "../util/auth.storage.js";
@@ -66,6 +70,10 @@ export function AuthProvider({ children }) {
   const adminLoginMutation = useAdminLoginMutation();
   const registerMutation = useRegisterMutation();
   const forgotPasswordMutation = useForgotPasswordMutation();
+  const resetPasswordMutation = useResetPasswordMutation();
+  const sendVerificationMutation = useSendVerificationMutation();
+  const resendVerificationMutation = useResendVerificationMutation();
+  const confirmVerificationMutation = useConfirmVerificationMutation();
   const logoutMutation = useLogoutMutation();
   const currentUserQuery = useCurrentUser(token);
 
@@ -151,12 +159,40 @@ export function AuthProvider({ children }) {
     }
   }, [logoutMutation, queryClient, session?.token]);
 
+  const resetPassword = useCallback(async (payload) => {
+    return resetPasswordMutation.mutateAsync(payload);
+  }, [resetPasswordMutation]);
+
+  const sendVerification = useCallback(async () => {
+    const token = session?.token ?? null;
+    return sendVerificationMutation.mutateAsync(token);
+  }, [sendVerificationMutation, session?.token]);
+
+  const resendVerification = useCallback(async () => {
+    const token = session?.token ?? null;
+    return resendVerificationMutation.mutateAsync(token);
+  }, [resendVerificationMutation, session?.token]);
+
+  const confirmVerification = useCallback(async (verificationToken) => {
+    const response = await confirmVerificationMutation.mutateAsync(verificationToken);
+    const nextSession = createSessionFromResponse(response, "user");
+
+    if (response?.success && nextSession) {
+      writeStoredAuth(nextSession);
+      setSession(nextSession);
+      queryClient.setQueryData(["auth", "currentUser"], nextSession.user);
+    }
+
+    return response;
+  }, [confirmVerificationMutation, queryClient]);
+
   const value = useMemo(() => {
     const user = session?.user ?? null;
     const hasValidSession = Boolean(session?.token && session?.expiresAt && !isExpired(session.expiresAt));
     const isAuthLoading = hasValidSession && currentUserQuery.isPending;
     const isAuthenticated = Boolean(hasValidSession && user);
     const isAdmin = isAuthenticated && user?.role === "admin";
+    const isVerified = Boolean(user?.isVerified);
 
     return {
       token: session?.token ?? null,
@@ -165,13 +201,30 @@ export function AuthProvider({ children }) {
       isAuthLoading,
       isAuthenticated,
       isAdmin,
+      isVerified,
       login,
       loginAdmin,
       register,
       forgotPassword,
+      resetPassword,
+      sendVerification,
+      resendVerification,
+      confirmVerification,
       logout,
     };
-  }, [currentUserQuery.isPending, forgotPassword, login, loginAdmin, logout, register, session]);
+  }, [
+    confirmVerification,
+    currentUserQuery.isPending,
+    forgotPassword,
+    login,
+    loginAdmin,
+    logout,
+    register,
+    resendVerification,
+    resetPassword,
+    sendVerification,
+    session,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
