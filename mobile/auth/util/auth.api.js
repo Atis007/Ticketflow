@@ -66,7 +66,7 @@ export async function loginAdmin(payload) {
 }
 
 export async function forgotPassword(email) {
-  const response = await fetch(`${baseUrl}auth/user/forgot-password`, {
+  const response = await fetch(`${baseUrl}auth/forgot-password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -77,6 +77,20 @@ export async function forgotPassword(email) {
   // Do not leak existence; just ensure request was accepted
   if (!response.ok) {
     throw new Error("Failed to send forgot password email");
+  }
+}
+
+export async function logout(token) {
+  try {
+    await fetch(`${baseUrl}auth/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch {
+    // fire-and-forget — local session is cleared regardless
   }
 }
 

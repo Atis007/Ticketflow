@@ -35,7 +35,7 @@ async function handleResponse(response) {
   return payload || {};
 }
 
-export async function simulatePurchase({ token, eventId, quantity, simulateOutcome, currency }) {
+export async function simulatePurchase({ token, eventId, quantity, simulateOutcome, currency, idempotencyKey }) {
   const response = await fetch(endpoint("purchases/simulate"), {
     method: "POST",
     headers: {
@@ -47,6 +47,7 @@ export async function simulatePurchase({ token, eventId, quantity, simulateOutco
       quantity,
       simulateOutcome,
       currency,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
     }),
   });
 

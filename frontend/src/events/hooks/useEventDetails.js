@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { getEventDetail } from "../mockEventDetails";
 import { getEventDetailsByCategorySlug } from "../events.api";
 import { eventsKeys } from "../events.queryKeys";
 
@@ -54,10 +53,23 @@ function toNumberPrice(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function resolvePurchaseMeta(eventPayload, fallback) {
+function buildTicketsFromApiEvent(eventPayload) {
+  if (!eventPayload || eventPayload.is_free) return [];
+  const price = parseFloat(eventPayload.price) || 0;
+  return [
+    {
+      id: "general",
+      name: "General Admission",
+      description: "Standard entry ticket",
+      price: `RSD ${price.toFixed(2)}`,
+      featured: true,
+    },
+  ];
+}
+
+function resolvePurchaseMeta(eventPayload) {
   const rawPrice = eventPayload?.price ?? null;
-  const fallbackPrice = fallback?.tickets?.[0]?.price ?? null;
-  const price = toNumberPrice(rawPrice) ?? toNumberPrice(fallbackPrice) ?? 0;
+  const price = toNumberPrice(rawPrice) ?? 0;
   const isFree = typeof eventPayload?.is_free === "boolean"
     ? eventPayload.is_free
     : price <= 0;
@@ -75,27 +87,24 @@ function adaptDetail(eventPayload) {
     return null;
   }
 
-  const fallback = getEventDetail(eventPayload.slug);
-
-  const purchase = resolvePurchaseMeta(eventPayload, fallback);
+  const purchase = resolvePurchaseMeta(eventPayload);
 
   return {
-    ...fallback,
     id: eventPayload.id,
     slug: eventPayload.slug,
     title: eventPayload.title,
-    heroImage: eventPayload.image || fallback.heroImage,
-    venue: eventPayload.venue || fallback.venue,
-    location: [eventPayload.city, eventPayload.venue].filter(Boolean).join(", ") || fallback.location,
+    heroImage: eventPayload.image || null,
+    venue: eventPayload.venue || null,
+    location: [eventPayload.city, eventPayload.venue].filter(Boolean).join(", ") || null,
     dateTime: formatDateTime(eventPayload.starts_at),
     categoryBadges: [
       { label: eventPayload.category_name || "Event", tone: "primary" },
       { label: eventPayload.subcategory_name || "General", tone: "neutral" },
     ],
-    description: toArrayDescription(eventPayload.description).length > 0 ? toArrayDescription(eventPayload.description) : fallback.description,
-    tickets: fallback.tickets,
-    lineup: fallback.lineup,
-    similar: fallback.similar,
+    description: toArrayDescription(eventPayload.description),
+    tickets: buildTicketsFromApiEvent(eventPayload),
+    lineup: [],
+    similar: [],
     purchase,
   };
 }

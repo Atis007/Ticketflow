@@ -33,8 +33,9 @@ import LoginPage from "./auth/pages/LoginPage";
 import RegisterPage from "./auth/pages/RegisterPage";
 //import AdminLoginPage from "./auth/pages/AdminLogin";
 import ForgotPasswordPage from "./auth/pages/ForgotPassword.jsx";
-import Home from "./pages/Home.jsx";
 import RequireAuthentication from "./guards/RequireAuthentication.jsx";
+import BottomTabNavigator from "./components/BottomTabNavigator.jsx";
+import EventDetailScreen from "./pages/EventDetailScreen.jsx";
 
 //import AdminDashboard from "./admin/pages/AdminDashboard.jsx";
 // Keep splash screen visible while loading fonts
@@ -77,7 +78,7 @@ export default function App() {
         <NavigationContainer>
           <Stack.Navigator
             screenOptions={{ headerShown: false }}
-            initialRouteName="Login"
+            initialRouteName="MainTabs"
           >
             <Stack.Screen name="Login">
               {() => (
@@ -100,13 +101,14 @@ export default function App() {
                 </AuthLayout>
               )}
             </Stack.Screen>
-            <Stack.Screen name="Home">
+            <Stack.Screen name="MainTabs">
               {() => (
                 <RequireAuthentication>
-                  <Home />
+                  <BottomTabNavigator />
                 </RequireAuthentication>
               )}
             </Stack.Screen>
+            <Stack.Screen name="EventDetail" component={EventDetailScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </AuthProvider>
