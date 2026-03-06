@@ -15,6 +15,7 @@ use App\Controllers\AdminLogController;
 use App\Controllers\AdminSecurityController;
 use App\Controllers\CategoryController;
 use App\Controllers\EventController;
+use App\Controllers\EventSeatController;
 use App\Controllers\PurchaseController;
 use App\Controllers\ProfileController;
 use App\Controllers\UserController;
@@ -65,6 +66,8 @@ $router->put('/api/events/{id:\d+}', [$event, 'update'], [AuthMiddleware::auth()
 $router->patch('/api/events/{id:\d+}', [$event, 'update'], [AuthMiddleware::auth()]);
 $router->get('/api/events/{category_slug}', [$event, 'indexBySubcategory']);
 $router->get('/api/events/{category_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug']);
+$eventSeat = new EventSeatController();
+$router->get('/api/events/{id:\d+}/seats', [$eventSeat, 'index']);
 $router->post('/api/purchases/simulate', [$purchase, 'simulate'], [AuthMiddleware::auth()]);
 $router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware::verified()]);
 $router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::verified()]);

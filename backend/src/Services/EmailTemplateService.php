@@ -96,11 +96,18 @@ HTML;
             $attachmentLine = '<p>Your ticket PDF is attached in this email.</p>';
         }
 
+        $safeStarsAt = htmlspecialchars($startsAtLabel, ENT_QUOTES, 'UTF-8');
+        $safeVenue = htmlspecialchars($venue, ENT_QUOTES, 'UTF-8');
+        $safeQr = htmlspecialchars($qrCodeValue, ENT_QUOTES, 'UTF-8');
+
         $subject = 'Your Ticketflow ticket: ' . $eventTitle;
         $html = <<<HTML
 <h2>Hello {$safeName},</h2>
 <p>Your ticket documents are ready.</p>
 <p><strong>Event:</strong> {$safeEventTitle}</p>
+<p><strong>Date:</strong> {$safeStarsAt}</p>
+<p><strong>Venue:</strong> {$safeVenue}</p>
+<p><strong>Ticket QR:</strong> {$safeQr}</p>
 {$attachmentLine}
 <p>Please use the attached files at check-in.</p>
 HTML;
@@ -108,15 +115,15 @@ HTML;
         $text = "Hello {$fullName},\n\n"
             . "Your ticket documents are ready.\n"
             . "Event: {$eventTitle}\n"
+            . "Date: {$startsAtLabel}\n"
+            . "Venue: {$venue}\n"
+            . "Ticket QR: {$qrCodeValue}\n"
             . ($isPaid
                 ? ($hasReceiptAttachment
                     ? "Your ticket PDF and receipt PDF are attached in this email.\n"
                     : "Your ticket PDF is attached in this email.\n")
                 : "Your ticket PDF is attached in this email.\n")
             . "Please use the attached files at check-in.\n";
-
-        // Keep method signature stable for future template expansion.
-        unset($startsAtLabel, $venue, $qrCodeValue);
 
         return [
             'subject' => $subject,

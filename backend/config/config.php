@@ -33,4 +33,9 @@ return [
         'password_reset_url' => Env::require('PASSWORD_RESET_URL'),
         'reset_token_ttl_seconds' => (int) Env::require('RESET_TOKEN_TTL_SECONDS'),
     ],
+
+    'ips' => [
+        'merchant_account' => Env::get('IPS_MERCHANT_ACCOUNT', '160000000000000000'),
+        'merchant_name'    => Env::get('IPS_MERCHANT_NAME', 'Ticketflow d.o.o.'),
+    ],
 ];
