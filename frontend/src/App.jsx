@@ -3,6 +3,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import RequireGuest from "./routes/guards/RequireGuest.jsx";
 import RequireAdmin from "./routes/guards/RequireAdmin.jsx";
 import RequireAuth from "./routes/guards/RequireAuth.jsx";
+import RequireVerified from "./routes/guards/RequireVerified.jsx";
 
 import RootLayout from "./pages/Root.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
@@ -15,6 +16,8 @@ import LoginPage from "./auth/pages/LoginPage";
 import RegisterPage from "./auth/pages/RegisterPage";
 import AdminLoginPage from "./auth/pages/AdminLogin";
 import ForgotPasswordPage from "./auth/pages/ForgotPassword.jsx";
+import ResetPasswordPage from "./auth/pages/ResetPasswordPage.jsx";
+import VerifyEmailPage from "./auth/pages/VerifyEmailPage.jsx";
 
 import AdminLayout from "./admin/layouts/AdminLayout.jsx";
 import DashboardPage from "./admin/pages/DashboardPage.jsx";
@@ -53,7 +56,19 @@ const router = createBrowserRouter([
       },
       {
         path: "events/:categorySlug/:eventSlug",
-        element: <EventDetailsPage />,
+        element: (
+          <RequireVerified>
+            <EventDetailsPage />
+          </RequireVerified>
+        ),
+      },
+      {
+        path: "reset-password",
+        element: <ResetPasswordPage />,
+      },
+      {
+        path: "verify-email",
+        element: <VerifyEmailPage />,
       },
       {
         path: "profile",

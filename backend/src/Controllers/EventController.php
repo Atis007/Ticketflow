@@ -12,6 +12,7 @@ use App\Middleware\AuthMiddleware;
 use App\Models\UserRole;
 use App\Services\AdminAuditService;
 use App\Services\EventChangeLogService;
+use App\Services\ImageUploadService;
 use DateTimeImmutable;
 use Exception;
 use PDO;
@@ -53,6 +54,10 @@ final class EventController
         }
 
         if ($monthFilter !== '') {
+            if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $monthFilter)) {
+                Json::error('Invalid month format. Use YYYY-MM.', 400);
+            }
+
             $monthStart = DateTimeImmutable::createFromFormat('!Y-m-d', $monthFilter . '-01');
             if (!$monthStart instanceof DateTimeImmutable) {
                 Json::error('Invalid month format. Use YYYY-MM.', 400);
@@ -219,7 +224,11 @@ final class EventController
             Json::error('Unauthorized', 401);
         }
 
-        $data = $request->jsonBody();
+        $data = $this->resolvePayload($request);
+        $uploadedImage = $this->uploadEventImageIfPresent();
+        if ($uploadedImage !== null) {
+            $data['image'] = $uploadedImage;
+        }
         $actorRole = $payload['role'] ?? null;
 
         $title = trim((string) ($data['title'] ?? ''));
@@ -352,7 +361,11 @@ final class EventController
                 Json::error('Forbidden', 403);
             }
 
-            $data = $request->jsonBody();
+            $data = $this->resolvePayload($request);
+            $uploadedImage = $this->uploadEventImageIfPresent();
+            if ($uploadedImage !== null) {
+                $data['image'] = $uploadedImage;
+            }
             $isPut = strtoupper($request->method) === 'PUT';
 
             $allowed = [
@@ -575,8 +588,24 @@ final class EventController
             Json::error('Category slug is required', 400);
         }
 
+        $page = max(1, (int) ($request->query['page'] ?? 1));
+        $pageSize = max(1, min(100, (int) ($request->query['pageSize'] ?? 20)));
+        $offset = ($page - 1) * $pageSize;
+        $timezone = $this->appTimezone();
+
         try {
             $pdo = Database::getConnection();
+            $countStmt = $pdo->prepare(
+                "SELECT COUNT(*)
+                 FROM events e
+                 INNER JOIN subcategories s ON s.id = e.subcategory_id
+                 INNER JOIN categories c ON c.id = e.category_id
+                 WHERE (c.slug = :scope_slug OR s.slug = :scope_slug)
+                   AND e.is_active = TRUE"
+            );
+            $countStmt->execute([':scope_slug' => $scopeSlug]);
+            $total = (int) $countStmt->fetchColumn();
+
             $stmt = $pdo->prepare(
                 "SELECT
                     e.id,
@@ -585,26 +614,39 @@ final class EventController
                     e.image,
                     e.city,
                     e.venue,
-                    TO_CHAR(e.starts_at, 'YYYY.MM.DD HH24:MI:SS') AS starts_at,
+                    TO_CHAR(timezone(:tz, e.starts_at), 'YYYY-MM-DD HH24:MI:SS') AS starts_at,
                     e.is_free,
                     e.price,
                     e.is_seated,
                     s.slug AS subcategory_slug,
-                    c.slug AS category_slug
+                    c.slug AS category_slug,
+                    c.name AS category_name,
+                    s.name AS subcategory_name
                  FROM events e
                  INNER JOIN subcategories s ON s.id = e.subcategory_id
                  INNER JOIN categories c ON c.id = e.category_id
                  WHERE (c.slug = :scope_slug OR s.slug = :scope_slug)
                     AND e.is_active = TRUE
-                 ORDER BY e.starts_at ASC"
+                 ORDER BY e.starts_at ASC
+                 LIMIT :limit OFFSET :offset"
             );
 
-            $stmt->execute([':scope_slug' => $scopeSlug]);
+            $stmt->bindValue(':tz', $timezone, PDO::PARAM_STR);
+            $stmt->bindValue(':scope_slug', $scopeSlug, PDO::PARAM_STR);
+            $stmt->bindValue(':limit', $pageSize, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
             $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             Json::success([
+                'items' => $events,
+                'pagination' => [
+                    'page' => $page,
+                    'pageSize' => $pageSize,
+                    'total' => $total,
+                    'totalPages' => $pageSize > 0 ? (int) ceil($total / $pageSize) : 1,
+                ],
                 'scopeSlug' => $scopeSlug,
-                'events' => $events,
             ]);
         } catch (Exception $e) {
             Logger::error('Failed to list events by scope slug: ' . $e->getMessage());
@@ -703,6 +745,39 @@ final class EventController
 
         $string = trim((string) $value);
         return $string === '' ? null : $string;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolvePayload(Request $request): array
+    {
+        $json = $request->jsonBody();
+        $form = $_POST ?? [];
+
+        if (!is_array($form)) {
+            $form = [];
+        }
+
+        return array_merge($json, $form);
+    }
+
+    private function uploadEventImageIfPresent(): ?string
+    {
+        if (!isset($_FILES['image'])) {
+            return null;
+        }
+
+        $file = $_FILES['image'];
+        if (!is_array($file)) {
+            return null;
+        }
+
+        if ((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
+        return (new ImageUploadService())->store($file, 'events', 'event');
     }
 
     private function toBool(mixed $value, string $field): bool

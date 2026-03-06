@@ -35,43 +35,23 @@ async function handleResponse(response) {
   return payload || {};
 }
 
-export async function getEvents({ page = 1, pageSize = 20 } = {}) {
-  const params = new URLSearchParams({
-    page: String(page),
-    pageSize: String(pageSize),
-  });
-
-  const response = await fetch(endpoint(`events?${params.toString()}`), {
+export async function getPurchases(token) {
+  const response = await fetch(endpoint("profile/purchases"), {
     method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 
   return handleResponse(response);
 }
 
-export async function getEventsByCategorySlug(categorySlug, { page = 1, pageSize = 20 } = {}) {
-  const params = new URLSearchParams({
-    page: String(page),
-    pageSize: String(pageSize),
-  });
-
-  const response = await fetch(endpoint(`events/${encodeURIComponent(categorySlug)}?${params.toString()}`), {
+export async function getFavorites(token) {
+  const response = await fetch(endpoint("profile/favorites"), {
     method: "GET",
-  });
-
-  return handleResponse(response);
-}
-
-export async function getEventDetailsByCategorySlug(categorySlug, eventSlug) {
-  const response = await fetch(endpoint(`events/${encodeURIComponent(categorySlug)}/${encodeURIComponent(eventSlug)}`), {
-    method: "GET",
-  });
-
-  return handleResponse(response);
-}
-
-export async function getEventById(id) {
-  const response = await fetch(endpoint(`events/${encodeURIComponent(id)}`), {
-    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 
   return handleResponse(response);

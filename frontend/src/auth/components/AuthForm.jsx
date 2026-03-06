@@ -94,8 +94,8 @@ export default function AuthForm({ mode, ...props }) {
       } else {
         setErrorMessage(response?.error ?? "Authentication failed.");
       }
-    } catch {
-      setErrorMessage("An error occurred. Please try again.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

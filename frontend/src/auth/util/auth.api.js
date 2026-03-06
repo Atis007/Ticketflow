@@ -8,11 +8,18 @@ function endpoint(path) {
 }
 
 async function handleResponse(response) {
+  const payload = await response.json().catch(() => null);
+
   if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(text || `Request failed with ${response.status}`);
+    const message = payload?.error || payload?.message || `Request failed with ${response.status}`;
+    throw new Error(message);
   }
-  return response.json().catch(() => ({}));
+
+  if (payload && payload.success === false) {
+    throw new Error(payload.error || "Request failed");
+  }
+
+  return payload || {};
 }
 
 export async function login(payload) {
@@ -59,10 +66,55 @@ export async function forgotPassword(email) {
     body: JSON.stringify({ email }),
   });
 
-  // do not leak existence; just ensure request was accepted
-  if (!response.ok) {
-    throw new Error("Failed to send forgot password email");
-  }
+  return handleResponse(response);
+}
+
+export async function resetPassword(payload) {
+  const response = await fetch(endpoint("auth/reset-password"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse(response);
+}
+
+export async function sendVerification(token) {
+  const response = await fetch(endpoint("auth/verify-email/send"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  return handleResponse(response);
+}
+
+export async function resendVerification(token) {
+  const response = await fetch(endpoint("auth/verify-email/resend"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  return handleResponse(response);
+}
+
+export async function confirmVerification(token) {
+  const response = await fetch(endpoint("auth/verify-email/confirm"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  return handleResponse(response);
 }
 
 export async function logout(token) {

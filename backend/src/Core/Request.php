@@ -33,7 +33,9 @@ final readonly class Request
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $path = self::normalizePath($uri);
         $headers = self::normalizeHeaders(function_exists('getallheaders') ? getallheaders() : []);
-        $body = self::decodeJson(file_get_contents('php://input') ?: '');
+        $contentType = $headers['content-type'] ?? '';
+        $shouldDecodeJson = str_contains($contentType, 'application/json');
+        $body = $shouldDecodeJson ? self::decodeJson(file_get_contents('php://input') ?: '') : [];
         $query = $_GET ?? [];
 
         return new self($method, $uri, $path, $headers, $body, $query);

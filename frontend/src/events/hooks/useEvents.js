@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { getEventsByCategorySlug } from "../events.api";
+import { getEvents, getEventsByCategorySlug } from "../events.api";
 import { eventsKeys } from "../events.queryKeys";
 
 function formatDateLabel(rawStartsAt) {
@@ -21,40 +21,64 @@ function formatDateLabel(rawStartsAt) {
 }
 
 function toCardModel(item) {
+  const title = item.title || "Untitled Event";
+  const location = [item.city, item.venue].filter(Boolean).join(", ") || "TBA";
+  const categorySlug = item.subcategory_slug || item.category_slug || null;
+  const category = item.category_name || "Event";
+  const tag = item.subcategory_name || item.category_name || "General";
+  const isFree = Boolean(item.is_free);
+  const priceValue = Number(item.price || 0);
+
   return {
     id: item.id,
     slug: item.slug,
-    categorySlug: item.subcategory_slug || item.category_slug,
-    title: item.title,
-    image: item.image || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80",
+    categorySlug,
+    title,
+    image: item.image || "",
     dateLabel: formatDateLabel(item.starts_at),
     icon: "event",
-    category: item.category_name || "Event",
-    location: [item.city, item.venue].filter(Boolean).join(", "),
-    tag: item.subcategory_name || item.category_name || "General",
-    priceLabel: item.is_free ? "Free" : `$${Number(item.price || 0).toFixed(2)}`,
+    category,
+    location,
+    tag,
+    isFree,
+    priceLabel: isFree ? "Free" : `$${Number.isFinite(priceValue) ? priceValue.toFixed(2) : "0.00"}`,
   };
 }
 
 export function useEvents(categorySlug) {
-  const query = useQuery({
-    queryKey: eventsKeys.list(categorySlug),
-    enabled: Boolean(categorySlug),
-    queryFn: async () => getEventsByCategorySlug(categorySlug),
+  const query = useInfiniteQuery({
+    queryKey: eventsKeys.list(categorySlug ?? "all"),
+    queryFn: async ({ pageParam = 1 }) => {
+      if (categorySlug) {
+        return getEventsByCategorySlug(categorySlug, { page: pageParam, pageSize: 20 });
+      }
+
+      return getEvents({ page: pageParam, pageSize: 20 });
+    },
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage?.pagination;
+      if (!pagination) {
+        return undefined;
+      }
+
+      const current = Number(pagination.page || 1);
+      const totalPages = Number(pagination.totalPages || 1);
+      return current < totalPages ? current + 1 : undefined;
+    },
     placeholderData: (previous) => previous,
   });
 
   const events = useMemo(() => {
-    const rows = query.data?.events;
-    if (!Array.isArray(rows)) {
-      return [];
-    }
-
-    return rows.map(toCardModel);
+    const pages = query.data?.pages ?? [];
+    const allItems = pages.flatMap((page) => page?.items ?? page?.events ?? []);
+    return allItems.map(toCardModel);
   }, [query.data]);
 
   return {
     ...query,
     events,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
   };
 }

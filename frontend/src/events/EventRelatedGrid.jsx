@@ -17,12 +17,13 @@ export default function EventRelatedGrid({ events }) {
               <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-md z-10">
                 {item.date}
               </div>
-              <img
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                src={item.image}
-                alt={item.title}
-                loading="lazy"
-              />
+              <div className="h-full w-full bg-gradient-to-br from-primary/25 via-surface-ink to-accent-cyan/20">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(var(--color-accent-cyan-rgb),0.22),_transparent_55%)]" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/80">
+                  <span className="material-symbols-outlined text-4xl">local_activity</span>
+                  <span className="mt-2 text-sm font-semibold">{item.title}</span>
+                </div>
+              </div>
             </div>
             <div className="p-5 flex flex-col gap-2">
               <h3 className="text-white font-bold text-lg group-hover:text-primary transition-colors">

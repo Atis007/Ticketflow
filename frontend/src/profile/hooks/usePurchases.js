@@ -1,29 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 
-const SAMPLE_PURCHASES = [
-  {
-    id: "ord-1",
-    eventName: "Neon Nights Music Festival",
-    eventDate: "2026-05-18T19:30:00Z",
-    quantity: 2,
-    ticketType: "VIP",
-    status: "paid",
-  },
-  {
-    id: "ord-2",
-    eventName: "Tech Future Summit",
-    eventDate: "2026-06-03T09:00:00Z",
-    quantity: 1,
-    ticketType: "Early Bird",
-    status: "pending",
-  },
-];
+import { getPurchases } from "../profile.api";
 
-export function usePurchases(enabled = true) {
+export function usePurchases(token, enabled = true) {
   return useQuery({
-    queryKey: ["profile", "purchases"],
-    enabled,
-    queryFn: async () => SAMPLE_PURCHASES,
+    queryKey: ["profile", "purchases", token],
+    enabled: Boolean(enabled && token),
+    queryFn: async () => {
+      const response = await getPurchases(token);
+      return response?.purchases ?? [];
+    },
     staleTime: 60 * 1000,
   });
 }

@@ -13,6 +13,22 @@ export async function forgotPasswordService(email) {
   return authApi.forgotPassword(email);
 }
 
+export async function resetPasswordService(payload) {
+  return authApi.resetPassword(payload);
+}
+
+export async function sendVerificationService(token) {
+  return authApi.sendVerification(token);
+}
+
+export async function resendVerificationService(token) {
+  return authApi.resendVerification(token);
+}
+
+export async function confirmVerificationService(token) {
+  return authApi.confirmVerification(token);
+}
+
 export async function logoutService(token) {
   return authApi.logout(token);
 }
