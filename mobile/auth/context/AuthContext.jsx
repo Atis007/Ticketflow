@@ -7,6 +7,7 @@ import {
   loginAdminService,
   forgotPasswordService,
 } from "../util/auth.service";
+import { logout as logoutApi } from "../util/auth.api";
 
 const AuthContext = createContext(null);
 
@@ -91,6 +92,14 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
+    try {
+      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      if (token) {
+        await logoutApi(token);
+      }
+    } catch {
+      // ignore — revoke is best-effort
+    }
     setIsAuthenticated(false);
     setUser(null);
     try {

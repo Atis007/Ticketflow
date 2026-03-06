@@ -4,6 +4,9 @@ import { simulatePurchase } from "../purchases.api";
 
 export function useSimulatePurchase() {
   return useMutation({
-    mutationFn: async (payload) => simulatePurchase(payload),
+    mutationFn: async (payload) => simulatePurchase({
+      ...payload,
+      idempotencyKey: payload.idempotencyKey ?? crypto.randomUUID(),
+    }),
   });
 }
