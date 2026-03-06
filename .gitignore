@@ -105,6 +105,7 @@ docs/
 # Local planning/agent notes (not tracked)
 agents/
 .agents/
+.claude/
 ###############################################
 # OTHER / MISC
 ###############################################
