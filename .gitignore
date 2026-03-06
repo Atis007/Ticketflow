@@ -58,6 +58,7 @@ backend/logs/
 backend/storage/
 backend/cache/
 backend/.phpunit.result.cache
+/backend/migrations/
 
 # Composer / PHP cache
 composer.lock

@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Config\AppConfig;
 use App\Core\Database;
 use App\Core\Logger;
 use App\Core\Request;
 use App\Helpers\Json;
 use App\Middleware\AuthMiddleware;
 use App\Services\DeviceLogService;
+use App\Services\EmailTemplateService;
+use App\Services\EventSeatService;
+use App\Services\IpsQrService;
+use App\Services\MailService;
+use DateTimeImmutable;
 use Exception;
 use PDO;
 use Throwable;
@@ -34,6 +40,10 @@ final class PurchaseController
         $quantity = (int) ($body['quantity'] ?? 1);
         $simulateOutcome = strtolower(trim((string) ($body['simulateOutcome'] ?? 'success')));
         $currency = strtoupper(trim((string) ($body['currency'] ?? 'RSD')));
+        $idempotencyKey = isset($body['idempotencyKey']) ? trim((string) $body['idempotencyKey']) : null;
+        if ($idempotencyKey === '') {
+            $idempotencyKey = null;
+        }
 
         if ($eventId <= 0) {
             Json::error('eventId is required', 400);
@@ -50,14 +60,42 @@ final class PurchaseController
         $pdo = Database::getConnection();
         $deviceLogService = new DeviceLogService();
 
+        // Idempotency check — outside transaction
+        if ($idempotencyKey !== null) {
+            $idemStmt = $pdo->prepare(
+                'SELECT id, status, amount, currency FROM payments WHERE idempotency_key = :key LIMIT 1'
+            );
+            $idemStmt->execute([':key' => $idempotencyKey]);
+            $existing = $idemStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (is_array($existing) && (string) ($existing['status'] ?? '') === 'paid') {
+                $ticketStmt = $pdo->prepare('SELECT id FROM tickets WHERE payment_id = :pid ORDER BY id ASC');
+                $ticketStmt->execute([':pid' => $existing['id']]);
+                $cachedTicketIds = array_column($ticketStmt->fetchAll(PDO::FETCH_ASSOC), 'id');
+
+                Json::success([
+                    'message'         => 'Purchase simulated successfully',
+                    'payment'         => [
+                        'id'       => (int) $existing['id'],
+                        'status'   => 'paid',
+                        'amount'   => (float) $existing['amount'],
+                        'currency' => (string) $existing['currency'],
+                    ],
+                    'tickets'         => array_map('intval', $cachedTicketIds),
+                    'simulateOutcome' => 'success',
+                ], 201);
+            }
+        }
+
         try {
             $pdo->beginTransaction();
 
             $eventStmt = $pdo->prepare(
-                'SELECT id, title, price, is_free, is_active, capacity, tickets_sold
+                'SELECT id, title, price, is_free, is_active, is_seated, capacity, tickets_sold, starts_at, venue
                  FROM events
                  WHERE id = :id
-                 LIMIT 1'
+                 LIMIT 1
+                 FOR UPDATE'
             );
             $eventStmt->execute([':id' => $eventId]);
             $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
@@ -83,6 +121,7 @@ final class PurchaseController
                 Json::error('Event price is invalid for paid flow', 400);
             }
 
+            $isSeated = (bool) ($event['is_seated'] ?? false);
             $capacity = $event['capacity'] !== null ? (int) $event['capacity'] : null;
             $ticketsSold = (int) ($event['tickets_sold'] ?? 0);
 
@@ -92,62 +131,131 @@ final class PurchaseController
             }
 
             $amount = round($price * $quantity, 2);
-            $paymentStatus = $simulateOutcome === 'success' ? 'paid' : 'failed';
-            $paymentPayload = [
-                'simulate_outcome' => $simulateOutcome,
-                'quantity' => $quantity,
-                'event_title' => (string) ($event['title'] ?? ''),
-            ];
 
+            // INSERT payment with status='pending'
             $paymentStmt = $pdo->prepare(
-                'INSERT INTO payments (user_id, event_id, amount, currency, status, ips_qr_payload, paid_at)
-                 VALUES (:user_id, :event_id, :amount, :currency, :status, :payload, :paid_at)
+                'INSERT INTO payments (user_id, event_id, amount, currency, status, ips_qr_payload, paid_at, idempotency_key)
+                 VALUES (:user_id, :event_id, :amount, :currency, :status, :payload, NULL, :idem_key)
                  RETURNING id'
             );
             $paymentStmt->execute([
-                ':user_id' => $userId,
+                ':user_id'  => $userId,
                 ':event_id' => $eventId,
-                ':amount' => $amount,
+                ':amount'   => $amount,
                 ':currency' => $currency,
-                ':status' => $paymentStatus,
-                ':payload' => json_encode($paymentPayload, JSON_UNESCAPED_UNICODE),
-                ':paid_at' => $simulateOutcome === 'success' ? (new \DateTimeImmutable('now'))->format('Y-m-d H:i:sP') : null,
+                ':status'   => 'pending',
+                ':payload'  => '',
+                ':idem_key' => $idempotencyKey,
             ]);
-
             $paymentId = (int) $paymentStmt->fetchColumn();
+
+            // Build real IPS QR payload now that we have paymentId
+            $config = AppConfig::all();
+            $merchantAccount = (string) ($config['ips']['merchant_account'] ?? '160000000000000000');
+            $merchantName = (string) ($config['ips']['merchant_name'] ?? 'Ticketflow d.o.o.');
+            $ipsPayload = (new IpsQrService())->buildPayload(
+                $paymentId,
+                $amount,
+                $currency,
+                (string) ($event['title'] ?? ''),
+                $merchantAccount,
+                $merchantName
+            );
+
+            $pdo->prepare('UPDATE payments SET ips_qr_payload = :payload WHERE id = :id')
+                ->execute([':payload' => $ipsPayload, ':id' => $paymentId]);
+
             $ticketIds = [];
+            $seatIds = [];
 
             if ($simulateOutcome === 'success') {
+                // Reserve seats for seated events
+                if ($isSeated) {
+                    $seatService = new EventSeatService();
+                    $seatIds = $seatService->reserveAvailableSeats($pdo, $eventId, $quantity);
+                    if (count($seatIds) < $quantity) {
+                        $pdo->rollBack();
+                        Json::error('Not enough seats available', 409);
+                    }
+                }
+
+                // Create tickets
                 $ticketStmt = $pdo->prepare(
                     'INSERT INTO tickets (user_id, event_id, payment_id, qr_code, is_used)
                      VALUES (:user_id, :event_id, :payment_id, :qr_code, FALSE)
                      RETURNING id'
                 );
-
                 for ($i = 0; $i < $quantity; $i++) {
                     $ticketStmt->execute([
-                        ':user_id' => $userId,
-                        ':event_id' => $eventId,
+                        ':user_id'    => $userId,
+                        ':event_id'   => $eventId,
                         ':payment_id' => $paymentId,
-                        ':qr_code' => $this->generateQrCode($eventId, $userId, $paymentId),
+                        ':qr_code'    => $this->generateQrCode($eventId, $userId, $paymentId),
                     ]);
                     $ticketIds[] = (int) $ticketStmt->fetchColumn();
                 }
 
-                $soldStmt = $pdo->prepare(
-                    'UPDATE events
-                     SET tickets_sold = tickets_sold + :qty
-                     WHERE id = :event_id'
-                );
-                $soldStmt->execute([
-                    ':qty' => $quantity,
-                    ':event_id' => $eventId,
-                ]);
+                // Link seats to tickets
+                if ($isSeated && $seatIds !== []) {
+                    $seatToTicketMap = [];
+                    foreach ($seatIds as $index => $seatId) {
+                        $seatToTicketMap[$seatId] = $ticketIds[$index] ?? $ticketIds[0];
+                    }
+                    (new EventSeatService())->markSeatsSold($pdo, $seatIds, $seatToTicketMap);
+                }
+
+                // Increment tickets_sold counter
+                $pdo->prepare('UPDATE events SET tickets_sold = tickets_sold + :qty WHERE id = :event_id')
+                    ->execute([':qty' => $quantity, ':event_id' => $eventId]);
+
+                // Transition payment pending → paid
+                $pdo->prepare("UPDATE payments SET status = 'paid', paid_at = NOW() WHERE id = :id")
+                    ->execute([':id' => $paymentId]);
+            } else {
+                $finalStatus = $simulateOutcome === 'cancelled' ? 'cancelled' : 'failed';
+                $pdo->prepare('UPDATE payments SET status = :status WHERE id = :id')
+                    ->execute([':status' => $finalStatus, ':id' => $paymentId]);
             }
 
             $pdo->commit();
 
-            $action = $simulateOutcome === 'success' ? 'purchase.paid.success' : ($simulateOutcome === 'cancelled' ? 'purchase.cancelled' : 'purchase.failed');
+            // Send ticket email — failure must not fail the purchase response
+            if ($simulateOutcome === 'success' && $ticketIds !== []) {
+                try {
+                    $userStmt = $pdo->prepare('SELECT email, fullname FROM users WHERE id = :id LIMIT 1');
+                    $userStmt->execute([':id' => $userId]);
+                    $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+                    if (is_array($userData)) {
+                        $template = (new EmailTemplateService())->ticketDeliveryEmail(
+                            fullName: (string) ($userData['fullname'] ?? ''),
+                            eventTitle: (string) ($event['title'] ?? ''),
+                            startsAtLabel: $this->formatEventDateForEmail($event),
+                            venue: (string) ($event['venue'] ?? ''),
+                            qrCodeValue: $this->getFirstQrCode($pdo, $ticketIds[0]),
+                            isPaid: true,
+                            hasReceiptAttachment: false,
+                        );
+                        (new MailService())->send(
+                            to: (string) ($userData['email'] ?? ''),
+                            subject: $template['subject'],
+                            html: $template['html'],
+                            text: $template['text'],
+                        );
+                    }
+                } catch (Throwable $e) {
+                    Logger::error('Ticket email failed: ' . $e->getMessage());
+                }
+            }
+
+            $finalStatus = $simulateOutcome === 'success'
+                ? 'paid'
+                : ($simulateOutcome === 'cancelled' ? 'cancelled' : 'failed');
+
+            $action = $simulateOutcome === 'success'
+                ? 'purchase.paid.success'
+                : ($simulateOutcome === 'cancelled' ? 'purchase.cancelled' : 'purchase.failed');
+
             $deviceLogService->logPurchaseEvent(
                 $pdo,
                 $request,
@@ -158,23 +266,26 @@ final class PurchaseController
                 $eventId,
                 $paymentId,
                 [
-                    'amount' => $amount,
-                    'currency' => $currency,
-                    'quantity' => $quantity,
-                    'ticket_ids' => $ticketIds,
+                    'amount'           => $amount,
+                    'currency'         => $currency,
+                    'quantity'         => $quantity,
+                    'ticket_ids'       => $ticketIds,
                     'simulate_outcome' => $simulateOutcome,
                 ]
             );
 
             Json::success([
-                'message' => $simulateOutcome === 'success' ? 'Purchase simulated successfully' : 'Purchase simulated as non-success',
-                'payment' => [
-                    'id' => $paymentId,
-                    'status' => $paymentStatus,
-                    'amount' => $amount,
-                    'currency' => $currency,
+                'message'         => $simulateOutcome === 'success'
+                    ? 'Purchase simulated successfully'
+                    : 'Purchase simulated as non-success',
+                'payment'         => [
+                    'id'           => $paymentId,
+                    'status'       => $finalStatus,
+                    'amount'       => $amount,
+                    'currency'     => $currency,
+                    'ipsQrPayload' => $simulateOutcome === 'success' ? $ipsPayload : null,
                 ],
-                'tickets' => $ticketIds,
+                'tickets'         => $ticketIds,
                 'simulateOutcome' => $simulateOutcome,
             ], 201);
         } catch (Throwable $e) {
@@ -189,6 +300,37 @@ final class PurchaseController
 
     private function generateQrCode(int $eventId, int $userId, int $paymentId): string
     {
-        return rtrim(strtr(base64_encode(hash('sha256', $eventId . ':' . $userId . ':' . $paymentId . ':' . microtime(true) . ':' . random_bytes(12), true)), '+/', '-_'), '=');
+        return rtrim(
+            strtr(
+                base64_encode(
+                    hash('sha256', $eventId . ':' . $userId . ':' . $paymentId . ':' . microtime(true) . ':' . random_bytes(12), true)
+                ),
+                '+/',
+                '-_'
+            ),
+            '='
+        );
+    }
+
+    private function formatEventDateForEmail(array $event): string
+    {
+        $startsAt = $event['starts_at'] ?? null;
+        if ($startsAt === null) {
+            return 'Date TBA';
+        }
+        try {
+            return (new DateTimeImmutable((string) $startsAt))->format('D, d M Y H:i');
+        } catch (Exception) {
+            return (string) $startsAt;
+        }
+    }
+
+    private function getFirstQrCode(PDO $pdo, int $ticketId): string
+    {
+        $stmt = $pdo->prepare('SELECT qr_code FROM tickets WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => $ticketId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? (string) ($row['qr_code'] ?? '') : '';
     }
 }

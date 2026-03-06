@@ -12,6 +12,7 @@ use App\Middleware\AuthMiddleware;
 use App\Models\UserRole;
 use App\Services\AdminAuditService;
 use App\Services\EventChangeLogService;
+use App\Services\EventSeatService;
 use App\Services\ImageUploadService;
 use DateTimeImmutable;
 use Exception;
@@ -262,6 +263,8 @@ final class EventController
             $this->assertCategorySubcategoryPair($pdo, $categoryId, $subcategoryId);
             $this->assertUniqueTitleOnCreate($pdo, $title);
 
+            $pdo->beginTransaction();
+
             $stmt = $pdo->prepare(
                 'INSERT INTO events
                     (created_by, category_id, subcategory_id, title, slug, description, image, city, venue, starts_at, ends_at, capacity, is_free, price, is_active, is_seated)
@@ -290,6 +293,12 @@ final class EventController
 
             $eventId = (int) $stmt->fetchColumn();
 
+            if ($isSeated && $capacity !== null && $capacity > 0) {
+                (new EventSeatService())->generateSeats($pdo, $eventId, $capacity);
+            }
+
+            $pdo->commit();
+
             if ($actorRole instanceof UserRole && $actorRole === UserRole::ADMIN) {
                 (new AdminAuditService())->log(
                     $pdo,
@@ -311,8 +320,14 @@ final class EventController
                 'message' => 'Event created successfully',
             ], 201);
         } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             $this->handleEventWritePdoException($e);
         } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             Logger::error('Failed to create event: ' . $e->getMessage());
             Json::error('Internal server error', 500);
         }
@@ -530,6 +545,15 @@ final class EventController
 
             if (!is_array($after)) {
                 Json::error('Event not found after update', 404);
+            }
+
+            $isNowSeated = (bool) ($after['is_seated'] ?? false);
+            $wasSeated = (bool) ($existing['is_seated'] ?? false);
+            $newCapacity = isset($after['capacity']) ? (int) $after['capacity'] : null;
+            $oldCapacity = isset($existing['capacity']) ? (int) $existing['capacity'] : null;
+
+            if ($isNowSeated && $newCapacity !== null && $newCapacity > 0 && (!$wasSeated || $newCapacity !== $oldCapacity)) {
+                (new EventSeatService())->generateSeats($pdo, $id, $newCapacity);
             }
 
             $trackedFields = [
