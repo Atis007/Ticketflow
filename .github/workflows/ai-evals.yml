@@ -1,0 +1,77 @@
+name: AI Evals
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - layout
+          - chat
+  pull_request:
+    types: [labeled]
+
+jobs:
+  ai-evals:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'ai-eval')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama serve &
+          sleep 5
+
+      - name: Pull models
+        run: |
+          ollama pull qwen2.5
+          ollama pull llama3.1
+
+      - name: Install AI service dependencies
+        run: |
+          cd ai-service
+          pip install -r requirements.txt
+
+      - name: Start AI service
+        run: |
+          cd ai-service
+          uvicorn main:app --host 0.0.0.0 --port 8100 &
+          sleep 3
+
+      - name: Install eval dependencies
+        run: |
+          pip install httpx
+
+      - name: Run evals
+        env:
+          AI_SERVICE_URL: http://localhost:8100
+        run: |
+          cd ai-evals/runners
+          python run_evals.py \
+            --service-url $AI_SERVICE_URL \
+            --suite ${{ github.event.inputs.suite || 'all' }} \
+            2>&1 | tee eval-results.txt
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-eval-results
+          path: ai-evals/runners/eval-results.txt
+          retention-days: 30

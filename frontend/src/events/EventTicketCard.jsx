@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 
 import AsyncState from "@/components/AsyncState";
 import { useAuth } from "@/auth/context/AuthContext";
 import { useSimulatePurchase } from "@/purchases/hooks/useSimulatePurchase";
+import SeatMap from "./SeatMap";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -37,6 +39,7 @@ export default function EventTicketCard({ tickets, purchase }) {
   const price = typeof purchase?.price === "number" ? purchase.price : 0;
   const currency = purchase?.currency || "RSD";
   const isFree = Boolean(purchase?.isFree);
+  const isSeated = Boolean(purchase?.isSeated);
   const total = price * quantity;
   const isSubmitting = simulatePurchase.isPending;
   const canCheckout = Boolean(eventId && !isFree && !isSubmitting && token);
@@ -61,24 +64,20 @@ export default function EventTicketCard({ tickets, purchase }) {
         currency,
       });
 
-      if (response?.payment?.id) {
-        setFeedback({
-          type: "info",
-          message: `Purchase simulated successfully. Payment #${response.payment.id} created for ${response.tickets?.length || 0} ticket(s).`,
-          success: true,
-        });
-      } else {
-        setFeedback({
-          type: "info",
-          message: response?.message || "Purchase simulated successfully.",
-          success: true,
-        });
-      }
+      setFeedback({
+        type: "info",
+        message: response?.payment?.id
+          ? `Purchase successful. Payment #${response.payment.id} · ${response.tickets?.length || 0} ticket(s).`
+          : response?.message || "Purchase simulated successfully.",
+        success: true,
+        ipsQrPayload: response?.payment?.ipsQrPayload ?? null,
+      });
     } catch (error) {
       setFeedback({
         type: "error",
         message: error instanceof Error ? error.message : "Checkout failed.",
         success: false,
+        ipsQrPayload: null,
       });
     }
   };
@@ -116,25 +115,48 @@ export default function EventTicketCard({ tickets, purchase }) {
         </div>
       ))}
 
+      {isSeated && !isFree && !feedback?.success && (
+        <SeatMap eventId={eventId} />
+      )}
+
       {feedback ? (
         <div className="mb-4">
           <AsyncState type={feedback.type} message={feedback.message} />
           {feedback.success ? (
-            <div className="mt-3 flex items-center gap-3">
-              <Link
-                to="/profile"
-                className="inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-color-hover"
-              >
-                Go to Profile
-              </Link>
-              <button
-                type="button"
-                onClick={() => setFeedback(null)}
-                className="inline-flex h-10 items-center rounded-full border border-white/20 px-4 text-sm font-semibold text-text-soft transition-colors hover:border-primary hover:text-primary"
-              >
-                Close
-              </button>
-            </div>
+            <>
+              {feedback.ipsQrPayload ? (
+                <div className="mt-4 rounded-xl border border-white/10 bg-background-dark p-4 flex flex-col items-center gap-3">
+                  <p className="text-xs text-text-muted text-center">
+                    IPS Payment QR — scan with your banking app
+                  </p>
+                  <QRCodeSVG
+                    value={feedback.ipsQrPayload}
+                    size={160}
+                    bgColor="transparent"
+                    fgColor="#ffffff"
+                    level="M"
+                  />
+                  <p className="text-[10px] text-text-muted break-all text-center max-w-[240px]">
+                    {feedback.ipsQrPayload}
+                  </p>
+                </div>
+              ) : null}
+              <div className="mt-3 flex items-center gap-3">
+                <Link
+                  to="/profile"
+                  className="inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-color-hover"
+                >
+                  Go to Profile
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setFeedback(null)}
+                  className="inline-flex h-10 items-center rounded-full border border-white/20 px-4 text-sm font-semibold text-text-soft transition-colors hover:border-primary hover:text-primary"
+                >
+                  Close
+                </button>
+              </div>
+            </>
           ) : null}
         </div>
       ) : null}

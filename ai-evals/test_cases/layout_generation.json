@@ -1,0 +1,71 @@
+[
+  {
+    "id": "layout_001",
+    "name": "Small concert hall layout",
+    "input": {
+      "venue_name": "Club Fest",
+      "venue_type": "club",
+      "total_capacity": 200
+    },
+    "assertions": {
+      "min_sections": 1,
+      "max_sections": 5,
+      "capacity_tolerance_pct": 20,
+      "required_fields": ["venue_name", "sections"],
+      "section_has_rows": true,
+      "no_duplicate_row_labels": true
+    }
+  },
+  {
+    "id": "layout_002",
+    "name": "Medium theater layout",
+    "input": {
+      "venue_name": "Narodno Pozoriste",
+      "venue_type": "theater",
+      "total_capacity": 800
+    },
+    "assertions": {
+      "min_sections": 2,
+      "max_sections": 8,
+      "capacity_tolerance_pct": 15,
+      "required_fields": ["venue_name", "sections"],
+      "section_has_rows": true,
+      "no_duplicate_row_labels": true
+    }
+  },
+  {
+    "id": "layout_003",
+    "name": "Large arena layout",
+    "input": {
+      "venue_name": "Arena Belgrade",
+      "venue_type": "arena",
+      "total_capacity": 5000
+    },
+    "assertions": {
+      "min_sections": 3,
+      "max_sections": 20,
+      "capacity_tolerance_pct": 20,
+      "required_fields": ["venue_name", "sections"],
+      "section_has_rows": true,
+      "no_duplicate_row_labels": true
+    }
+  },
+  {
+    "id": "layout_004",
+    "name": "Stadium with instructions",
+    "input": {
+      "venue_name": "Rajko Mitic Stadium",
+      "venue_type": "stadium",
+      "total_capacity": 10000,
+      "additional_instructions": "Include a VIP section and a standing area"
+    },
+    "assertions": {
+      "min_sections": 3,
+      "max_sections": 30,
+      "capacity_tolerance_pct": 25,
+      "required_fields": ["venue_name", "sections"],
+      "section_has_rows": true,
+      "no_duplicate_row_labels": true
+    }
+  }
+]

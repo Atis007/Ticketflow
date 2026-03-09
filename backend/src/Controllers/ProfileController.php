@@ -61,20 +61,43 @@ final class ProfileController
             $stmt->execute();
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Collect payment IDs for batch-fetching tickets
+            $paymentIds = array_map(fn($r) => (int) $r['id'], $rows);
+            $ticketsByPayment = [];
+            if ($paymentIds !== []) {
+                $placeholders = implode(',', array_fill(0, count($paymentIds), '?'));
+                $ticketStmt = $pdo->prepare(
+                    "SELECT id, payment_id, qr_code FROM tickets WHERE payment_id IN ({$placeholders}) ORDER BY id ASC"
+                );
+                $ticketStmt->execute($paymentIds);
+                foreach ($ticketStmt->fetchAll(PDO::FETCH_ASSOC) as $ticket) {
+                    $ticketsByPayment[(int) $ticket['payment_id']][] = [
+                        'id' => (int) $ticket['id'],
+                        'qrCode' => (string) ($ticket['qr_code'] ?? ''),
+                    ];
+                }
+            }
+
             $purchases = [];
 
             foreach ($rows as $row) {
-                $ticketCount = (int) ($row['ticket_count'] ?? 0);
+                $paymentId = (int) ($row['id'] ?? 0);
+                $tickets = $ticketsByPayment[$paymentId] ?? [];
+                $ticketCount = count($tickets) > 0 ? count($tickets) : (int) ($row['ticket_count'] ?? 0);
                 $payloadQuantity = $this->extractQuantity($row['ips_qr_payload'] ?? null);
                 $quantity = $ticketCount > 0 ? $ticketCount : $payloadQuantity;
 
                 $purchases[] = [
-                    'id' => (int) ($row['id'] ?? 0),
+                    'id' => $paymentId,
                     'eventName' => (string) ($row['event_title'] ?? ''),
                     'eventDate' => (string) ($row['event_date'] ?? ''),
                     'quantity' => $quantity > 0 ? $quantity : 0,
                     'ticketType' => 'General Admission',
                     'status' => (string) ($row['status'] ?? 'pending'),
+                    'amount' => (string) ($row['amount'] ?? '0'),
+                    'currency' => (string) ($row['currency'] ?? 'RSD'),
+                    'tickets' => $tickets,
                 ];
             }
 

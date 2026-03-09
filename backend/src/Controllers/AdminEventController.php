@@ -10,9 +10,13 @@ use App\Core\Request;
 use App\Helpers\Json;
 use App\Middleware\AuthMiddleware;
 use App\Services\AdminAuditService;
+use App\Services\AiServiceClient;
 use App\Services\EventChangeLogService;
+use App\Services\EventSeatService;
+use App\Services\LayoutVersionService;
 use Exception;
 use PDO;
+use Throwable;
 
 final class AdminEventController
 {
@@ -179,6 +183,134 @@ final class AdminEventController
         } catch (Exception $e) {
             Logger::error('Admin toggle event failed: ' . $e->getMessage());
             Json::error('Failed to update event status', 500);
+        }
+    }
+
+    /**
+     * Generates a venue layout using AI and persists sections + seats.
+     * POST /api/admin/events/{id}/generate-layout
+     */
+    public function generateLayout(Request $request, array $params = []): void
+    {
+        $eventId = (int) ($params['id'] ?? 0);
+        $adminId = AuthMiddleware::authenticatedUserId($request);
+
+        if ($eventId <= 0) {
+            Json::error('Invalid event id', 400);
+        }
+
+        $pdo = \App\Core\Database::getConnection();
+
+        $eventStmt = $pdo->prepare(
+            'SELECT id, title, venue, capacity, is_seated FROM events WHERE id = :id LIMIT 1'
+        );
+        $eventStmt->execute([':id' => $eventId]);
+        $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!is_array($event)) {
+            Json::error('Event not found', 404);
+        }
+
+        $body = $request->jsonBody();
+        $venueType = trim((string) ($body['venueType'] ?? 'concert_hall'));
+        $instructions = trim((string) ($body['instructions'] ?? ''));
+        $capacity = (int) ($body['capacity'] ?? $event['capacity'] ?? 500);
+        $venueName = trim((string) ($body['venueName'] ?? $event['venue'] ?? $event['title'] ?? ''));
+
+        if ($capacity <= 0) {
+            Json::error('capacity must be greater than 0', 400);
+        }
+
+        try {
+            $aiClient = new AiServiceClient();
+            $result = $aiClient->generateLayout($venueName, $venueType, $capacity, $instructions);
+
+            if ($result === null) {
+                Json::error('AI service unavailable or failed to generate layout', 502);
+            }
+
+            $layout = $result['layout'] ?? null;
+            if (!is_array($layout) || !isset($layout['sections'])) {
+                Json::error('Invalid layout response from AI service', 502);
+            }
+
+            $pdo->beginTransaction();
+
+            // Create sections in DB
+            // event_sections.type enum is 'seated' | 'standing'
+            $typeMap = [
+                'standard' => 'seated',
+                'vip' => 'seated',
+                'balcony' => 'seated',
+                'standing' => 'standing',
+                'seated' => 'seated',
+            ];
+
+            $sectionStmt = $pdo->prepare(
+                'INSERT INTO event_sections (event_id, name, type, capacity, price, x_position, y_position, source)
+                 VALUES (:event_id, :name, :type, :capacity, :price, :x_pos, :y_pos, :source)
+                 RETURNING id'
+            );
+
+            $sectionsWithIds = [];
+            foreach ($layout['sections'] as $i => $section) {
+                $rawType = strtolower((string) ($section['type'] ?? 'seated'));
+                $dbType = $typeMap[$rawType] ?? 'seated';
+                $sectionCapacity = 0;
+                foreach (($section['rows'] ?? []) as $row) {
+                    $sectionCapacity += (int) ($row['seat_count'] ?? $row['seatCount'] ?? 0);
+                }
+
+                $sectionStmt->execute([
+                    ':event_id'  => $eventId,
+                    ':name'      => $section['name'] ?? 'Section ' . ($i + 1),
+                    ':type'      => $dbType,
+                    ':capacity'  => $sectionCapacity > 0 ? $sectionCapacity : 1,
+                    ':price'     => 0,
+                    ':x_pos'     => 0,
+                    ':y_pos'     => $i,
+                    ':source'    => 'ai',
+                ]);
+                $sectionId = (int) $sectionStmt->fetchColumn();
+                $section['section_id'] = $sectionId;
+                $sectionsWithIds[] = $section;
+            }
+
+            // Generate seats from layout
+            $seatService = new EventSeatService();
+            $seatService->generateFromLayout($pdo, $eventId, ['sections' => $sectionsWithIds]);
+
+            // Update event to seated if not already
+            $pdo->prepare('UPDATE events SET is_seated = TRUE WHERE id = :id')
+                ->execute([':id' => $eventId]);
+
+            // Save layout version
+            $layoutVersionService = new LayoutVersionService();
+            $versionId = $layoutVersionService->save($pdo, $eventId, $layout);
+
+            $pdo->commit();
+
+            (new AdminAuditService())->log(
+                $pdo,
+                $adminId,
+                'event.generate_layout',
+                'event',
+                $eventId,
+                ['version_id' => $versionId, 'sections' => count($layout['sections'])]
+            );
+
+            Json::success([
+                'eventId' => $eventId,
+                'layout' => $layout,
+                'versionId' => $versionId,
+                'message' => 'Layout generated and persisted successfully',
+            ]);
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            Logger::error('Layout generation failed: ' . $e->getMessage());
+            Json::error('Internal server error', 500);
         }
     }
 

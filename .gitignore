@@ -51,6 +51,8 @@ dist-ssr/
 # BACKEND (PHP)
 ###############################################
 
+/backend/migrations/
+migrations/
 backend/phpqrcode/
 backend/vendor/
 backend/.env
@@ -58,7 +60,7 @@ backend/logs/
 backend/storage/
 backend/cache/
 backend/.phpunit.result.cache
-/backend/migrations/
+backend/uploads/
 
 # Composer / PHP cache
 composer.lock
@@ -98,16 +100,39 @@ mobile/ios/
 # Metro bundler
 mobile/.metro-health-check*
 
-###############################################
-# DOCS
-###############################################
-docs/
 
-# Local planning/agent notes (not tracked)
+###############################################
+# AI SERVICE (Python)
+###############################################
+
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/.venv/
+ai-service/venv/
+ai-service/.env
+*.pyc
+__pycache__/
+
+
+###############################################
+# AI EVALS
+###############################################
+
+ai-evals/__pycache__/
+ai-evals/**/__pycache__/
+ai-evals/runners/eval-results.txt
+
+
+###############################################
+# DOCS / AGENT NOTES
+###############################################
+
+docs/
 agents/
 .agents/
 .claude/
-migrations/
+
+
 ###############################################
 # OTHER / MISC
 ###############################################

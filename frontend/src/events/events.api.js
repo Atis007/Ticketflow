@@ -76,3 +76,11 @@ export async function getEventById(id) {
 
   return handleResponse(response);
 }
+
+export async function getEventSeats(eventId) {
+  const response = await fetch(endpoint(`events/${encodeURIComponent(eventId)}/seats`), {
+    method: "GET",
+  });
+
+  return handleResponse(response);
+}
