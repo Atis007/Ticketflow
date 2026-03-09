@@ -1,0 +1,203 @@
+{
+  "info": {
+    "name": "Ticketflow RBAC Tests",
+    "description": "Authorization test scenarios for 401/403 responses",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api" },
+    { "key": "adminToken", "value": "" },
+    { "key": "userToken", "value": "" },
+    { "key": "otherUserToken", "value": "" },
+    { "key": "eventId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "401 — No token on protected route",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/auth/me",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 401 without token', function () {",
+              "  pm.response.to.have.status(401);",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(false);",
+              "  pm.expect(json.error).to.include('Unauthorized');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "403 — User token on admin route",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/events",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}" }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 403 for non-admin', function () {",
+              "  pm.response.to.have.status(403);",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(false);",
+              "  pm.expect(json.error).to.include('Forbidden');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "403 — Non-owner updating event",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/events/{{eventId}}",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{otherUserToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\": \"Hijacked Event\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 403 for non-owner', function () {",
+              "  pm.response.to.have.status(403);",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(false);",
+              "  pm.expect(json.error).to.include('Forbidden');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "200 — Owner can update own event",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/events/{{eventId}}",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"city\": \"Updated City\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200 for owner', function () {",
+              "  pm.response.to.have.status(200);",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "200 — Admin can update any event",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/events/{{eventId}}",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"city\": \"Admin Updated City\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200 for admin', function () {",
+              "  pm.response.to.have.status(200);",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "403 — Disabled user cannot purchase",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/purchases/simulate",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"eventId\": {{eventId}}, \"quantity\": 1}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 403 for disabled user', function () {",
+              "  pm.response.to.have.status(403);",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(false);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "401 — Expired/invalid token",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/auth/me",
+        "header": [
+          { "key": "Authorization", "value": "Bearer invalid_token_here" }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 401 for invalid token', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

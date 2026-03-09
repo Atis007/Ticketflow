@@ -11,6 +11,7 @@ use App\Helpers\Json;
 use App\Middleware\AuthMiddleware;
 use App\Models\UserRole;
 use App\Services\AdminAuditService;
+use App\Services\AuthorizationService;
 use App\Services\EventChangeLogService;
 use App\Services\EventSeatService;
 use App\Services\ImageUploadService;
@@ -369,12 +370,7 @@ final class EventController
                 Json::error('Event not found', 404);
             }
 
-            $isAdmin = $actorRole instanceof UserRole && $actorRole === UserRole::ADMIN;
-            $isOwner = (int) ($existing['created_by'] ?? 0) === $actorId;
-
-            if (!$isAdmin && !$isOwner) {
-                Json::error('Forbidden', 403);
-            }
+            (new AuthorizationService())->assertOwnerOrAdmin($actorId, $actorRole, (int) ($existing['created_by'] ?? 0));
 
             $data = $this->resolvePayload($request);
             $uploadedImage = $this->uploadEventImageIfPresent();
@@ -577,6 +573,7 @@ final class EventController
             $changeLogService = new EventChangeLogService();
             $changeLogService->logDiff($pdo, $id, $actorId, $existing, $after, $trackedFields);
 
+            $isAdmin = $actorRole instanceof UserRole && $actorRole === UserRole::ADMIN;
             if ($isAdmin) {
                 (new AdminAuditService())->log(
                     $pdo,

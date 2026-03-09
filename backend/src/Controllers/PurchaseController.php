@@ -10,6 +10,7 @@ use App\Core\Logger;
 use App\Core\Request;
 use App\Helpers\Json;
 use App\Middleware\AuthMiddleware;
+use App\Services\AuthorizationService;
 use App\Services\DeviceLogService;
 use App\Services\EmailTemplateService;
 use App\Services\EventSeatService;
@@ -41,6 +42,7 @@ final class PurchaseController
         $simulateOutcome = strtolower(trim((string) ($body['simulateOutcome'] ?? 'success')));
         $currency = strtoupper(trim((string) ($body['currency'] ?? 'RSD')));
         $idempotencyKey = isset($body['idempotencyKey']) ? trim((string) $body['idempotencyKey']) : null;
+        $requestedSeatIds = isset($body['seatIds']) && is_array($body['seatIds']) ? array_map('intval', $body['seatIds']) : null;
         if ($idempotencyKey === '') {
             $idempotencyKey = null;
         }
@@ -59,6 +61,9 @@ final class PurchaseController
 
         $pdo = Database::getConnection();
         $deviceLogService = new DeviceLogService();
+
+        // Verify user account is active and not disabled
+        (new AuthorizationService())->assertAccountActive($pdo, $userId);
 
         // Idempotency check — outside transaction
         if ($idempotencyKey !== null) {
@@ -172,10 +177,21 @@ final class PurchaseController
                 // Reserve seats for seated events
                 if ($isSeated) {
                     $seatService = new EventSeatService();
-                    $seatIds = $seatService->reserveAvailableSeats($pdo, $eventId, $quantity);
-                    if (count($seatIds) < $quantity) {
-                        $pdo->rollBack();
-                        Json::error('Not enough seats available', 409);
+                    if ($requestedSeatIds !== null && $requestedSeatIds !== []) {
+                        // User-selected specific seats
+                        $seatIds = $seatService->reserveSpecificSeats($pdo, $eventId, $requestedSeatIds, $userId);
+                        if (count($seatIds) < count($requestedSeatIds)) {
+                            $pdo->rollBack();
+                            Json::error('Some selected seats are no longer available', 409);
+                        }
+                        $quantity = count($seatIds);
+                    } else {
+                        // Auto-assign seats
+                        $seatIds = $seatService->reserveAvailableSeats($pdo, $eventId, $quantity);
+                        if (count($seatIds) < $quantity) {
+                            $pdo->rollBack();
+                            Json::error('Not enough seats available', 409);
+                        }
                     }
                 }
 
@@ -227,14 +243,14 @@ final class PurchaseController
                     $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
 
                     if (is_array($userData)) {
-                        $template = (new EmailTemplateService())->ticketDeliveryEmail(
+                        $qrCodes = $this->getAllQrCodes($pdo, $ticketIds);
+                        $template = (new EmailTemplateService())->multiTicketDeliveryEmail(
                             fullName: (string) ($userData['fullname'] ?? ''),
                             eventTitle: (string) ($event['title'] ?? ''),
                             startsAtLabel: $this->formatEventDateForEmail($event),
                             venue: (string) ($event['venue'] ?? ''),
-                            qrCodeValue: $this->getFirstQrCode($pdo, $ticketIds[0]),
-                            isPaid: true,
-                            hasReceiptAttachment: false,
+                            qrCodes: $qrCodes,
+                            ipsQrPayload: $ipsPayload,
                         );
                         (new MailService())->send(
                             to: (string) ($userData['email'] ?? ''),
@@ -332,5 +348,22 @@ final class PurchaseController
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return is_array($row) ? (string) ($row['qr_code'] ?? '') : '';
+    }
+
+    /**
+     * @param int[] $ticketIds
+     * @return string[]
+     */
+    private function getAllQrCodes(PDO $pdo, array $ticketIds): array
+    {
+        if ($ticketIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ticketIds), '?'));
+        $stmt = $pdo->prepare("SELECT qr_code FROM tickets WHERE id IN ({$placeholders}) ORDER BY id ASC");
+        $stmt->execute($ticketIds);
+
+        return array_map(fn($row) => (string) ($row['qr_code'] ?? ''), $stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 }

@@ -7,6 +7,8 @@ require_once __DIR__ . '/../bootstrap.php';
 use App\Core\Router;
 use App\Core\CORS;
 use App\Core\ErrorHandler;
+use App\Controllers\AdminAiController;
+use App\Controllers\AdminAnalyticsController;
 use App\Controllers\AdminController;
 use App\Controllers\AdminCategoryController;
 use App\Controllers\AdminDashboardController;
@@ -16,8 +18,10 @@ use App\Controllers\AdminSecurityController;
 use App\Controllers\CategoryController;
 use App\Controllers\EventController;
 use App\Controllers\EventSeatController;
+use App\Controllers\PaymentController;
 use App\Controllers\PurchaseController;
 use App\Controllers\ProfileController;
+use App\Controllers\TicketController;
 use App\Controllers\UserController;
 use App\Controllers\VerificationController;
 use App\Middleware\AuthMiddleware;
@@ -68,7 +72,14 @@ $router->get('/api/events/{category_slug}', [$event, 'indexBySubcategory']);
 $router->get('/api/events/{category_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug']);
 $eventSeat = new EventSeatController();
 $router->get('/api/events/{id:\d+}/seats', [$eventSeat, 'index']);
+$router->post('/api/events/{id:\d+}/seats/reserve', [$eventSeat, 'reserve'], [AuthMiddleware::auth()]);
 $router->post('/api/purchases/simulate', [$purchase, 'simulate'], [AuthMiddleware::auth()]);
+
+$payment = new PaymentController();
+$router->post('/api/payments/{id:\d+}/confirm', [$payment, 'confirm'], [AuthMiddleware::auth()]);
+
+$ticket = new TicketController();
+$router->post('/api/tickets/scan', [$ticket, 'scan'], [AuthMiddleware::auth()]);
 $router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware::verified()]);
 $router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::verified()]);
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
@@ -102,6 +113,15 @@ $router->post('/api/admin/security/incidents/{id}/resolve', [$adminSecurity, 're
 
 $router->get('/api/admin/health/summary', [$adminDashboard, 'healthSummary'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 $router->get('/api/admin/sync/changes', [$adminDashboard, 'syncChanges'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$router->post('/api/admin/events/{id:\d+}/generate-layout', [$adminEvent, 'generateLayout'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$adminAnalytics = new AdminAnalyticsController();
+$router->get('/api/admin/analytics/sales', [$adminAnalytics, 'sales'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$adminAi = new AdminAiController();
+$router->post('/api/admin/ai/chat', [$adminAi, 'chat'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->get('/api/admin/ai/history', [$adminAi, 'history'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 /*$router->resource("/api/events", EventController::class);
 $router->resource("/api/categories", CategoryController::class);
 $router->resource("/api/tickets", TicketController::class);

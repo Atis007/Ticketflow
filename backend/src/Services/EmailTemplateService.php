@@ -82,48 +82,123 @@ HTML;
         string $startsAtLabel,
         string $venue,
         string $qrCodeValue,
-        bool $isPaid,
-        bool $hasReceiptAttachment
+        string $ipsQrPayload = ''
     ): array {
         $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
         $safeEventTitle = htmlspecialchars($eventTitle, ENT_QUOTES, 'UTF-8');
-
-        $attachmentLine = $isPaid
-            ? '<p>Your ticket PDF and receipt PDF are attached in this email.</p>'
-            : '<p>Your ticket PDF is attached in this email.</p>';
-
-        if ($isPaid && !$hasReceiptAttachment) {
-            $attachmentLine = '<p>Your ticket PDF is attached in this email.</p>';
-        }
-
         $safeStarsAt = htmlspecialchars($startsAtLabel, ENT_QUOTES, 'UTF-8');
         $safeVenue = htmlspecialchars($venue, ENT_QUOTES, 'UTF-8');
         $safeQr = htmlspecialchars($qrCodeValue, ENT_QUOTES, 'UTF-8');
 
+        $ipsBlock = '';
+        if ($ipsQrPayload !== '') {
+            $safeIps = htmlspecialchars($ipsQrPayload, ENT_QUOTES, 'UTF-8');
+            $ipsBlock = "<p><strong>IPS QR (payment reference):</strong><br><code style=\"font-size:11px;word-break:break-all;\">{$safeIps}</code></p>";
+        }
+
         $subject = 'Your Ticketflow ticket: ' . $eventTitle;
         $html = <<<HTML
 <h2>Hello {$safeName},</h2>
-<p>Your ticket documents are ready.</p>
+<p>Your purchase was successful. Here are your ticket details.</p>
 <p><strong>Event:</strong> {$safeEventTitle}</p>
 <p><strong>Date:</strong> {$safeStarsAt}</p>
 <p><strong>Venue:</strong> {$safeVenue}</p>
-<p><strong>Ticket QR:</strong> {$safeQr}</p>
-{$attachmentLine}
-<p>Please use the attached files at check-in.</p>
+<p><strong>Ticket QR code:</strong><br><code style="font-size:11px;word-break:break-all;">{$safeQr}</code></p>
+{$ipsBlock}
+<p>Please present your ticket QR code at the venue entrance for check-in.</p>
 HTML;
 
+        $ipsText = $ipsQrPayload !== ''
+            ? "IPS QR (payment reference): {$ipsQrPayload}\n"
+            : '';
+
         $text = "Hello {$fullName},\n\n"
-            . "Your ticket documents are ready.\n"
+            . "Your purchase was successful. Here are your ticket details.\n"
             . "Event: {$eventTitle}\n"
             . "Date: {$startsAtLabel}\n"
             . "Venue: {$venue}\n"
-            . "Ticket QR: {$qrCodeValue}\n"
-            . ($isPaid
-                ? ($hasReceiptAttachment
-                    ? "Your ticket PDF and receipt PDF are attached in this email.\n"
-                    : "Your ticket PDF is attached in this email.\n")
-                : "Your ticket PDF is attached in this email.\n")
-            . "Please use the attached files at check-in.\n";
+            . "Ticket QR code: {$qrCodeValue}\n"
+            . $ipsText
+            . "Please present your ticket QR code at the venue entrance for check-in.\n";
+
+        return [
+            'subject' => $subject,
+            'html' => $html,
+            'text' => $text,
+        ];
+    }
+
+    /**
+     * Builds a ticket delivery email containing multiple QR codes.
+     *
+     * @param string[] $qrCodes
+     * @return array{subject: string, html: string, text: string}
+     */
+    public function multiTicketDeliveryEmail(
+        string $fullName,
+        string $eventTitle,
+        string $startsAtLabel,
+        string $venue,
+        array $qrCodes,
+        string $ipsQrPayload = ''
+    ): array {
+        if (count($qrCodes) <= 1) {
+            return $this->ticketDeliveryEmail(
+                $fullName,
+                $eventTitle,
+                $startsAtLabel,
+                $venue,
+                $qrCodes[0] ?? '',
+                $ipsQrPayload
+            );
+        }
+
+        $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+        $safeEventTitle = htmlspecialchars($eventTitle, ENT_QUOTES, 'UTF-8');
+        $safeStartsAt = htmlspecialchars($startsAtLabel, ENT_QUOTES, 'UTF-8');
+        $safeVenue = htmlspecialchars($venue, ENT_QUOTES, 'UTF-8');
+        $ticketCount = count($qrCodes);
+
+        $qrHtmlParts = [];
+        $qrTextParts = [];
+        foreach ($qrCodes as $i => $qr) {
+            $num = $i + 1;
+            $safeQr = htmlspecialchars($qr, ENT_QUOTES, 'UTF-8');
+            $qrHtmlParts[] = "<p><strong>Ticket #{$num}:</strong><br><code style=\"font-size:11px;word-break:break-all;\">{$safeQr}</code></p>";
+            $qrTextParts[] = "Ticket #{$num}: {$qr}";
+        }
+        $qrHtml = implode("\n", $qrHtmlParts);
+        $qrText = implode("\n", $qrTextParts);
+
+        $ipsBlock = '';
+        $ipsText = '';
+        if ($ipsQrPayload !== '') {
+            $safeIps = htmlspecialchars($ipsQrPayload, ENT_QUOTES, 'UTF-8');
+            $ipsBlock = "<p><strong>IPS QR (payment reference):</strong><br><code style=\"font-size:11px;word-break:break-all;\">{$safeIps}</code></p>";
+            $ipsText = "IPS QR (payment reference): {$ipsQrPayload}\n";
+        }
+
+        $subject = 'Your Ticketflow tickets (' . $ticketCount . '): ' . $eventTitle;
+        $html = <<<HTML
+<h2>Hello {$safeName},</h2>
+<p>Your purchase was successful. You have {$ticketCount} tickets.</p>
+<p><strong>Event:</strong> {$safeEventTitle}</p>
+<p><strong>Date:</strong> {$safeStartsAt}</p>
+<p><strong>Venue:</strong> {$safeVenue}</p>
+<h3>Your Tickets</h3>
+{$qrHtml}
+{$ipsBlock}
+<p>Please present the relevant ticket QR code at the venue entrance for check-in.</p>
+HTML;
+
+        $text = "Hello {$fullName},\n\n"
+            . "Your purchase was successful. You have {$ticketCount} tickets.\n"
+            . "Event: {$eventTitle}\n"
+            . "Date: {$startsAtLabel}\n"
+            . "Venue: {$venue}\n\n"
+            . $qrText . "\n"
+            . $ipsText
+            . "Please present the relevant ticket QR code at the venue entrance for check-in.\n";
 
         return [
             'subject' => $subject,
