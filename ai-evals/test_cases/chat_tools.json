@@ -1,0 +1,67 @@
+[
+  {
+    "id": "chat_001",
+    "name": "Create event triggers createEvent tool",
+    "input": {
+      "messages": [
+        {"role": "user", "content": "Create a concert event called Rock Night at Arena Belgrade for next Saturday with 1000 capacity and 2500 RSD tickets"}
+      ]
+    },
+    "assertions": {
+      "expected_tool": "createEvent",
+      "response_not_empty": true
+    }
+  },
+  {
+    "id": "chat_002",
+    "name": "Sales analysis triggers analyzeSales tool",
+    "input": {
+      "messages": [
+        {"role": "user", "content": "Show me ticket sales analytics for the last 30 days"}
+      ]
+    },
+    "assertions": {
+      "expected_tool": "analyzeSales",
+      "response_not_empty": true
+    }
+  },
+  {
+    "id": "chat_003",
+    "name": "Marketing email triggers sendMarketingEmail tool",
+    "input": {
+      "messages": [
+        {"role": "user", "content": "Draft and send a marketing email about upcoming weekend events to all users"}
+      ]
+    },
+    "assertions": {
+      "expected_tool": "sendMarketingEmail",
+      "response_not_empty": true
+    }
+  },
+  {
+    "id": "chat_004",
+    "name": "General question returns text without tools",
+    "input": {
+      "messages": [
+        {"role": "user", "content": "What features does Ticketflow offer?"}
+      ]
+    },
+    "assertions": {
+      "expected_tool": null,
+      "response_not_empty": true
+    }
+  },
+  {
+    "id": "chat_005",
+    "name": "Update ticket price triggers updateTickets tool",
+    "input": {
+      "messages": [
+        {"role": "user", "content": "Change the ticket price for event ID 5 to 3000 RSD"}
+      ]
+    },
+    "assertions": {
+      "expected_tool": "updateTickets",
+      "response_not_empty": true
+    }
+  }
+]

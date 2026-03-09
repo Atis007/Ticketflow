@@ -77,6 +77,7 @@ function resolvePurchaseMeta(eventPayload) {
   return {
     eventId: eventPayload?.id ?? null,
     isFree,
+    isSeated: Boolean(eventPayload?.is_seated),
     price,
     currency: "RSD",
   };
