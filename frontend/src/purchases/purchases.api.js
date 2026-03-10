@@ -35,7 +35,7 @@ async function handleResponse(response) {
   return payload || {};
 }
 
-export async function simulatePurchase({ token, eventId, quantity, simulateOutcome, currency, idempotencyKey }) {
+export async function simulatePurchase({ token, eventId, quantity, simulateOutcome, currency, idempotencyKey, seatIds }) {
   const response = await fetch(endpoint("purchases/simulate"), {
     method: "POST",
     headers: {
@@ -48,7 +48,19 @@ export async function simulatePurchase({ token, eventId, quantity, simulateOutco
       simulateOutcome,
       currency,
       ...(idempotencyKey ? { idempotencyKey } : {}),
+      ...(seatIds?.length ? { seatIds } : {}),
     }),
+  });
+
+  return handleResponse(response);
+}
+
+export async function confirmPayment({ token, paymentId }) {
+  const response = await fetch(endpoint(`payments/${paymentId}/confirm`), {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 
   return handleResponse(response);

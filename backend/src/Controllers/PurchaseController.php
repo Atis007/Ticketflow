@@ -16,6 +16,7 @@ use App\Services\EmailTemplateService;
 use App\Services\EventSeatService;
 use App\Services\IpsQrService;
 use App\Services\MailService;
+use App\Services\NotificationService;
 use DateTimeImmutable;
 use Exception;
 use PDO;
@@ -96,7 +97,7 @@ final class PurchaseController
             $pdo->beginTransaction();
 
             $eventStmt = $pdo->prepare(
-                'SELECT id, title, price, is_free, is_active, is_seated, capacity, tickets_sold, starts_at, venue
+                'SELECT id, title, slug, price, is_free, is_active, is_seated, capacity, tickets_sold, starts_at, venue
                  FROM events
                  WHERE id = :id
                  LIMIT 1
@@ -234,6 +235,32 @@ final class PurchaseController
             }
 
             $pdo->commit();
+
+            // Create purchase_success notification — failure must not fail the purchase response
+            if ($simulateOutcome === 'success' && $ticketIds !== []) {
+                try {
+                    $catStmt = $pdo->prepare(
+                        'SELECT c.slug AS category_slug
+                         FROM events e
+                         INNER JOIN categories c ON c.id = e.category_id
+                         WHERE e.id = :id
+                         LIMIT 1'
+                    );
+                    $catStmt->execute([':id' => $eventId]);
+                    $catRow = $catStmt->fetch(PDO::FETCH_ASSOC);
+
+                    NotificationService::create($pdo, $userId, 'purchase_success', [
+                        'event_title'   => (string) ($event['title'] ?? ''),
+                        'event_id'      => $eventId,
+                        'purchase_id'   => $paymentId,
+                        'ticket_count'  => count($ticketIds),
+                        'category_slug' => is_array($catRow) ? (string) ($catRow['category_slug'] ?? '') : '',
+                        'event_slug'    => (string) ($event['slug'] ?? ''),
+                    ]);
+                } catch (Throwable $e) {
+                    Logger::error('Purchase notification failed: ' . $e->getMessage());
+                }
+            }
 
             // Send ticket email — failure must not fail the purchase response
             if ($simulateOutcome === 'success' && $ticketIds !== []) {

@@ -12,6 +12,7 @@ export const adminQueryKeys = {
   events: {
     all: ["admin", "events"],
     list: (params = {}) => ["admin", "events", "list", params],
+    layout: (eventId) => ["admin", "events", "layout", eventId],
   },
   categories: {
     all: ["admin", "categories"],
@@ -25,5 +26,11 @@ export const adminQueryKeys = {
   security: {
     incidents: (params = {}) => ["admin", "security", "incidents", params],
     blocks: (params = {}) => ["admin", "security", "blocks", params],
+  },
+  analytics: {
+    sales: (days) => ["admin", "analytics", "sales", days],
+  },
+  ai: {
+    history: (params = {}) => ["admin", "ai", "history", params],
   },
 };

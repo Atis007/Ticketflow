@@ -19,6 +19,8 @@ import ForgotPasswordPage from "./auth/pages/ForgotPassword.jsx";
 import ResetPasswordPage from "./auth/pages/ResetPasswordPage.jsx";
 import VerifyEmailPage from "./auth/pages/VerifyEmailPage.jsx";
 
+import CreateEventPage from "./pages/CreateEventPage.jsx";
+
 import AdminLayout from "./admin/layouts/AdminLayout.jsx";
 import DashboardPage from "./admin/pages/DashboardPage.jsx";
 import UsersPage from "./admin/pages/UsersPage.jsx";
@@ -29,6 +31,8 @@ import AdminLogsPage from "./admin/pages/AdminLogsPage.jsx";
 import EventChangeLogsPage from "./admin/pages/EventChangeLogsPage.jsx";
 import IncidentsPage from "./admin/pages/IncidentsPage.jsx";
 import IPBlocksPage from "./admin/pages/IPBlocksPage.jsx";
+import AnalyticsPage from "./admin/pages/AnalyticsPage.jsx";
+import AiChatPage from "./admin/pages/AiChatPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -79,6 +83,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "create-event",
+        element: (
+          <RequireAuth>
+            <CreateEventPage />
+          </RequireAuth>
+        ),
+      },
+      {
         path: "admin",
         element: (
           <RequireAdmin>
@@ -96,6 +108,8 @@ const router = createBrowserRouter([
           { path: "logs/event-changes", element: <EventChangeLogsPage /> },
           { path: "security/incidents", element: <IncidentsPage /> },
           { path: "security/blocks", element: <IPBlocksPage /> },
+          { path: "analytics", element: <AnalyticsPage /> },
+          { path: "ai", element: <AiChatPage /> },
         ],
       },
     ],

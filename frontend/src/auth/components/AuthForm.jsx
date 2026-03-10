@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import AuthFields from "./AuthFields";
-import AuthSocial from "./AuthSocial";
 import AuthFooter from "./AuthFooter";
 import AsyncState from "@/components/AsyncState";
 
@@ -163,10 +162,7 @@ export default function AuthForm({ mode, ...props }) {
         </button>
 
         {mode !== "admin-login" && mode !== "forgot-password" && (
-          <>
-            <AuthSocial />
-            <AuthFooter mode={mode} />
-          </>
+          <AuthFooter mode={mode} />
         )}
       </form>
     </>

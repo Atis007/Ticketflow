@@ -21,6 +21,7 @@ import {
   ToolbarRow,
   useDataGridState,
 } from "../components";
+import VenueLayoutGenerator from "../components/VenueLayoutGenerator";
 
 function toDateTimeLocal(value) {
   if (!value) {
@@ -112,6 +113,7 @@ export default function EventsPage() {
   const [eventModal, setEventModal] = useState({ open: false, mode: "create", id: null });
   const [eventForm, setEventForm] = useState(() => initialEventForm());
   const [eventFormErrors, setEventFormErrors] = useState({});
+  const [layoutModal, setLayoutModal] = useState({ open: false, event: null });
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -402,6 +404,17 @@ export default function EventsPage() {
           meta: { align: "right" },
           cell: ({ row }) => (
           <div className="flex justify-end gap-2" onClick={(event) => event.stopPropagation()}>
+            {row.original.is_seated && (
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setLayoutModal({ open: true, event: row.original })}
+                icon={<span className="material-symbols-outlined text-base">grid_view</span>}
+                iconPosition="left"
+              >
+                Layout
+              </AdminButton>
+            )}
             <AdminButton
               variant="ghost"
               size="sm"
@@ -683,6 +696,22 @@ export default function EventsPage() {
             />
           </div>
         </div>
+      </AdminModal>
+
+      <AdminModal
+        isOpen={layoutModal.open}
+        onClose={() => setLayoutModal({ open: false, event: null })}
+        title={`Generate Layout — ${layoutModal.event?.title || ""}`}
+        size="lg"
+      >
+        {layoutModal.event && (
+          <VenueLayoutGenerator
+            eventId={layoutModal.event.id}
+            eventVenue={layoutModal.event.venue}
+            eventCapacity={layoutModal.event.capacity}
+            onGenerated={() => setLayoutModal({ open: false, event: null })}
+          />
+        )}
       </AdminModal>
     </AdminPage>
   );

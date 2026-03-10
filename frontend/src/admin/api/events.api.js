@@ -56,3 +56,12 @@ export function updateEventPatch({ token, id, payload, signal }) {
     body: payload,
   });
 }
+
+export function generateLayout({ token, eventId, venueType, venueName, capacity, instructions, signal }) {
+  return request(`admin/events/${eventId}/generate-layout`, {
+    token,
+    signal,
+    method: "POST",
+    body: { venueType, venueName, capacity, instructions },
+  });
+}

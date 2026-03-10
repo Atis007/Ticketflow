@@ -16,11 +16,16 @@ const actions = [
     icon: "settings",
     to: "/profile",
   },
+  {
+    label: "Create Event",
+    icon: "add_circle",
+    to: "/create-event",
+  },
 ];
 
 export default function QuickActions() {
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {actions.map((action) => (
         <Link
           key={action.label}
