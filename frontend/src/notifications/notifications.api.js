@@ -3,7 +3,6 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL;
 function endpoint(path) {
   const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
   const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
-
   return `${normalizedBase}${normalizedPath}`;
 }
 
@@ -20,7 +19,8 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
-    const message = payload?.error || payload?.message || `Request failed with ${response.status}`;
+    const message =
+      payload?.error || payload?.message || `Request failed with ${response.status}`;
     throw new Error(message);
   }
 
@@ -35,39 +35,42 @@ async function handleResponse(response) {
   return payload || {};
 }
 
-export async function getPurchases(token) {
-  const response = await fetch(endpoint("profile/purchases"), {
+export async function getNotifications(token) {
+  const response = await fetch(endpoint("api/notifications"), {
     method: "GET",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
-
   return handleResponse(response);
 }
 
-export async function uploadAvatar(token, file) {
-  const formData = new FormData();
-  formData.append("avatar", file);
+export async function markNotificationRead(token, id) {
+  const response = await fetch(endpoint(`api/notifications/${id}/read`), {
+    method: "PATCH",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  return handleResponse(response);
+}
 
-  const response = await fetch(endpoint("profile/avatar"), {
+export async function markAllRead(token) {
+  const response = await fetch(endpoint("api/notifications/read-all"), {
     method: "POST",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: formData,
   });
-
   return handleResponse(response);
 }
 
-export async function getFavorites(token) {
-  const response = await fetch(endpoint("profile/favorites"), {
-    method: "GET",
+export async function deleteNotification(token, id) {
+  const response = await fetch(endpoint(`api/notifications/${id}`), {
+    method: "DELETE",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
-
   return handleResponse(response);
 }

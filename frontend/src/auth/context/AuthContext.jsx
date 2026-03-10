@@ -173,6 +173,16 @@ export function AuthProvider({ children }) {
     return resendVerificationMutation.mutateAsync(token);
   }, [resendVerificationMutation, session?.token]);
 
+  const updateUser = useCallback((partialUser) => {
+    setSession((prev) => {
+      if (!prev?.user) return prev;
+      const nextUser = { ...prev.user, ...partialUser };
+      const nextSession = { ...prev, user: nextUser };
+      writeStoredAuth(nextSession);
+      return nextSession;
+    });
+  }, []);
+
   const confirmVerification = useCallback(async (verificationToken) => {
     const response = await confirmVerificationMutation.mutateAsync(verificationToken);
     const nextSession = createSessionFromResponse(response, "user");
@@ -211,6 +221,7 @@ export function AuthProvider({ children }) {
       resendVerification,
       confirmVerification,
       logout,
+      updateUser,
     };
   }, [
     confirmVerification,
@@ -224,6 +235,7 @@ export function AuthProvider({ children }) {
     resetPassword,
     sendVerification,
     session,
+    updateUser,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,22 +1,56 @@
+import { useState } from "react";
+
+import { formatEventDate } from "@/utils/formatDate";
+
 const STATUS_STYLES = {
   paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
   pending: "border-amber-500/30 bg-amber-500/10 text-amber-300",
   refunded: "border-slate-500/30 bg-slate-500/10 text-slate-300",
 };
 
-function formatDate(dateValue) {
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) {
-    return "Date TBA";
-  }
+function formatAmount(amount, currency) {
+  if (amount == null) return null;
+  const num = Number(amount);
+  if (!Number.isFinite(num)) return null;
+  return `${num.toFixed(2)} ${currency || "RSD"}`;
+}
 
-  return parsed.toLocaleString("en-US", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+function TicketQRList({ tickets }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!tickets || tickets.length === 0) return null;
+
+  return (
+    <div className="mt-3 border-t border-white/5 pt-3">
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="inline-flex items-center gap-1 text-xs font-medium text-text-muted hover:text-white transition-colors"
+      >
+        <span className="material-symbols-outlined text-sm">
+          {expanded ? "expand_less" : "expand_more"}
+        </span>
+        {expanded ? "Hide" : "Show"} {tickets.length} ticket{tickets.length !== 1 ? "s" : ""}
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-2">
+          {tickets.map((ticket, idx) => (
+            <div
+              key={ticket.id || idx}
+              className="flex items-start gap-2 rounded-lg border border-white/5 bg-surface-dark/50 px-3 py-2"
+            >
+              <span className="material-symbols-outlined text-sm text-accent-cyan mt-0.5">qr_code_2</span>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-white">Ticket #{idx + 1}</p>
+                <p className="text-[10px] text-text-muted break-all font-mono">{ticket.qrCode}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PurchasesList({ items = [] }) {
@@ -38,13 +72,21 @@ export default function PurchasesList({ items = [] }) {
           <div className="grid grid-cols-1 gap-1 text-sm text-text-soft lg:grid-cols-3">
             <p className="inline-flex items-center gap-1">
               <span className="material-symbols-outlined text-base">calendar_month</span>
-              {formatDate(item.eventDate)}
+              {formatEventDate(item.eventDate)}
             </p>
             <p className="inline-flex items-center gap-1">
               <span className="material-symbols-outlined text-base">confirmation_number</span>
               {item.quantity} x {item.ticketType}
             </p>
+            {formatAmount(item.amount, item.currency) && (
+              <p className="inline-flex items-center gap-1">
+                <span className="material-symbols-outlined text-base">payments</span>
+                {formatAmount(item.amount, item.currency)}
+              </p>
+            )}
           </div>
+
+          <TicketQRList tickets={item.tickets} />
         </article>
       ))}
     </div>

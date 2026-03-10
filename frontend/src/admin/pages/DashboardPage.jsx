@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/auth/context/AuthContext";
-import { adminQueryKeys, getHealthSummary, getSyncChanges } from "../api";
+import { adminQueryKeys, getAdminLogs, getHealthSummary, getIncidents, getSyncChanges } from "../api";
 import { AdminCard, AdminPage, ErrorState, KPICard, LoadingState, PageContent, PageHeader, StatusBadge } from "../components";
 import { formatAdminDateTime } from "../utils/dateTime";
 
@@ -128,9 +129,27 @@ export default function DashboardPage() {
     }
   }, [syncQuery.data?.nextCursor]);
 
+  const incidentsQuery = useQuery({
+    queryKey: adminQueryKeys.security.incidents({ status: "open", pageSize: 5 }),
+    enabled: Boolean(token),
+    queryFn: ({ signal }) => getIncidents({ token, status: "open", pageSize: 5, signal }),
+    placeholderData: (previous) => previous,
+    staleTime: 60 * 1000,
+  });
+
+  const adminLogsQuery = useQuery({
+    queryKey: adminQueryKeys.logs.admin({ pageSize: 5 }),
+    enabled: Boolean(token),
+    queryFn: ({ signal }) => getAdminLogs({ token, pageSize: 5, signal }),
+    placeholderData: (previous) => previous,
+    staleTime: 60 * 1000,
+  });
+
   const summary = summaryQuery.data;
   const recentChanges = useMemo(() => flattenChanges(syncQuery.data?.changes), [syncQuery.data?.changes]);
   const syncWarning = syncQuery.error?.message || null;
+  const openIncidents = incidentsQuery.data?.items ?? [];
+  const recentAdminLogs = adminLogsQuery.data?.items ?? [];
 
   const kpis = useMemo(
     () => [
@@ -230,17 +249,66 @@ export default function DashboardPage() {
                 )}
               </AdminCard>
 
-              <AdminCard title="Open Incidents">
-                <div className="space-y-4">
-                  <p className="text-[var(--admin-text-small)] text-[var(--admin-text-secondary)]">This panel will be connected in the next phase.</p>
-                  <StatusBadge variant="warning" dot>
-                    Pending deeper integration
-                  </StatusBadge>
-                </div>
+              <AdminCard
+                title="Open Incidents"
+                noPadding
+                action={
+                  <Link to="/admin/security/incidents" className="text-[var(--admin-text-caption)] text-[var(--admin-interactive-primary)] hover:underline">
+                    View all
+                  </Link>
+                }
+              >
+                {incidentsQuery.isPending && !incidentsQuery.data ? (
+                  <div className="px-6 py-8 text-center text-[var(--admin-text-small)] text-[var(--admin-text-muted)]">Loading…</div>
+                ) : incidentsQuery.error ? (
+                  <div className="px-6 py-8 text-center text-[var(--admin-text-small)] text-[var(--admin-status-error)]">{incidentsQuery.error.message || "Failed to load incidents."}</div>
+                ) : openIncidents.length === 0 ? (
+                  <div className="px-6 py-8 text-center text-[var(--admin-text-small)] text-[var(--admin-text-muted)]">No open incidents.</div>
+                ) : (
+                  <div className="divide-y divide-[var(--admin-border)]">
+                    {openIncidents.map((incident) => (
+                      <div key={incident.id} className="flex items-center justify-between px-6 py-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[var(--admin-text-small)] text-[var(--admin-text-primary)]">{incident.incident_type}</p>
+                          <p className="text-[var(--admin-text-caption)] text-[var(--admin-text-muted)]">{incident.ip} • {formatAdminDateTime(incident.last_seen_at)}</p>
+                        </div>
+                        <StatusBadge variant={incident.severity === "high" || incident.severity === "critical" ? "error" : "warning"} size="sm">
+                          {incident.severity}
+                        </StatusBadge>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </AdminCard>
 
-              <AdminCard title="Admin Activity">
-                <p className="text-[var(--admin-text-small)] text-[var(--admin-text-secondary)]">Action feed will be connected with admin logs in the next phase.</p>
+              <AdminCard
+                title="Admin Activity"
+                noPadding
+                action={
+                  <Link to="/admin/logs/admin" className="text-[var(--admin-text-caption)] text-[var(--admin-interactive-primary)] hover:underline">
+                    View all
+                  </Link>
+                }
+              >
+                {adminLogsQuery.isPending && !adminLogsQuery.data ? (
+                  <div className="px-6 py-8 text-center text-[var(--admin-text-small)] text-[var(--admin-text-muted)]">Loading…</div>
+                ) : adminLogsQuery.error ? (
+                  <div className="px-6 py-8 text-center text-[var(--admin-text-small)] text-[var(--admin-status-error)]">{adminLogsQuery.error.message || "Failed to load logs."}</div>
+                ) : recentAdminLogs.length === 0 ? (
+                  <div className="px-6 py-8 text-center text-[var(--admin-text-small)] text-[var(--admin-text-muted)]">No recent activity.</div>
+                ) : (
+                  <div className="divide-y divide-[var(--admin-border)]">
+                    {recentAdminLogs.map((log) => (
+                      <div key={log.id} className="flex items-center justify-between px-6 py-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[var(--admin-text-small)] text-[var(--admin-text-primary)]">{log.action}</p>
+                          <p className="truncate text-[var(--admin-text-caption)] text-[var(--admin-text-muted)]">{log.admin_email} • {log.entity_type}</p>
+                        </div>
+                        <p className="ml-4 shrink-0 text-[var(--admin-text-caption)] text-[var(--admin-text-muted)]">{formatAdminDateTime(log.created_at)}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </AdminCard>
             </div>
           </>

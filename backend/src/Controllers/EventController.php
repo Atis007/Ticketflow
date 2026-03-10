@@ -15,6 +15,7 @@ use App\Services\AuthorizationService;
 use App\Services\EventChangeLogService;
 use App\Services\EventSeatService;
 use App\Services\ImageUploadService;
+use App\Services\NotificationService;
 use DateTimeImmutable;
 use Exception;
 use PDO;
@@ -585,6 +586,24 @@ final class EventController
                         'changed_fields' => $this->changedFields($existing, $after, $trackedFields),
                     ]
                 );
+            }
+
+            // Notify confirmed ticket holders — failure must not block the response
+            try {
+                $catStmt = $pdo->prepare(
+                    'SELECT slug FROM categories WHERE id = :id LIMIT 1'
+                );
+                $catStmt->execute([':id' => (int) ($after['category_id'] ?? 0)]);
+                $catRow = $catStmt->fetch(PDO::FETCH_ASSOC);
+
+                NotificationService::createForEventTicketHolders($pdo, $id, 'event_updated', [
+                    'event_title'   => (string) ($after['title'] ?? ''),
+                    'event_id'      => $id,
+                    'category_slug' => is_array($catRow) ? (string) ($catRow['slug'] ?? '') : '',
+                    'event_slug'    => (string) ($after['slug'] ?? ''),
+                ]);
+            } catch (Exception $notifEx) {
+                Logger::error('Event update notification failed: ' . $notifEx->getMessage());
             }
 
             Json::success([

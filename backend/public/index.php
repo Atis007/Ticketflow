@@ -18,6 +18,7 @@ use App\Controllers\AdminSecurityController;
 use App\Controllers\CategoryController;
 use App\Controllers\EventController;
 use App\Controllers\EventSeatController;
+use App\Controllers\NotificationController;
 use App\Controllers\PaymentController;
 use App\Controllers\PurchaseController;
 use App\Controllers\ProfileController;
@@ -82,6 +83,12 @@ $ticket = new TicketController();
 $router->post('/api/tickets/scan', [$ticket, 'scan'], [AuthMiddleware::auth()]);
 $router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware::verified()]);
 $router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::verified()]);
+
+$notification = new NotificationController();
+$router->get('/api/notifications', [$notification, 'index'], [AuthMiddleware::auth()]);
+$router->patch('/api/notifications/{id:\d+}/read', [$notification, 'markRead'], [AuthMiddleware::auth()]);
+$router->post('/api/notifications/read-all', [$notification, 'markAllRead'], [AuthMiddleware::auth()]);
+$router->delete('/api/notifications/{id:\d+}', [$notification, 'destroy'], [AuthMiddleware::auth()]);
 // All type of resource routes, commented out for now. With the resource method, you can create all CRUD routes for a resource in one line.
 $router->resource("/api/admin/users", $admin, [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 $router->patch('/api/admin/users/{id}/disable', [$admin, 'disableUser'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);

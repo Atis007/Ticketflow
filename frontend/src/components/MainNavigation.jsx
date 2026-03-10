@@ -2,14 +2,19 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../auth/context/AuthContext";
+import { useNotifications } from "../notifications/hooks/useNotifications";
+import NotificationDropdown from "../notifications/NotificationDropdown";
 
 import SidebarMenu from "@/components/SidebarMenu";
 
 function MainNavigation() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
 
   const { isAuthenticated, isAdmin } = useAuth();
+  const { data: notifData } = useNotifications();
+  const unreadCount = notifData?.unread_count ?? 0;
 
   function toggleExpand() {
     setIsExpanded(!isExpanded);
@@ -75,6 +80,27 @@ function MainNavigation() {
                     search
                   </span>
                 </button>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setBellOpen((v) => !v)}
+                    aria-label="Notifications"
+                    className="cursor-pointer relative flex items-center justify-center w-10 h-10 rounded-full text-gray-300 hover:bg-white/10 transition-all"
+                  >
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      notifications
+                    </span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  {bellOpen && (
+                    <NotificationDropdown onClose={() => setBellOpen(false)} />
+                  )}
+                </div>
 
                 <NavLink
                   to={isAdmin ? "/admin/dashboard" : "/profile"}

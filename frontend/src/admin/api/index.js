@@ -4,4 +4,6 @@ export * from "./events.api";
 export * from "./categories.api";
 export * from "./logs.api";
 export * from "./security.api";
+export * from "./analytics.api";
+export * from "./ai.api";
 export * from "./queryKeys";

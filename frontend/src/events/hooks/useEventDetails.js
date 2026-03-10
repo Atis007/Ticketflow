@@ -3,26 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getEventDetailsByCategorySlug } from "../events.api";
 import { eventsKeys } from "../events.queryKeys";
-
-function formatDateTime(rawStartsAt) {
-  if (!rawStartsAt) {
-    return "Date TBA";
-  }
-
-  const normalized = String(rawStartsAt).replace(" ", "T").replace(/\./g, "-");
-  const parsed = new Date(normalized);
-  if (Number.isNaN(parsed.getTime())) {
-    return String(rawStartsAt);
-  }
-
-  return parsed.toLocaleString("en-US", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { formatEventDate } from "@/utils/formatDate";
 
 function toArrayDescription(value) {
   if (Array.isArray(value)) {
@@ -94,10 +75,11 @@ function adaptDetail(eventPayload) {
     id: eventPayload.id,
     slug: eventPayload.slug,
     title: eventPayload.title,
+    createdBy: eventPayload.created_by || null,
     heroImage: eventPayload.image || null,
     venue: eventPayload.venue || null,
     location: [eventPayload.city, eventPayload.venue].filter(Boolean).join(", ") || null,
-    dateTime: formatDateTime(eventPayload.starts_at),
+    dateTime: formatEventDate(eventPayload.starts_at),
     categoryBadges: [
       { label: eventPayload.category_name || "Event", tone: "primary" },
       { label: eventPayload.subcategory_name || "General", tone: "neutral" },

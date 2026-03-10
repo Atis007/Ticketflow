@@ -6,7 +6,11 @@ import { useAuth } from "@/auth/context/AuthContext";
 const navigation = [
   {
     title: "Overview",
-    items: [{ label: "Dashboard", path: "/admin/dashboard", icon: "dashboard" }],
+    items: [
+      { label: "Dashboard", path: "/admin/dashboard", icon: "dashboard" },
+      { label: "Analytics", path: "/admin/analytics", icon: "bar_chart" },
+      { label: "AI Assistant", path: "/admin/ai", icon: "smart_toy" },
+    ],
   },
   {
     title: "Management",

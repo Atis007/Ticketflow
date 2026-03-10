@@ -84,3 +84,35 @@ export async function getEventSeats(eventId) {
 
   return handleResponse(response);
 }
+
+export async function getCategories() {
+  const response = await fetch(endpoint("categories"), {
+    method: "GET",
+  });
+
+  return handleResponse(response);
+}
+
+export async function createEvent(token, formData) {
+  const response = await fetch(endpoint("events"), {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  return handleResponse(response);
+}
+
+export async function updateEvent(token, id, formData) {
+  const response = await fetch(endpoint(`events/${encodeURIComponent(id)}`), {
+    method: "PUT",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  return handleResponse(response);
+}
