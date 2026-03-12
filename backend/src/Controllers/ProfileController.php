@@ -195,6 +195,65 @@ final class ProfileController
         }
     }
 
+    /**
+     * Adds an event to the authenticated user's favorites.
+     * POST /api/favorites/{eventId}
+     */
+    public function addFavorite(Request $request, array $params = []): void
+    {
+        $eventId = (int) ($params['eventId'] ?? 0);
+        if ($eventId <= 0) {
+            Json::error('Invalid event id', 400);
+        }
+
+        $userId = (int) (AuthMiddleware::authenticatedPayload($request)['id'] ?? 0);
+        if ($userId <= 0) {
+            Json::error('Unauthorized', 401);
+        }
+
+        $pdo = Database::getConnection();
+
+        $eventStmt = $pdo->prepare('SELECT id FROM events WHERE id = :id LIMIT 1');
+        $eventStmt->execute([':id' => $eventId]);
+        if (!is_array($eventStmt->fetch(PDO::FETCH_ASSOC))) {
+            Json::error('Event not found', 404);
+        }
+
+        $checkStmt = $pdo->prepare('SELECT id FROM favorites WHERE user_id = :uid AND event_id = :eid LIMIT 1');
+        $checkStmt->execute([':uid' => $userId, ':eid' => $eventId]);
+        if (is_array($checkStmt->fetch(PDO::FETCH_ASSOC))) {
+            Json::error('Event is already in favorites', 409);
+        }
+
+        $pdo->prepare('INSERT INTO favorites (user_id, event_id) VALUES (:uid, :eid)')
+            ->execute([':uid' => $userId, ':eid' => $eventId]);
+
+        Json::success(null, 201);
+    }
+
+    /**
+     * Removes an event from the authenticated user's favorites.
+     * DELETE /api/favorites/{eventId}
+     */
+    public function removeFavorite(Request $request, array $params = []): void
+    {
+        $eventId = (int) ($params['eventId'] ?? 0);
+        if ($eventId <= 0) {
+            Json::error('Invalid event id', 400);
+        }
+
+        $userId = (int) (AuthMiddleware::authenticatedPayload($request)['id'] ?? 0);
+        if ($userId <= 0) {
+            Json::error('Unauthorized', 401);
+        }
+
+        $pdo = Database::getConnection();
+        $pdo->prepare('DELETE FROM favorites WHERE user_id = :uid AND event_id = :eid')
+            ->execute([':uid' => $userId, ':eid' => $eventId]);
+
+        Json::success(null);
+    }
+
     private function appTimezone(): string
     {
         $value = (string) ($_ENV['TIMEZONE'] ?? 'Europe/Belgrade');

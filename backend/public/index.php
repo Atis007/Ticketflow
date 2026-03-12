@@ -77,12 +77,19 @@ $router->post('/api/events/{id:\d+}/seats/reserve', [$eventSeat, 'reserve'], [Au
 $router->post('/api/purchases/simulate', [$purchase, 'simulate'], [AuthMiddleware::auth()]);
 
 $payment = new PaymentController();
+$router->post('/api/payments', [$payment, 'initiate'], [AuthMiddleware::auth()]);
+$router->get('/api/payments/{id:\d+}', [$payment, 'show'], [AuthMiddleware::auth()]);
 $router->post('/api/payments/{id:\d+}/confirm', [$payment, 'confirm'], [AuthMiddleware::auth()]);
 
 $ticket = new TicketController();
+$router->get('/api/tickets', [$ticket, 'index'], [AuthMiddleware::auth()]);
+$router->get('/api/tickets/archive', [$ticket, 'archive'], [AuthMiddleware::auth()]);
+$router->get('/api/tickets/{id:\d+}', [$ticket, 'show'], [AuthMiddleware::auth()]);
 $router->post('/api/tickets/scan', [$ticket, 'scan'], [AuthMiddleware::auth()]);
 $router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware::verified()]);
 $router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::verified()]);
+$router->post('/api/favorites/{eventId:\d+}', [$profile, 'addFavorite'], [AuthMiddleware::auth()]);
+$router->delete('/api/favorites/{eventId:\d+}', [$profile, 'removeFavorite'], [AuthMiddleware::auth()]);
 
 $notification = new NotificationController();
 $router->get('/api/notifications', [$notification, 'index'], [AuthMiddleware::auth()]);
