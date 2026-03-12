@@ -40,6 +40,19 @@ final class AiServiceClient
     }
 
     /**
+     * Enhances event title and description via the AI service.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function enhanceContent(string $title, string $description): ?array
+    {
+        return $this->post('/enhance-content', [
+            'title'       => $title,
+            'description' => $description,
+        ]);
+    }
+
+    /**
      * Sends a chat message to the AI admin assistant.
      *
      * @param array<int, array{role: string, content: string}> $messages
