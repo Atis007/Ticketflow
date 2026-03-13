@@ -8,6 +8,7 @@ use App\Core\Router;
 use App\Core\CORS;
 use App\Core\ErrorHandler;
 use App\Controllers\AdminAiController;
+use App\Controllers\AiController;
 use App\Controllers\AdminAnalyticsController;
 use App\Controllers\AdminController;
 use App\Controllers\AdminCategoryController;
@@ -22,6 +23,7 @@ use App\Controllers\NotificationController;
 use App\Controllers\PaymentController;
 use App\Controllers\PurchaseController;
 use App\Controllers\ProfileController;
+use App\Controllers\MobileController;
 use App\Controllers\TicketController;
 use App\Controllers\UserController;
 use App\Controllers\VerificationController;
@@ -77,12 +79,25 @@ $router->post('/api/events/{id:\d+}/seats/reserve', [$eventSeat, 'reserve'], [Au
 $router->post('/api/purchases/simulate', [$purchase, 'simulate'], [AuthMiddleware::auth()]);
 
 $payment = new PaymentController();
+$router->post('/api/payments', [$payment, 'initiate'], [AuthMiddleware::auth()]);
+$router->get('/api/payments/{id:\d+}', [$payment, 'show'], [AuthMiddleware::auth()]);
 $router->post('/api/payments/{id:\d+}/confirm', [$payment, 'confirm'], [AuthMiddleware::auth()]);
 
 $ticket = new TicketController();
+$router->get('/api/tickets', [$ticket, 'index'], [AuthMiddleware::auth()]);
+$router->get('/api/tickets/archive', [$ticket, 'archive'], [AuthMiddleware::auth()]);
+$router->get('/api/tickets/{id:\d+}', [$ticket, 'show'], [AuthMiddleware::auth()]);
 $router->post('/api/tickets/scan', [$ticket, 'scan'], [AuthMiddleware::auth()]);
+$mobile = new MobileController();
+$router->post('/api/push-tokens', [$mobile, 'registerPushToken'], [AuthMiddleware::auth()]);
+$router->delete('/api/push-tokens/{id:\d+}', [$mobile, 'deletePushToken'], [AuthMiddleware::auth()]);
+$router->get('/api/checkin/event/{id:\d+}/tickets', [$mobile, 'checkinTickets'], [AuthMiddleware::auth()]);
+$router->post('/api/checkin/sync', [$mobile, 'checkinSync'], [AuthMiddleware::auth()]);
+
 $router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware::verified()]);
 $router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::verified()]);
+$router->post('/api/favorites/{eventId:\d+}', [$profile, 'addFavorite'], [AuthMiddleware::auth()]);
+$router->delete('/api/favorites/{eventId:\d+}', [$profile, 'removeFavorite'], [AuthMiddleware::auth()]);
 
 $notification = new NotificationController();
 $router->get('/api/notifications', [$notification, 'index'], [AuthMiddleware::auth()]);
@@ -129,6 +144,10 @@ $router->get('/api/admin/analytics/sales', [$adminAnalytics, 'sales'], [AuthMidd
 $adminAi = new AdminAiController();
 $router->post('/api/admin/ai/chat', [$adminAi, 'chat'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 $router->get('/api/admin/ai/history', [$adminAi, 'history'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+
+$ai = new AiController();
+$router->post('/api/ai/enhance-content', [$ai, 'enhanceContent'], [AuthMiddleware::auth()]);
+$router->get('/api/ai/eval-results', [$ai, 'evalResults'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 /*$router->resource("/api/events", EventController::class);
 $router->resource("/api/categories", CategoryController::class);
 $router->resource("/api/tickets", TicketController::class);

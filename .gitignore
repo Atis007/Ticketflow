@@ -61,6 +61,8 @@ backend/storage/
 backend/cache/
 backend/.phpunit.result.cache
 backend/uploads/
+backend/SPEC.MD
+backend/REMAINING.md
 
 # Composer / PHP cache
 composer.lock
@@ -77,6 +79,8 @@ frontend/.env.local
 frontend/.env.*.local
 frontend/build/
 frontend/dist/
+frontend/SPEC.MD
+frontend/REMAINING.md
 
 
 ###############################################
@@ -87,6 +91,8 @@ mobile/node_modules/
 mobile/.env
 mobile/.env.local
 mobile/.env.*.local
+mobile/SPEC.MD
+mobile/REMAINING.md
 
 # Expo directories
 mobile/.expo/
