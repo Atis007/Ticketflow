@@ -27,8 +27,11 @@ export default function ArchivePage() {
         </Link>
       </div>
 
-      {purchasesQuery.isPending && <AsyncState message="Loading archive..." />}
-      {purchasesQuery.isError && (
+      {!isVerified && (
+        <AsyncState message="Please verify your email to view your archive." />
+      )}
+      {isVerified && purchasesQuery.isPending && <AsyncState message="Loading archive..." />}
+      {isVerified && purchasesQuery.isError && (
         <AsyncState
           type="error"
           message={purchasesQuery.error?.message || "Failed to load archive."}
@@ -36,7 +39,7 @@ export default function ArchivePage() {
         />
       )}
 
-      {!purchasesQuery.isPending && !purchasesQuery.isError && (
+      {isVerified && !purchasesQuery.isPending && !purchasesQuery.isError && (
         <PurchasesList items={archived} />
       )}
     </div>

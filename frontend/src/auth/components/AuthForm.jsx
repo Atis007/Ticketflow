@@ -88,6 +88,11 @@ export default function AuthForm({ mode, ...props }) {
         return;
       }
 
+      if (mode === "register" && response?.success) {
+        navigate("/login?registered=true");
+        return;
+      }
+
       if (response?.success) {
         navigate("/");
       } else {

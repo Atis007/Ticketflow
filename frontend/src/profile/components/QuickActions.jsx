@@ -4,7 +4,7 @@ const actions = [
   {
     label: "Browse Events",
     icon: "event",
-    to: "/events/music-festival",
+    to: "/events",
   },
   {
     label: "Saved Favorites",
