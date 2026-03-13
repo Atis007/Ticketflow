@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { formatEventDate } from "@/utils/formatDate";
+import TicketQR from "@/purchases/TicketQR";
 
 const STATUS_STYLES = {
   paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
@@ -34,18 +35,13 @@ function TicketQRList({ tickets }) {
       </button>
 
       {expanded && (
-        <div className="mt-2 space-y-2">
+        <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {tickets.map((ticket, idx) => (
-            <div
+            <TicketQR
               key={ticket.id || idx}
-              className="flex items-start gap-2 rounded-lg border border-white/5 bg-surface-dark/50 px-3 py-2"
-            >
-              <span className="material-symbols-outlined text-sm text-accent-cyan mt-0.5">qr_code_2</span>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-white">Ticket #{idx + 1}</p>
-                <p className="text-[10px] text-text-muted break-all font-mono">{ticket.qrCode}</p>
-              </div>
-            </div>
+              qrCode={ticket.qrCode}
+              ticketNumber={idx + 1}
+            />
           ))}
         </div>
       )}

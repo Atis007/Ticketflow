@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { QRCodeSVG } from "qrcode.react";
+import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import AsyncState from "@/components/AsyncState";
 import { useAuth } from "@/auth/context/AuthContext";
 import { useSimulatePurchase } from "@/purchases/hooks/useSimulatePurchase";
-import { useConfirmPayment } from "@/purchases/hooks/useConfirmPayment";
+import PaymentQR from "@/purchases/PaymentQR";
 import { eventsKeys } from "./events.queryKeys";
 import SeatMap from "./SeatMap";
 
@@ -24,9 +23,9 @@ function formatMoney(amount, currency) {
 
 export default function EventTicketCard({ tickets, purchase }) {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const simulatePurchase = useSimulatePurchase();
-  const confirmPayment = useConfirmPayment();
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSeatIds, setSelectedSeatIds] = useState([]);
@@ -102,24 +101,14 @@ export default function EventTicketCard({ tickets, purchase }) {
     }
   };
 
-  const handleConfirmPayment = async () => {
-    if (!feedback?.paymentId || !token) return;
-
-    try {
-      await confirmPayment.mutateAsync({ token, paymentId: feedback.paymentId });
-      setFeedback((prev) => ({
-        ...prev,
-        type: "info",
-        message: "Payment confirmed — tickets are ready!",
-        confirmed: true,
-      }));
-    } catch (error) {
-      setFeedback((prev) => ({
-        ...prev,
-        type: "error",
-        message: error instanceof Error ? error.message : "Payment confirmation failed.",
-      }));
-    }
+  const handlePaymentConfirmed = () => {
+    setFeedback((prev) => ({
+      ...prev,
+      type: "info",
+      message: "Payment confirmed — tickets are ready!",
+      confirmed: true,
+    }));
+    navigate("/dashboard/tickets");
   };
 
   return (
@@ -183,34 +172,14 @@ export default function EventTicketCard({ tickets, purchase }) {
               )}
 
               {feedback.ipsQrPayload && !feedback.confirmed ? (
-                <div className="mt-4 rounded-xl border border-white/10 bg-background-dark p-4 flex flex-col items-center gap-3">
-                  <p className="text-xs text-text-muted text-center">
-                    IPS Payment QR — scan with your banking app
-                  </p>
-                  <QRCodeSVG
-                    value={feedback.ipsQrPayload}
-                    size={160}
-                    bgColor="transparent"
-                    fgColor="#ffffff"
-                    level="M"
-                  />
-                  <p className="text-[10px] text-text-muted break-all text-center max-w-60">
-                    {feedback.ipsQrPayload}
-                  </p>
-                </div>
+                <PaymentQR
+                  ipsQrPayload={feedback.ipsQrPayload}
+                  paymentId={feedback.paymentId}
+                  onConfirmed={handlePaymentConfirmed}
+                />
               ) : null}
 
               <div className="mt-3 flex items-center gap-3">
-                {feedback.paymentId && !feedback.confirmed && (
-                  <button
-                    type="button"
-                    onClick={handleConfirmPayment}
-                    disabled={confirmPayment.isPending}
-                    className="inline-flex h-10 items-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-60"
-                  >
-                    {confirmPayment.isPending ? "Confirming..." : "Confirm Payment"}
-                  </button>
-                )}
                 <Link
                   to="/profile"
                   className="inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-color-hover"

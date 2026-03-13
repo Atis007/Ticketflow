@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/auth/context/AuthContext";
-import { adminQueryKeys, getAiHistory, sendAiChat } from "../api";
+import { adminQueryKeys, getAiHistory, getEvalResults, sendAiChat } from "../api";
 import { AdminButton, AdminCard, AdminPage, PageContent, PageHeader, StatusBadge } from "../components";
 import { formatAdminDateTime } from "../utils/dateTime";
 
@@ -277,6 +277,81 @@ function HistoryTab({ token }) {
   );
 }
 
+function EvalResultsTab({ token }) {
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const evalQuery = useQuery({
+    queryKey: adminQueryKeys.ai.evalResults({ page, pageSize }),
+    enabled: Boolean(token),
+    queryFn: ({ signal }) => getEvalResults({ token, page, pageSize, signal }),
+    placeholderData: (previous) => previous,
+  });
+
+  const items = evalQuery.data?.items ?? [];
+  const pagination = evalQuery.data?.pagination;
+
+  const statusVariant = (s) => {
+    if (s === "passed") return "success";
+    if (s === "failed") return "error";
+    if (s === "running") return "warning";
+    return "default";
+  };
+
+  return (
+    <AdminCard title="Eval Results" noPadding>
+      {evalQuery.isPending && !evalQuery.data ? (
+        <div className="px-6 py-12 text-center text-[var(--admin-text-small)] text-[var(--admin-text-muted)]">Loading eval results…</div>
+      ) : evalQuery.error ? (
+        <div className="px-6 py-12 text-center text-[var(--admin-text-small)] text-[var(--admin-status-error)]">{evalQuery.error.message || "Failed to load eval results."}</div>
+      ) : items.length === 0 ? (
+        <div className="px-6 py-12 text-center text-[var(--admin-text-small)] text-[var(--admin-text-muted)]">No eval results yet.</div>
+      ) : (
+        <>
+          <div className="divide-y divide-[var(--admin-border)]">
+            <div className="grid grid-cols-12 gap-2 px-6 py-3 text-[var(--admin-text-caption)] font-semibold text-[var(--admin-text-muted)] uppercase tracking-wider">
+              <span className="col-span-3">Date</span>
+              <span className="col-span-3">Event ID</span>
+              <span className="col-span-3">Eval Name</span>
+              <span className="col-span-2">Status</span>
+              <span className="col-span-1 text-right">Duration</span>
+            </div>
+            {items.map((item) => (
+              <div key={item.id} className="grid grid-cols-12 items-center gap-2 px-6 py-3">
+                <span className="col-span-3 text-[var(--admin-text-caption)] text-[var(--admin-text-muted)]">{formatAdminDateTime(item.created_at)}</span>
+                <span className="col-span-3 truncate font-mono text-[var(--admin-text-caption)] text-[var(--admin-text-muted)]">{item.event_id ?? "—"}</span>
+                <span className="col-span-3 truncate text-[var(--admin-text-small)] text-[var(--admin-text-primary)]">{item.eval_name ?? "—"}</span>
+                <span className="col-span-2">
+                  <StatusBadge variant={statusVariant(item.status)} size="sm">
+                    {item.status}
+                  </StatusBadge>
+                </span>
+                <span className="col-span-1 text-right text-[var(--admin-text-caption)] text-[var(--admin-text-muted)]">{item.duration_ms != null ? `${item.duration_ms}ms` : "—"}</span>
+              </div>
+            ))}
+          </div>
+
+          {pagination && pagination.totalPages > 1 ? (
+            <div className="flex items-center justify-between border-t border-[var(--admin-border)] px-6 py-4">
+              <p className="text-[var(--admin-text-caption)] text-[var(--admin-text-muted)]">
+                Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+              </p>
+              <div className="flex gap-2">
+                <AdminButton variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  Previous
+                </AdminButton>
+                <AdminButton variant="secondary" size="sm" disabled={page >= pagination.totalPages} onClick={() => setPage((p) => p + 1)}>
+                  Next
+                </AdminButton>
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+    </AdminCard>
+  );
+}
+
 export default function AiChatPage() {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState("chat");
@@ -287,33 +362,36 @@ export default function AiChatPage() {
 
       <PageContent>
         <div className="mb-6 flex gap-1 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] bg-[var(--admin-bg-card)] p-1 w-fit">
-          {["chat", "history"].map((tab) => (
+          {[
+            { id: "chat", icon: "chat", label: "Chat" },
+            { id: "history", icon: "history", label: "History" },
+            { id: "eval-results", icon: "science", label: "Eval Results" },
+          ].map((tab) => (
             <button
-              key={tab}
+              key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`rounded-[var(--admin-radius-md)] px-4 py-2 text-[var(--admin-text-small)] font-medium capitalize transition-all duration-[var(--admin-transition-fast)] ${
-                activeTab === tab
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-[var(--admin-radius-md)] px-4 py-2 text-[var(--admin-text-small)] font-medium transition-all duration-[var(--admin-transition-fast)] ${
+                activeTab === tab.id
                   ? "bg-[var(--admin-interactive-primary)] text-white shadow-[var(--admin-glow-primary)]"
                   : "text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
               }`}
             >
-              {tab === "chat" ? (
-                <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">chat</span>
-                  Chat
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">history</span>
-                  History
-                </span>
-              )}
+              <span className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-base">{tab.icon}</span>
+                {tab.label}
+              </span>
             </button>
           ))}
         </div>
 
-        {activeTab === "chat" ? <ChatTab token={token} /> : <HistoryTab token={token} />}
+        {activeTab === "chat" ? (
+          <ChatTab token={token} />
+        ) : activeTab === "history" ? (
+          <HistoryTab token={token} />
+        ) : (
+          <EvalResultsTab token={token} />
+        )}
       </PageContent>
     </AdminPage>
   );

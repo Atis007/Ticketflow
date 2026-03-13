@@ -32,5 +32,6 @@ export const adminQueryKeys = {
   },
   ai: {
     history: (params = {}) => ["admin", "ai", "history", params],
+    evalResults: (params = {}) => ["admin", "ai", "eval-results", params],
   },
 };

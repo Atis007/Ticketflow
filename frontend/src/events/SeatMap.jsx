@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import AsyncState from "@/components/AsyncState";
+import { useAuth } from "@/auth/context/AuthContext";
 import { useEventSeats } from "./hooks/useEventSeats";
+import { useRealtimeSeats } from "./hooks/useRealtimeSeats";
+import { useReserveSeat } from "./hooks/useReserveSeat";
 
 const SEAT_SIZE = 24;
 const SEAT_GAP = 4;
@@ -76,6 +79,9 @@ function SeatRect({ x, y, seat, isSelected, onClick }) {
 
 export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1, disabled = false }) {
   const seatsQuery = useEventSeats(eventId, Boolean(eventId));
+  useRealtimeSeats(eventId);
+  const { token } = useAuth();
+  const reserveSeat = useReserveSeat(eventId);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [zoomLevel, setZoomLevel] = useState(1.0);
   const containerRef = useRef(null);
@@ -85,8 +91,10 @@ export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1,
   const isInteractive = typeof onSelectionChange === "function";
 
   const handleToggle = useCallback(
-    (seatId) => {
+    async (seatId) => {
       if (!isInteractive || disabled) return;
+
+      const isAdding = !selectedIds.has(seatId);
 
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -101,8 +109,21 @@ export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1,
         }
         return next;
       });
+
+      if (isAdding && token) {
+        try {
+          await reserveSeat.mutateAsync({ seatIds: [seatId], token });
+        } catch {
+          // Seat was already taken — rollback local selection
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(seatId);
+            return next;
+          });
+        }
+      }
     },
-    [isInteractive, disabled, maxSelectable],
+    [isInteractive, disabled, maxSelectable, selectedIds, token, reserveSeat],
   );
 
   const activeSelectedIds = useMemo(() => {
