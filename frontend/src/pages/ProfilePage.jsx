@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 
 import AsyncState from "@/components/AsyncState";
@@ -48,6 +48,23 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-2 pt-4 pb-6 sm:px-4 lg:px-6">
       <ProfileHeader user={user} onLogout={handleLogout} />
+
+      <div className="flex flex-wrap gap-2">
+        <Link
+          to="/dashboard/tickets"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-text-soft transition-colors hover:border-primary hover:text-primary"
+        >
+          <span className="material-symbols-outlined text-base">confirmation_number</span>
+          My Tickets
+        </Link>
+        <Link
+          to="/dashboard/archive"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-text-soft transition-colors hover:border-primary hover:text-primary"
+        >
+          <span className="material-symbols-outlined text-base">archive</span>
+          Archive
+        </Link>
+      </div>
 
       {!isVerified ? (
         <ProfileSection title="Email Verification Required">

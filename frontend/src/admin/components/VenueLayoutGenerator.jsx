@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/auth/context/AuthContext";
+import { enhanceContent } from "../api/ai.api";
 import { generateLayout } from "../api/events.api";
 import { adminQueryKeys } from "../api/queryKeys";
 import { AdminButton } from "./AdminButton";
@@ -25,6 +26,8 @@ export default function VenueLayoutGenerator({ eventId, eventVenue, eventCapacit
   const [capacity, setCapacity] = useState(eventCapacity ? String(eventCapacity) : "");
   const [instructions, setInstructions] = useState("");
   const [layout, setLayout] = useState(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhanceError, setEnhanceError] = useState(null);
 
   const mutation = useMutation({
     mutationFn: (params) => generateLayout({ token, eventId, ...params }),
@@ -36,11 +39,31 @@ export default function VenueLayoutGenerator({ eventId, eventVenue, eventCapacit
     },
   });
 
-  const handleGenerate = () => {
-    const params = { venueType, signal: undefined };
+  const handleGenerate = async () => {
+    setEnhanceError(null);
+    const params = { venueType };
     if (venueName.trim()) params.venueName = venueName.trim();
     if (capacity && Number(capacity) > 0) params.capacity = Number(capacity);
-    if (instructions.trim()) params.instructions = instructions.trim();
+
+    let finalInstructions = instructions.trim();
+    if (finalInstructions) {
+      setIsEnhancing(true);
+      try {
+        const result = await enhanceContent({
+          token,
+          title: venueName.trim() || venueType,
+          description: finalInstructions,
+        });
+        finalInstructions = result?.enhanced?.description ?? finalInstructions;
+      } catch (err) {
+        setIsEnhancing(false);
+        setEnhanceError(err?.message || "AI enhancement service is unavailable. Please try again.");
+        return;
+      }
+      setIsEnhancing(false);
+      params.instructions = finalInstructions;
+    }
+
     mutation.mutate(params);
   };
 
@@ -87,6 +110,12 @@ export default function VenueLayoutGenerator({ eventId, eventVenue, eventCapacit
         placeholder="Describe the venue layout you want (e.g., 'VIP section in front, 2 balcony levels')..."
       />
 
+      {enhanceError && (
+        <div className="rounded-lg border border-[var(--admin-status-error-border)] bg-[var(--admin-status-error-bg)] px-4 py-3 text-[var(--admin-text-small)] text-[var(--admin-status-error)]">
+          {enhanceError}
+        </div>
+      )}
+
       {mutation.isError && (
         <div className="rounded-lg border border-[var(--admin-status-error-border)] bg-[var(--admin-status-error-bg)] px-4 py-3 text-[var(--admin-text-small)] text-[var(--admin-status-error)]">
           {mutation.error?.message || "Failed to generate layout."}
@@ -96,17 +125,19 @@ export default function VenueLayoutGenerator({ eventId, eventVenue, eventCapacit
       <AdminButton
         variant="primary"
         onClick={handleGenerate}
-        loading={mutation.isPending}
-        disabled={mutation.isPending}
+        loading={isEnhancing || mutation.isPending}
+        disabled={isEnhancing || mutation.isPending}
         icon={<span className="material-symbols-outlined text-base">auto_awesome</span>}
         iconPosition="left"
       >
-        {mutation.isPending ? "Generating Layout..." : "Generate Layout"}
+        {isEnhancing || mutation.isPending ? "Generating Layout..." : "Generate Layout"}
       </AdminButton>
 
-      {mutation.isPending && (
+      {(isEnhancing || mutation.isPending) && (
         <p className="text-[var(--admin-text-muted)] text-[var(--admin-text-small)]">
-          AI is generating the venue layout. This may take up to 90 seconds...
+          {isEnhancing
+            ? "Refining your description with AI..."
+            : "AI is generating the venue layout. This may take up to 90 seconds..."}
         </p>
       )}
 

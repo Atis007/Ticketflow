@@ -21,6 +21,7 @@ import {
   ToolbarRow,
   useDataGridState,
 } from "../components";
+import AIContentEnhancer from "../components/AIContentEnhancer";
 import VenueLayoutGenerator from "../components/VenueLayoutGenerator";
 
 function toDateTimeLocal(value) {
@@ -113,6 +114,7 @@ export default function EventsPage() {
   const [eventModal, setEventModal] = useState({ open: false, mode: "create", id: null });
   const [eventForm, setEventForm] = useState(() => initialEventForm());
   const [eventFormErrors, setEventFormErrors] = useState({});
+  const [showEnhancer, setShowEnhancer] = useState(false);
   const [layoutModal, setLayoutModal] = useState({ open: false, event: null });
 
   useEffect(() => {
@@ -233,6 +235,7 @@ export default function EventsPage() {
     setEventModal({ open: false, mode: "create", id: null });
     setEventForm(initialEventForm());
     setEventFormErrors({});
+    setShowEnhancer(false);
   }, []);
 
   const openCreateEventModal = useCallback(() => {
@@ -694,6 +697,31 @@ export default function EventsPage() {
               value={eventForm.description}
               onChange={(event) => setEventForm((prev) => ({ ...prev, description: event.target.value }))}
             />
+            {eventForm.title.trim() && eventForm.description.trim() && !showEnhancer && (
+              <div className="mt-2">
+                <AdminButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEnhancer(true)}
+                  icon={<span className="material-symbols-outlined text-base">auto_awesome</span>}
+                  iconPosition="left"
+                >
+                  Enhance with AI
+                </AdminButton>
+              </div>
+            )}
+            {showEnhancer && (
+              <AIContentEnhancer
+                title={eventForm.title}
+                description={eventForm.description}
+                token={token}
+                onAccept={({ title, description }) => {
+                  setEventForm((f) => ({ ...f, title, description }));
+                  setShowEnhancer(false);
+                }}
+                onClose={() => setShowEnhancer(false)}
+              />
+            )}
           </div>
         </div>
       </AdminModal>

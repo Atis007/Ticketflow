@@ -20,6 +20,8 @@ import ResetPasswordPage from "./auth/pages/ResetPasswordPage.jsx";
 import VerifyEmailPage from "./auth/pages/VerifyEmailPage.jsx";
 
 import CreateEventPage from "./pages/CreateEventPage.jsx";
+import MyTicketsPage from "./pages/MyTicketsPage.jsx";
+import ArchivePage from "./pages/ArchivePage.jsx";
 
 import AdminLayout from "./admin/layouts/AdminLayout.jsx";
 import DashboardPage from "./admin/pages/DashboardPage.jsx";
@@ -87,6 +89,22 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <CreateEventPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "dashboard/tickets",
+        element: (
+          <RequireAuth>
+            <MyTicketsPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "dashboard/archive",
+        element: (
+          <RequireAuth>
+            <ArchivePage />
           </RequireAuth>
         ),
       },
