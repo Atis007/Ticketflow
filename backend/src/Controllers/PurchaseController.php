@@ -196,6 +196,11 @@ final class PurchaseController
                     }
                 }
 
+                // Transition payment pending → paid BEFORE creating tickets
+                // (DB trigger enforce_ticket_rules requires payment to be paid)
+                $pdo->prepare("UPDATE payments SET status = 'paid', paid_at = NOW() WHERE id = :id")
+                    ->execute([':id' => $paymentId]);
+
                 // Create tickets
                 $ticketStmt = $pdo->prepare(
                     'INSERT INTO tickets (user_id, event_id, payment_id, qr_code, is_used)
@@ -224,10 +229,6 @@ final class PurchaseController
                 // Increment tickets_sold counter
                 $pdo->prepare('UPDATE events SET tickets_sold = tickets_sold + :qty WHERE id = :event_id')
                     ->execute([':qty' => $quantity, ':event_id' => $eventId]);
-
-                // Transition payment pending → paid
-                $pdo->prepare("UPDATE payments SET status = 'paid', paid_at = NOW() WHERE id = :id")
-                    ->execute([':id' => $paymentId]);
             } else {
                 $finalStatus = $simulateOutcome === 'cancelled' ? 'cancelled' : 'failed';
                 $pdo->prepare('UPDATE payments SET status = :status WHERE id = :id')
