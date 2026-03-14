@@ -110,7 +110,7 @@ export default function EventsPage() {
                   <Link
                     key={pill.slug ?? "all"}
                     to={href}
-                    className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${
+                    className={`px-4 py-2 rounded-full text-sm transition-colors duration-200 ${
                       isActive
                         ? "bg-primary text-white shadow-[0_0_16px_rgba(var(--color-primary-rgb),0.4)]"
                         : "bg-surface-mid border border-border text-text-muted hover:text-white hover:border-primary/50"
@@ -182,7 +182,7 @@ export default function EventsPage() {
                 type="button"
                 onClick={() => eventsQuery.fetchNextPage()}
                 disabled={eventsQuery.isFetchingNextPage}
-                className="flex items-center gap-2 rounded-full border border-border bg-surface-dark px-6 py-3 text-sm font-bold text-white transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
+                className="flex items-center gap-2 rounded-full border border-border bg-surface-dark px-6 py-3 text-sm font-bold text-white transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-60"
               >
                 {eventsQuery.isFetchingNextPage ? "Loading..." : "Load More Events"}
                 <span className="material-symbols-outlined text-sm">expand_more</span>

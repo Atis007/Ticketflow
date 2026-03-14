@@ -371,7 +371,7 @@ export default function AiChatPage() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`rounded-[var(--admin-radius-md)] px-4 py-2 text-[var(--admin-text-small)] font-medium transition-all duration-[var(--admin-transition-fast)] ${
+              className={`rounded-[var(--admin-radius-md)] px-4 py-2 text-[var(--admin-text-small)] font-medium transition-[color,background-color,border-color,box-shadow] duration-[var(--admin-transition-fast)] ${
                 activeTab === tab.id
                   ? "bg-[var(--admin-interactive-primary)] text-white shadow-[var(--admin-glow-primary)]"
                   : "text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"

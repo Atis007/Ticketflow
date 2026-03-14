@@ -31,7 +31,7 @@ final class AdminAnalyticsController
                     COUNT(*) AS total_payments,
                     COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid_count,
                     COUNT(CASE WHEN status = 'failed' THEN 1 END) AS failed_count,
-                    COUNT(CASE WHEN status = 'cancelled' THEN 1 END) AS cancelled_count
+                    COUNT(CASE WHEN status = 'refunded' THEN 1 END) AS refunded_count
                  FROM payments
                  WHERE created_at >= NOW() - INTERVAL ':days days'"
             );
@@ -42,7 +42,7 @@ final class AdminAnalyticsController
                     COUNT(*) AS total_payments,
                     COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid_count,
                     COUNT(CASE WHEN status = 'failed' THEN 1 END) AS failed_count,
-                    COUNT(CASE WHEN status = 'cancelled' THEN 1 END) AS cancelled_count
+                    COUNT(CASE WHEN status = 'refunded' THEN 1 END) AS refunded_count
                  FROM payments
                  WHERE created_at >= NOW() - make_interval(days => :days)"
             );
@@ -102,7 +102,7 @@ final class AdminAnalyticsController
                     'totalPayments' => (int) ($revenue['total_payments'] ?? 0),
                     'paidCount' => (int) ($revenue['paid_count'] ?? 0),
                     'failedCount' => (int) ($revenue['failed_count'] ?? 0),
-                    'cancelledCount' => (int) ($revenue['cancelled_count'] ?? 0),
+                    'refundedCount' => (int) ($revenue['refunded_count'] ?? 0),
                     'ticketsSold' => (int) ($tickets['tickets_sold'] ?? 0),
                 ],
                 'topEvents' => $topEvents,

@@ -32,8 +32,9 @@ export default function SidebarMenu({ open, onClose }) {
           </button>
         </div>
         {loading && (
-          <div className="p-4 text-sm text-slate-400">
-            Loading categories...
+          <div className="p-4 flex items-center gap-3 text-sm text-slate-400">
+            <span className="material-symbols-outlined animate-spin text-accent-cyan text-lg">progress_activity</span>
+            Loading categories…
           </div>
         )}
         {/* Content */}

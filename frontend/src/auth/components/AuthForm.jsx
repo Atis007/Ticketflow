@@ -130,17 +130,17 @@ export default function AuthForm({ mode, ...props }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`group mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg text-white font-semibold transition-all duration-300 ease-out active:translate-y-0 ${submitToneClass}`}
+          className={`group mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg text-white font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-300 ease-out active:translate-y-0 ${submitToneClass}`}
         >
           {mode === "login" && (
-            <span className="transition-all duration-300 ease-out group-hover:tracking-wide">
+            <span className="transition-[letter-spacing] duration-300 ease-out group-hover:tracking-wide">
               Log In
             </span>
           )}
 
           {mode === "register" && (
             <>
-              <span className="transition-all duration-300 ease-out group-hover:tracking-wide">
+              <span className="transition-[letter-spacing] duration-300 ease-out group-hover:tracking-wide">
                 {props.buttonText}
               </span>
               <span className="material-symbols-outlined text-xl transition-transform duration-300 ease-out group-hover:translate-x-1">
@@ -150,13 +150,13 @@ export default function AuthForm({ mode, ...props }) {
           )}
 
           {mode === "admin-login" && (
-            <span className="transition-all duration-300 ease-out group-hover:tracking-wide">
+            <span className="transition-[letter-spacing] duration-300 ease-out group-hover:tracking-wide">
               Log In
             </span>
           )}
 
           {mode === "forgot-password" && (
-            <span className="transition-all duration-300 ease-out group-hover:tracking-wide">
+            <span className="transition-[letter-spacing] duration-300 ease-out group-hover:tracking-wide">
               Reset Password
             </span>
           )}

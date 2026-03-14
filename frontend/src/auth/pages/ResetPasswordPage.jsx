@@ -35,7 +35,8 @@ export default function ResetPasswordPage() {
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const password = String(formData.get("password") || "");
     const passwordConfirmation = String(formData.get("passwordConfirmation") || "");
 
@@ -56,7 +57,7 @@ export default function ResetPasswordPage() {
 
       if (response?.success) {
         setSuccessMessage(response?.data?.message || "Password reset successful. Please log in.");
-        event.currentTarget.reset();
+        form.reset();
       } else {
         setErrorMessage(response?.error || "Reset password failed.");
       }
@@ -90,7 +91,7 @@ export default function ResetPasswordPage() {
             <form method="post" onSubmit={handleSubmit} className="flex flex-col gap-4">
               <label className="flex flex-col gap-2">
                 <span className="text-sm font-medium text-text-soft">New password</span>
-                <div className="flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:border-accent-cyan focus-within:ring-1 focus-within:ring-accent-cyan">
+                <div className="flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-colors focus-within:border-accent-cyan focus-within:ring-1 focus-within:ring-accent-cyan">
                   <span className="material-symbols-outlined text-text-muted-strong">lock</span>
                   <input
                     id="reset-password"
@@ -106,7 +107,7 @@ export default function ResetPasswordPage() {
 
               <label className="flex flex-col gap-2">
                 <span className="text-sm font-medium text-text-soft">Confirm password</span>
-                <div className="flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:border-accent-cyan focus-within:ring-1 focus-within:ring-accent-cyan">
+                <div className="flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-colors focus-within:border-accent-cyan focus-within:ring-1 focus-within:ring-accent-cyan">
                   <span className="material-symbols-outlined text-text-muted-strong">lock</span>
                   <input
                     id="reset-password-confirmation"
@@ -123,9 +124,9 @@ export default function ResetPasswordPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="group mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-strong text-white font-semibold transition-all duration-300 ease-out hover:bg-primary-strong-hover hover:shadow-glow-primary active:translate-y-0"
+                className="group mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-strong text-white font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-300 ease-out hover:bg-primary-strong-hover hover:shadow-glow-primary active:translate-y-0"
               >
-                <span className="transition-all duration-300 ease-out group-hover:tracking-wide">Reset Password</span>
+                <span className="transition-[letter-spacing] duration-300 ease-out group-hover:tracking-wide">Reset Password</span>
                 {isSubmitting ? <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span> : null}
               </button>
             </form>

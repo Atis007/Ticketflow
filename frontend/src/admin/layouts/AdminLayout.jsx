@@ -72,7 +72,7 @@ export default function AdminLayout() {
                       <Link
                         key={item.path}
                         to={item.path}
-                        className={`admin-focus-ring relative flex items-center gap-3 rounded-[var(--admin-radius-md)] px-3 py-2.5 text-[var(--admin-text-small)] font-medium transition-all duration-[var(--admin-transition-fast)] ${isActive ? "bg-[var(--admin-interactive-primary)] text-white shadow-[var(--admin-glow-primary)]" : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-card)] hover:text-[var(--admin-text-primary)]"}`}
+                        className={`admin-focus-ring relative flex items-center gap-3 rounded-[var(--admin-radius-md)] px-3 py-2.5 text-[var(--admin-text-small)] font-medium transition-[color,background-color,border-color,box-shadow] duration-[var(--admin-transition-fast)] ${isActive ? "bg-[var(--admin-interactive-primary)] text-white shadow-[var(--admin-glow-primary)]" : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-card)] hover:text-[var(--admin-text-primary)]"}`}
                       >
                         {isActive ? <div className="absolute top-1/2 left-0 h-8 w-1 -translate-y-1/2 rounded-r-full bg-white" /> : null}
                         <span className="material-symbols-outlined text-xl">{item.icon}</span>

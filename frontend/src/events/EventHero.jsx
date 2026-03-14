@@ -24,11 +24,11 @@ export default function EventHero({ feature }) {
         </h1>
         <p className="max-w-xl text-lg text-gray-300">{feature.description}</p>
         <div className="flex flex-wrap gap-4 pt-2">
-          <button className="shadow-hero-cta flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-bold text-background-dark transition-all hover:bg-primary-dark">
+          <button className="shadow-hero-cta flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-bold text-background-dark transition-colors hover:bg-primary-dark">
             {feature.ctaPrimary}
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </button>
-          <button className="flex items-center gap-2 rounded-full border border-white/15 bg-surface-dark/60 px-7 py-3 text-sm font-bold text-white backdrop-blur transition-all hover:border-primary/40 hover:text-primary">
+          <button className="flex items-center gap-2 rounded-full border border-white/15 bg-surface-dark/60 px-7 py-3 text-sm font-bold text-white backdrop-blur transition-colors hover:border-primary/40 hover:text-primary">
             {feature.ctaSecondary}
           </button>
         </div>

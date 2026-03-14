@@ -123,13 +123,13 @@ export default function CreateEventPage() {
       const formData = new FormData();
       formData.append("title", form.title.trim());
       if (form.slug.trim()) formData.append("slug", form.slug.trim());
-      formData.append("category_id", form.categoryId);
-      formData.append("subcategory_id", form.subcategoryId);
+      formData.append("categoryId", form.categoryId);
+      formData.append("subcategoryId", form.subcategoryId);
       if (form.city.trim()) formData.append("city", form.city.trim());
       if (form.venue.trim()) formData.append("venue", form.venue.trim());
-      formData.append("starts_at", form.startsAt);
-      if (form.endsAt) formData.append("ends_at", form.endsAt);
-      formData.append("is_free", form.isFree ? "1" : "0");
+      formData.append("startsAt", form.startsAt);
+      if (form.endsAt) formData.append("endsAt", form.endsAt);
+      formData.append("isFree", form.isFree ? "1" : "0");
       if (!form.isFree && form.price) formData.append("price", form.price);
       if (form.capacity) formData.append("capacity", form.capacity);
       if (form.description.trim()) formData.append("description", form.description.trim());
