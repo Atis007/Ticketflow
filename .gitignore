@@ -148,3 +148,5 @@ app-example/
 
 # Kotlin artifacts (RN Android)
 .kotlin/
+
+.playwright-mcp/

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import AnimatedOutlet from "@/components/AnimatedOutlet";
 
 import { useAuth } from "@/auth/context/AuthContext";
 
@@ -9,7 +10,6 @@ const navigation = [
     items: [
       { label: "Dashboard", path: "/admin/dashboard", icon: "dashboard" },
       { label: "Analytics", path: "/admin/analytics", icon: "bar_chart" },
-      { label: "AI Assistant", path: "/admin/ai", icon: "smart_toy" },
     ],
   },
   {
@@ -72,7 +72,7 @@ export default function AdminLayout() {
                       <Link
                         key={item.path}
                         to={item.path}
-                        className={`admin-focus-ring relative flex items-center gap-3 rounded-[var(--admin-radius-md)] px-3 py-2.5 text-[var(--admin-text-small)] font-medium transition-all duration-[var(--admin-transition-fast)] ${isActive ? "bg-[var(--admin-interactive-primary)] text-white shadow-[var(--admin-glow-primary)]" : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-card)] hover:text-[var(--admin-text-primary)]"}`}
+                        className={`admin-focus-ring relative flex items-center gap-3 rounded-[var(--admin-radius-md)] px-3 py-2.5 text-[var(--admin-text-small)] font-medium transition-[color,background-color,border-color,box-shadow] duration-[var(--admin-transition-fast)] ${isActive ? "bg-[var(--admin-interactive-primary)] text-white shadow-[var(--admin-glow-primary)]" : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-card)] hover:text-[var(--admin-text-primary)]"}`}
                       >
                         {isActive ? <div className="absolute top-1/2 left-0 h-8 w-1 -translate-y-1/2 rounded-r-full bg-white" /> : null}
                         <span className="material-symbols-outlined text-xl">{item.icon}</span>
@@ -106,7 +106,7 @@ export default function AdminLayout() {
         <div className="sticky top-20 z-[var(--admin-z-sticky)] border-b border-[var(--admin-border)] bg-[var(--admin-bg-base)] px-4 py-4 lg:px-6 2xl:px-8">
           <p className="font-[var(--admin-font-display)] text-[var(--admin-text-subheading)] text-[var(--admin-text-primary)]">{title}</p>
         </div>
-        <Outlet />
+        <AnimatedOutlet />
       </main>
     </div>
   );

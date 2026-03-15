@@ -21,7 +21,7 @@ export default function AuthFields(props) {
             {props.labelFullName}
           </span>
           <div
-            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-colors focus-within:ring-1 ${focusTone}`}
           >
             <span className="material-symbols-outlined text-text-muted-strong">
               {props.iconFullName}
@@ -44,7 +44,7 @@ export default function AuthFields(props) {
           {props.labelEmail}
         </span>
         <div
-          className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+          className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-colors focus-within:ring-1 ${focusTone}`}
         >
           <span className="material-symbols-outlined text-text-muted-strong">
             {props.iconEmail}
@@ -76,7 +76,7 @@ export default function AuthFields(props) {
           </div>
 
           <div
-            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-colors focus-within:ring-1 ${focusTone}`}
           >
             <span className="material-symbols-outlined text-text-muted-strong">
               {props.iconPassword}
@@ -110,7 +110,7 @@ export default function AuthFields(props) {
             {props.labelPasswordAgain}
           </span>
           <div
-            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-all focus-within:ring-1 ${focusTone}`}
+            className={`flex h-11 items-center rounded-lg border border-border-strong bg-background-dark px-3.5 transition-colors focus-within:ring-1 ${focusTone}`}
           >
             <span className="material-symbols-outlined text-text-muted-strong">
               {props.iconPassword}

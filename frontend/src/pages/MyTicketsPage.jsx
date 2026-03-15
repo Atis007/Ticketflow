@@ -33,8 +33,13 @@ export default function MyTicketsPage() {
         </Link>
       </div>
 
-      {purchasesQuery.isPending && <AsyncState message="Loading tickets..." />}
-      {purchasesQuery.isError && (
+      {!isVerified && (
+        <AsyncState
+          message="Please verify your email to view your tickets."
+        />
+      )}
+      {isVerified && purchasesQuery.isPending && <AsyncState message="Loading tickets..." />}
+      {isVerified && purchasesQuery.isError && (
         <AsyncState
           type="error"
           message={purchasesQuery.error?.message || "Failed to load tickets."}
@@ -42,7 +47,7 @@ export default function MyTicketsPage() {
         />
       )}
 
-      {!purchasesQuery.isPending && !purchasesQuery.isError && (
+      {isVerified && !purchasesQuery.isPending && !purchasesQuery.isError && (
         <>
           <TicketSection title="Upcoming Events" purchases={upcoming} emptyText="No upcoming events." />
           <TicketSection title="Past Events" purchases={past} emptyText="No past events." />

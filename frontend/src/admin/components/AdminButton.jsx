@@ -30,7 +30,7 @@ export function AdminButton({
   return (
     <button
       disabled={isDisabled}
-      className={`admin-focus-ring inline-flex items-center justify-center rounded-[var(--admin-radius-md)] border font-medium transition-all duration-[var(--admin-transition-fast)] ${variantStyles[variant]} ${sizeStyles[size]} ${isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${className}`}
+      className={`admin-focus-ring inline-flex items-center justify-center rounded-[var(--admin-radius-md)] border font-medium transition-[color,background-color,border-color,box-shadow,opacity] duration-[var(--admin-transition-fast)] ${variantStyles[variant]} ${sizeStyles[size]} ${isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${className}`}
       {...props}
     >
       {loading ? <span className="material-symbols-outlined animate-spin text-current">progress_activity</span> : null}

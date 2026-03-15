@@ -122,8 +122,8 @@ export default function AnalyticsPage() {
         color: "var(--admin-status-success)",
       },
       {
-        title: "Cancelled",
-        value: summary?.cancelledCount ?? 0,
+        title: "Refunded",
+        value: summary?.refundedCount ?? 0,
         icon: <span className="material-symbols-outlined text-3xl">cancel</span>,
         color: "var(--admin-status-warning)",
       },
@@ -143,7 +143,7 @@ export default function AnalyticsPage() {
                 key={opt.value}
                 type="button"
                 onClick={() => setDays(opt.value)}
-                className={`rounded-[var(--admin-radius-sm)] px-3 py-1.5 text-[var(--admin-text-caption)] font-medium transition-all duration-[var(--admin-transition-fast)] ${
+                className={`rounded-[var(--admin-radius-sm)] px-3 py-1.5 text-[var(--admin-text-caption)] font-medium transition-[color,background-color,border-color,box-shadow] duration-[var(--admin-transition-fast)] ${
                   days === opt.value
                     ? "bg-[var(--admin-interactive-primary)] text-white shadow-[var(--admin-glow-primary)]"
                     : "text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"

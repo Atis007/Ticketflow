@@ -116,11 +116,11 @@ function EditModal({ event, token, onClose, onSaved }) {
       formData.append("title", form.title.trim());
       if (form.city.trim()) formData.append("city", form.city.trim());
       if (form.venue.trim()) formData.append("venue", form.venue.trim());
-      formData.append("is_free", form.isFree ? "1" : "0");
+      formData.append("isFree", form.isFree ? "1" : "0");
       if (!form.isFree && form.price) formData.append("price", form.price);
       if (form.description.trim()) formData.append("description", form.description.trim());
-      if (form.categoryId) formData.append("category_id", form.categoryId);
-      if (form.subcategoryId) formData.append("subcategory_id", form.subcategoryId);
+      if (form.categoryId) formData.append("categoryId", form.categoryId);
+      if (form.subcategoryId) formData.append("subcategoryId", form.subcategoryId);
 
       await updateEvent(token, event.id, formData);
       onSaved();
@@ -385,7 +385,7 @@ export default function EventDetailsPage() {
               <button
                 type="button"
                 onClick={toggleFavorite}
-                className="p-3 rounded-full bg-background-dark/60 backdrop-blur-sm border border-white/10 hover:border-primary/50 transition-all"
+                className="p-3 rounded-full bg-background-dark/60 backdrop-blur-sm border border-white/10 hover:border-primary/50 transition-colors"
                 aria-label={isFavorited ? "Remove from favorites" : "Save event"}
               >
                 <span className={`material-symbols-outlined ${isFavorited ? "text-primary" : "text-white/70"}`}>
@@ -396,7 +396,7 @@ export default function EventDetailsPage() {
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="p-3 rounded-full bg-background-dark/60 backdrop-blur-sm border border-white/10 hover:border-accent-cyan/50 transition-all"
+                  className="p-3 rounded-full bg-background-dark/60 backdrop-blur-sm border border-white/10 hover:border-accent-cyan/50 transition-colors"
                   aria-label="Share event"
                 >
                   <span className="material-symbols-outlined text-white/70">share</span>

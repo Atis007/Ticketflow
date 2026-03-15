@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import RequireGuest from "./routes/guards/RequireGuest.jsx";
@@ -8,33 +9,41 @@ import RequireVerified from "./routes/guards/RequireVerified.jsx";
 import RootLayout from "./pages/Root.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import EventsPage from "./pages/EventsPage.jsx";
-import EventDetailsPage from "./pages/EventDetailsPage.jsx";
-import ProfilePage from "./pages/ProfilePage.jsx";
+import PageLoader from "./components/PageLoader.jsx";
 
-import AuthLayout from "./auth/layouts/AuthLayout.jsx";
-import LoginPage from "./auth/pages/LoginPage";
-import RegisterPage from "./auth/pages/RegisterPage";
-import AdminLoginPage from "./auth/pages/AdminLogin";
-import ForgotPasswordPage from "./auth/pages/ForgotPassword.jsx";
-import ResetPasswordPage from "./auth/pages/ResetPasswordPage.jsx";
-import VerifyEmailPage from "./auth/pages/VerifyEmailPage.jsx";
+const EventDetailsPage = lazy(() => import("./pages/EventDetailsPage.jsx"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage.jsx"));
 
-import CreateEventPage from "./pages/CreateEventPage.jsx";
-import MyTicketsPage from "./pages/MyTicketsPage.jsx";
-import ArchivePage from "./pages/ArchivePage.jsx";
+const AuthLayout = lazy(() => import("./auth/layouts/AuthLayout.jsx"));
+const LoginPage = lazy(() => import("./auth/pages/LoginPage"));
+const RegisterPage = lazy(() => import("./auth/pages/RegisterPage"));
+const AdminLoginPage = lazy(() => import("./auth/pages/AdminLogin"));
+const ForgotPasswordPage = lazy(() =>
+  import("./auth/pages/ForgotPassword.jsx")
+);
+const ResetPasswordPage = lazy(() =>
+  import("./auth/pages/ResetPasswordPage.jsx")
+);
+const VerifyEmailPage = lazy(() => import("./auth/pages/VerifyEmailPage.jsx"));
 
-import AdminLayout from "./admin/layouts/AdminLayout.jsx";
-import DashboardPage from "./admin/pages/DashboardPage.jsx";
-import UsersPage from "./admin/pages/UsersPage.jsx";
-import EventsPageAdmin from "./admin/pages/EventsPage.jsx";
-import CategoriesPage from "./admin/pages/CategoriesPage.jsx";
-import DeviceLogsPage from "./admin/pages/DeviceLogsPage.jsx";
-import AdminLogsPage from "./admin/pages/AdminLogsPage.jsx";
-import EventChangeLogsPage from "./admin/pages/EventChangeLogsPage.jsx";
-import IncidentsPage from "./admin/pages/IncidentsPage.jsx";
-import IPBlocksPage from "./admin/pages/IPBlocksPage.jsx";
-import AnalyticsPage from "./admin/pages/AnalyticsPage.jsx";
-import AiChatPage from "./admin/pages/AiChatPage.jsx";
+const CreateEventPage = lazy(() => import("./pages/CreateEventPage.jsx"));
+const MyTicketsPage = lazy(() => import("./pages/MyTicketsPage.jsx"));
+const ArchivePage = lazy(() => import("./pages/ArchivePage.jsx"));
+
+const AdminLayout = lazy(() => import("./admin/layouts/AdminLayout.jsx"));
+const DashboardPage = lazy(() => import("./admin/pages/DashboardPage.jsx"));
+const UsersPage = lazy(() => import("./admin/pages/UsersPage.jsx"));
+const EventsPageAdmin = lazy(() => import("./admin/pages/EventsPage.jsx"));
+const CategoriesPage = lazy(() => import("./admin/pages/CategoriesPage.jsx"));
+const DeviceLogsPage = lazy(() => import("./admin/pages/DeviceLogsPage.jsx"));
+const AdminLogsPage = lazy(() => import("./admin/pages/AdminLogsPage.jsx"));
+const EventChangeLogsPage = lazy(() =>
+  import("./admin/pages/EventChangeLogsPage.jsx")
+);
+const IncidentsPage = lazy(() => import("./admin/pages/IncidentsPage.jsx"));
+const IPBlocksPage = lazy(() => import("./admin/pages/IPBlocksPage.jsx"));
+const AnalyticsPage = lazy(() => import("./admin/pages/AnalyticsPage.jsx"));
+const loader = <PageLoader />;
 
 const router = createBrowserRouter([
   {
@@ -46,15 +55,49 @@ const router = createBrowserRouter([
       {
         element: (
           <RequireGuest>
-            <AuthLayout />
+            <Suspense fallback={loader}>
+              <AuthLayout />
+            </Suspense>
           </RequireGuest>
         ),
         children: [
-          { path: "login", element: <LoginPage /> },
-          { path: "register", element: <RegisterPage /> },
-          { path: "admin-login", element: <AdminLoginPage /> },
-          { path: "forgot-password", element: <ForgotPasswordPage /> },
+          {
+            path: "login",
+            element: (
+              <Suspense fallback={loader}>
+                <LoginPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "register",
+            element: (
+              <Suspense fallback={loader}>
+                <RegisterPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "admin-login",
+            element: (
+              <Suspense fallback={loader}>
+                <AdminLoginPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "forgot-password",
+            element: (
+              <Suspense fallback={loader}>
+                <ForgotPasswordPage />
+              </Suspense>
+            ),
+          },
         ],
+      },
+      {
+        path: "events",
+        element: <EventsPage />,
       },
       {
         path: "events/:categorySlug",
@@ -64,23 +107,35 @@ const router = createBrowserRouter([
         path: "events/:categorySlug/:eventSlug",
         element: (
           <RequireVerified>
-            <EventDetailsPage />
+            <Suspense fallback={loader}>
+              <EventDetailsPage />
+            </Suspense>
           </RequireVerified>
         ),
       },
       {
         path: "reset-password",
-        element: <ResetPasswordPage />,
+        element: (
+          <Suspense fallback={loader}>
+            <ResetPasswordPage />
+          </Suspense>
+        ),
       },
       {
         path: "verify-email",
-        element: <VerifyEmailPage />,
+        element: (
+          <Suspense fallback={loader}>
+            <VerifyEmailPage />
+          </Suspense>
+        ),
       },
       {
         path: "profile",
         element: (
           <RequireAuth>
-            <ProfilePage />
+            <Suspense fallback={loader}>
+              <ProfilePage />
+            </Suspense>
           </RequireAuth>
         ),
       },
@@ -88,7 +143,9 @@ const router = createBrowserRouter([
         path: "create-event",
         element: (
           <RequireAuth>
-            <CreateEventPage />
+            <Suspense fallback={loader}>
+              <CreateEventPage />
+            </Suspense>
           </RequireAuth>
         ),
       },
@@ -96,7 +153,9 @@ const router = createBrowserRouter([
         path: "dashboard/tickets",
         element: (
           <RequireAuth>
-            <MyTicketsPage />
+            <Suspense fallback={loader}>
+              <MyTicketsPage />
+            </Suspense>
           </RequireAuth>
         ),
       },
@@ -104,7 +163,9 @@ const router = createBrowserRouter([
         path: "dashboard/archive",
         element: (
           <RequireAuth>
-            <ArchivePage />
+            <Suspense fallback={loader}>
+              <ArchivePage />
+            </Suspense>
           </RequireAuth>
         ),
       },
@@ -112,22 +173,100 @@ const router = createBrowserRouter([
         path: "admin",
         element: (
           <RequireAdmin>
-            <AdminLayout />
+            <Suspense fallback={loader}>
+              <AdminLayout />
+            </Suspense>
           </RequireAdmin>
         ),
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: "dashboard", element: <DashboardPage /> },
-          { path: "users", element: <UsersPage /> },
-          { path: "events", element: <EventsPageAdmin /> },
-          { path: "categories", element: <CategoriesPage /> },
-          { path: "logs/device", element: <DeviceLogsPage /> },
-          { path: "logs/admin", element: <AdminLogsPage /> },
-          { path: "logs/event-changes", element: <EventChangeLogsPage /> },
-          { path: "security/incidents", element: <IncidentsPage /> },
-          { path: "security/blocks", element: <IPBlocksPage /> },
-          { path: "analytics", element: <AnalyticsPage /> },
-          { path: "ai", element: <AiChatPage /> },
+          {
+            index: true,
+            element: (
+              <Suspense fallback={loader}>
+                <DashboardPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "dashboard",
+            element: (
+              <Suspense fallback={loader}>
+                <DashboardPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "users",
+            element: (
+              <Suspense fallback={loader}>
+                <UsersPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "events",
+            element: (
+              <Suspense fallback={loader}>
+                <EventsPageAdmin />
+              </Suspense>
+            ),
+          },
+          {
+            path: "categories",
+            element: (
+              <Suspense fallback={loader}>
+                <CategoriesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "logs/device",
+            element: (
+              <Suspense fallback={loader}>
+                <DeviceLogsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "logs/admin",
+            element: (
+              <Suspense fallback={loader}>
+                <AdminLogsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "logs/event-changes",
+            element: (
+              <Suspense fallback={loader}>
+                <EventChangeLogsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "security/incidents",
+            element: (
+              <Suspense fallback={loader}>
+                <IncidentsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "security/blocks",
+            element: (
+              <Suspense fallback={loader}>
+                <IPBlocksPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "analytics",
+            element: (
+              <Suspense fallback={loader}>
+                <AnalyticsPage />
+              </Suspense>
+            ),
+          },
         ],
       },
     ],

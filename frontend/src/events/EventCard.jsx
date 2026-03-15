@@ -22,7 +22,7 @@ export default function EventCard({ event }) {
   return (
     <Link
       to={eventHref}
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface-dark transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.18)]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface-dark transition-[color,background-color,border-color,box-shadow] duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.18)]"
     >
       <div className="relative h-48 w-full overflow-hidden">
         {imageUrl ? (
@@ -63,7 +63,7 @@ export default function EventCard({ event }) {
             <span className="text-xs text-text-muted">{event.tag}</span>
             <span className="text-lg font-semibold text-white">{event.priceLabel}</span>
           </div>
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface-mid text-white transition-all group-hover:border-primary/50 group-hover:text-primary">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface-mid text-white transition-colors group-hover:border-primary/50 group-hover:text-primary">
             <span className="material-symbols-outlined">arrow_forward</span>
           </span>
         </div>

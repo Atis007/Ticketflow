@@ -6,6 +6,7 @@ import AsyncState from "@/components/AsyncState";
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const resetSent = searchParams.get("reset") === "sent";
+  const justRegistered = searchParams.get("registered") === "true";
 
   return (
     <section className="relative w-full overflow-hidden">
@@ -29,6 +30,7 @@ export default function LoginPage() {
             <div className="flex flex-1 justify-center lg:justify-end">
               <div className="shadow-auth-panel relative w-full max-w-110 overflow-hidden rounded-[2rem] border border-border-strong bg-surface-dark/80 p-8 backdrop-blur-xl">
                 <div className="absolute left-0 top-0 h-1 w-full bg-linear-to-r from-primary via-accent-cyan to-primary opacity-60"></div>
+                {justRegistered ? <AsyncState message="Registration successful! Please check your email to verify your account, then log in." className="mb-4" /> : null}
                 {resetSent ? <AsyncState message="If the email exists in our system, password reset instructions were sent." className="mb-4" /> : null}
                 <AuthForm
                 mode="login"

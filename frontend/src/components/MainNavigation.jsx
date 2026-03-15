@@ -50,12 +50,12 @@ function MainNavigation() {
             {isAuthenticated && (
               <>
                 <div
-                  className={`w-40 max-w-2xl overflow-hidden transition-all duration-500 ease-in-out ${
+                  className={`w-40 max-w-2xl overflow-hidden transition-opacity duration-500 ease-in-out ${
                     isExpanded ? "opacity-100" : "opacity-0"
                   }`}
                 >
                   <form
-                    className="group relative flex items-center w-full h-16 rounded-full bg-surface-dark border border-white/10 shadow-xl focus-within:border-accent-purple/50 focus-within:ring-2 focus-within:ring-accent-purple/20 transition-all overflow-hidden"
+                    className="group relative flex items-center w-full h-16 rounded-full bg-surface-dark border border-white/10 shadow-xl focus-within:border-accent-purple/50 focus-within:ring-2 focus-within:ring-accent-purple/20 transition-colors overflow-hidden"
                     aria-label="Search for events"
                   >
                     <input
@@ -69,7 +69,7 @@ function MainNavigation() {
 
                 <button
                   type="button"
-                  className="cursor-pointer hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-gray-300 hover:bg-white/10 transition-all"
+                  className="cursor-pointer hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-gray-300 hover:bg-white/10 transition-colors"
                   aria-label="Search"
                   onClick={toggleExpand}
                 >
@@ -86,7 +86,7 @@ function MainNavigation() {
                     type="button"
                     onClick={() => setBellOpen((v) => !v)}
                     aria-label="Notifications"
-                    className="cursor-pointer relative flex items-center justify-center w-10 h-10 rounded-full text-gray-300 hover:bg-white/10 transition-all"
+                    className="cursor-pointer relative flex items-center justify-center w-10 h-10 rounded-full text-gray-300 hover:bg-white/10 transition-colors"
                   >
                     <span className="material-symbols-outlined" aria-hidden="true">
                       notifications
@@ -104,7 +104,7 @@ function MainNavigation() {
 
                 <NavLink
                   to={isAdmin ? "/admin/dashboard" : "/profile"}
-                  className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-all hover:border-primary hover:text-primary hover:bg-white/5"
+                  className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-gray-300 transition-colors hover:border-primary hover:text-primary hover:bg-white/5"
                   aria-label={isAdmin ? "Go to admin dashboard" : "Go to profile"}
                 >
                   <span className="material-symbols-outlined" aria-hidden="true">
@@ -120,7 +120,7 @@ function MainNavigation() {
                   to="/login"
                   className={({
                     isActive,
-                  }) => `hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-all
+                  }) => `hidden sm:flex h-10 px-6 items-center justify-center rounded-full border transition-colors
             ${
               isActive
                 ? " border-primary text-primary bg-primary/10"
@@ -133,7 +133,7 @@ function MainNavigation() {
                   to="/register"
                   className={({
                     isActive,
-                  }) => `h-10 px-6 flex items-center justify-center rounded-full font-semibold transition-all shadow
+                  }) => `h-10 px-6 flex items-center justify-center rounded-full font-semibold transition-[color,background-color,border-color,box-shadow] shadow
             ${
               isActive
                 ? "bg-primary font-bold text-white/90 shadow-glow-primary-strong"

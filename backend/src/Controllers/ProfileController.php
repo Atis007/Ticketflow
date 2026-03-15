@@ -134,7 +134,7 @@ final class ProfileController
 
             $stmt = $pdo->prepare(
                 "SELECT
-                    f.id,
+                    f.event_id,
                     e.title,
                     e.image,
                     e.city,
@@ -147,7 +147,7 @@ final class ProfileController
                  LEFT JOIN subcategories s ON s.id = e.subcategory_id
                  LEFT JOIN categories c ON c.id = e.category_id
                  WHERE f.user_id = :user_id
-                 ORDER BY f.created_at DESC, f.id DESC
+                 ORDER BY f.created_at DESC, f.event_id DESC
                  LIMIT :limit OFFSET :offset"
             );
 
@@ -175,7 +175,7 @@ final class ProfileController
                 );
 
                 $favorites[] = [
-                    'id' => (int) ($row['id'] ?? 0),
+                    'id' => (int) ($row['event_id'] ?? 0),
                     'title' => (string) ($row['title'] ?? ''),
                     'date' => (string) ($row['event_date'] ?? ''),
                     'location' => $location,
@@ -219,7 +219,7 @@ final class ProfileController
             Json::error('Event not found', 404);
         }
 
-        $checkStmt = $pdo->prepare('SELECT id FROM favorites WHERE user_id = :uid AND event_id = :eid LIMIT 1');
+        $checkStmt = $pdo->prepare('SELECT 1 FROM favorites WHERE user_id = :uid AND event_id = :eid LIMIT 1');
         $checkStmt->execute([':uid' => $userId, ':eid' => $eventId]);
         if (is_array($checkStmt->fetch(PDO::FETCH_ASSOC))) {
             Json::error('Event is already in favorites', 409);
@@ -228,7 +228,7 @@ final class ProfileController
         $pdo->prepare('INSERT INTO favorites (user_id, event_id) VALUES (:uid, :eid)')
             ->execute([':uid' => $userId, ':eid' => $eventId]);
 
-        Json::success(null, 201);
+        Json::success([], 201);
     }
 
     /**
@@ -251,7 +251,7 @@ final class ProfileController
         $pdo->prepare('DELETE FROM favorites WHERE user_id = :uid AND event_id = :eid')
             ->execute([':uid' => $userId, ':eid' => $eventId]);
 
-        Json::success(null);
+        Json::success([]);
     }
 
     private function appTimezone(): string

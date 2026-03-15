@@ -97,9 +97,9 @@ export default function VerifyEmailPage() {
                 type="button"
                 onClick={handleResend}
                 disabled={isSending}
-                className="group mt-2 flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-strong text-white font-semibold transition-all duration-300 ease-out hover:bg-primary-strong-hover hover:shadow-glow-primary active:translate-y-0"
+                className="group mt-2 flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-strong text-white font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-300 ease-out hover:bg-primary-strong-hover hover:shadow-glow-primary active:translate-y-0"
               >
-                <span className="transition-all duration-300 ease-out group-hover:tracking-wide">Resend verification email</span>
+                <span className="transition-[letter-spacing] duration-300 ease-out group-hover:tracking-wide">Resend verification email</span>
                 {isSending ? <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span> : null}
               </button>
             ) : null}

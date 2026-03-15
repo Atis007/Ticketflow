@@ -4,17 +4,17 @@ const actions = [
   {
     label: "Browse Events",
     icon: "event",
-    to: "/events/music-festival",
+    to: "/events",
   },
   {
     label: "Saved Favorites",
     icon: "favorite",
-    to: "/profile",
+    to: "/profile#favorites",
   },
   {
     label: "Account Settings",
     icon: "settings",
-    to: "/profile",
+    to: "/profile#account",
   },
   {
     label: "Create Event",

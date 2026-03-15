@@ -14,7 +14,9 @@ use App\Services\AdminAuditService;
 use App\Services\AuthorizationService;
 use App\Services\EventChangeLogService;
 use App\Services\EventSeatService;
+use App\Services\EventSectionService;
 use App\Services\ImageUploadService;
+use App\Services\LayoutVersionService;
 use App\Services\NotificationService;
 use DateTimeImmutable;
 use Exception;
@@ -258,6 +260,7 @@ final class EventController
         $endsAtValue = $endsAt === '' ? null : $this->parseDateTimeOrError($endsAt, 'endsAt');
         $this->assertDateOrder($startsAtValue, $endsAtValue);
         $this->assertFreePaidConsistency($isFree, $price);
+        $this->assertFreeNotSeated($isFree, $isSeated);
 
         try {
             $pdo = Database::getConnection();
@@ -296,7 +299,18 @@ final class EventController
             $eventId = (int) $stmt->fetchColumn();
 
             if ($isSeated && $capacity !== null && $capacity > 0) {
-                (new EventSeatService())->generateSeats($pdo, $eventId, $capacity);
+                $layoutJson = $this->nullableString($data['layout'] ?? null);
+                $layoutData = $layoutJson !== null ? json_decode($layoutJson, true) : null;
+
+                if (is_array($layoutData) && isset($layoutData['sections']) && $layoutData['sections'] !== []) {
+                    $sectionService = new EventSectionService();
+                    $sectionsWithIds = $sectionService->createSectionsFromLayout($pdo, $eventId, $layoutData['sections']);
+
+                    (new EventSeatService())->generateFromLayout($pdo, $eventId, ['sections' => $sectionsWithIds]);
+                    (new LayoutVersionService())->save($pdo, $eventId, $layoutData);
+                } else {
+                    (new EventSeatService())->generateSeats($pdo, $eventId, $capacity);
+                }
             }
 
             $pdo->commit();
@@ -458,6 +472,11 @@ final class EventController
                 : (($existing['price'] ?? null) === null ? null : (float) $existing['price']);
 
             $this->assertFreePaidConsistency($targetIsFree, $targetPrice);
+
+            $targetIsSeated = array_key_exists('isSeated', $data)
+                ? $this->toBool($data['isSeated'], 'isSeated')
+                : (bool) ($existing['is_seated'] ?? false);
+            $this->assertFreeNotSeated($targetIsFree, $targetIsSeated);
 
             if (array_key_exists('capacity', $data)) {
                 $this->nullablePositiveInt($data['capacity'], 'capacity');
@@ -894,6 +913,13 @@ final class EventController
 
         if (!$isFree && ($price === null || $price <= 0)) {
             Json::error('Paid events must have a price greater than 0', 400);
+        }
+    }
+
+    private function assertFreeNotSeated(bool $isFree, bool $isSeated): void
+    {
+        if ($isFree && $isSeated) {
+            Json::error('Free events cannot have seating arrangements', 400);
         }
     }
 

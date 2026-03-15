@@ -117,6 +117,19 @@ export async function updateEvent(token, id, formData) {
   return handleResponse(response);
 }
 
+export async function generateLayoutPreview(token, { venueName, venueType, capacity, instructions }) {
+  const response = await fetch(endpoint("ai/generate-layout-preview"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ venueName, venueType, capacity, instructions }),
+  });
+
+  return handleResponse(response);
+}
+
 export async function reserveSeats(eventId, seatIds, token) {
   const response = await fetch(endpoint(`events/${encodeURIComponent(eventId)}/seats/reserve`), {
     method: "POST",

@@ -24,4 +24,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-router": ["react-router-dom"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-motion": ["motion"],
+          "vendor-table": ["@tanstack/react-table"],
+          "vendor-supabase": ["@supabase/supabase-js"],
+        },
+      },
+    },
+  },
 });

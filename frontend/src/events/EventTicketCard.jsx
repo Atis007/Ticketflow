@@ -237,7 +237,7 @@ export default function EventTicketCard({ tickets, purchase }) {
             type="button"
             onClick={handleSubmit}
             disabled={!canCheckout}
-            className="w-full bg-primary hover:bg-color-hover hover:shadow-glow-primary-soft transition-all duration-300 text-white font-bold py-4 rounded-full text-lg tracking-wide flex items-center justify-center gap-2 disabled:opacity-60 disabled:hover:shadow-none"
+            className="w-full bg-primary hover:bg-color-hover hover:shadow-glow-primary-soft transition-[color,background-color,border-color,box-shadow] duration-300 text-white font-bold py-4 rounded-full text-lg tracking-wide flex items-center justify-center gap-2 disabled:opacity-60 disabled:hover:shadow-none"
           >
             <span className="material-symbols-outlined">confirmation_number</span>
             {isSubmitting ? "Processing..." : needsSeats ? "Select Seats to Checkout" : "Checkout"}

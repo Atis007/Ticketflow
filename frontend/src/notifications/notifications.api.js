@@ -36,7 +36,7 @@ async function handleResponse(response) {
 }
 
 export async function getNotifications(token) {
-  const response = await fetch(endpoint("api/notifications"), {
+  const response = await fetch(endpoint("notifications"), {
     method: "GET",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -46,7 +46,7 @@ export async function getNotifications(token) {
 }
 
 export async function markNotificationRead(token, id) {
-  const response = await fetch(endpoint(`api/notifications/${id}/read`), {
+  const response = await fetch(endpoint(`notifications/${id}/read`), {
     method: "PATCH",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -56,7 +56,7 @@ export async function markNotificationRead(token, id) {
 }
 
 export async function markAllRead(token) {
-  const response = await fetch(endpoint("api/notifications/read-all"), {
+  const response = await fetch(endpoint("notifications/read-all"), {
     method: "POST",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -66,7 +66,7 @@ export async function markAllRead(token) {
 }
 
 export async function deleteNotification(token, id) {
-  const response = await fetch(endpoint(`api/notifications/${id}`), {
+  const response = await fetch(endpoint(`notifications/${id}`), {
     method: "DELETE",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

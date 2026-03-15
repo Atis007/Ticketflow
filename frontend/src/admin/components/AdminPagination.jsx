@@ -68,7 +68,7 @@ export function AdminPagination({ currentPage, totalPages, onPageChange, totalIt
               <button
                 key={`${page}-${index}`}
                 onClick={() => onPageChange(page)}
-                className={`rounded-[var(--admin-radius-md)] px-3 py-1.5 text-[var(--admin-text-small)] font-medium transition-all duration-[var(--admin-transition-fast)] ${page === currentPage ? "bg-[var(--admin-interactive-primary)] text-white" : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-card)] hover:text-[var(--admin-text-primary)]"}`}
+                className={`rounded-[var(--admin-radius-md)] px-3 py-1.5 text-[var(--admin-text-small)] font-medium transition-colors duration-[var(--admin-transition-fast)] ${page === currentPage ? "bg-[var(--admin-interactive-primary)] text-white" : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-card)] hover:text-[var(--admin-text-primary)]"}`}
               >
                 {page}
               </button>

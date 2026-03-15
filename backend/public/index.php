@@ -7,7 +7,6 @@ require_once __DIR__ . '/../bootstrap.php';
 use App\Core\Router;
 use App\Core\CORS;
 use App\Core\ErrorHandler;
-use App\Controllers\AdminAiController;
 use App\Controllers\AiController;
 use App\Controllers\AdminAnalyticsController;
 use App\Controllers\AdminController;
@@ -141,13 +140,9 @@ $router->post('/api/admin/events/{id:\d+}/generate-layout', [$adminEvent, 'gener
 $adminAnalytics = new AdminAnalyticsController();
 $router->get('/api/admin/analytics/sales', [$adminAnalytics, 'sales'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
 
-$adminAi = new AdminAiController();
-$router->post('/api/admin/ai/chat', [$adminAi, 'chat'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
-$router->get('/api/admin/ai/history', [$adminAi, 'history'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
-
 $ai = new AiController();
 $router->post('/api/ai/enhance-content', [$ai, 'enhanceContent'], [AuthMiddleware::auth()]);
-$router->get('/api/ai/eval-results', [$ai, 'evalResults'], [AuthMiddleware::auth(), AuthMiddleware::admin()]);
+$router->post('/api/ai/generate-layout-preview', [$ai, 'generateLayoutPreview'], [AuthMiddleware::auth()]);
 /*$router->resource("/api/events", EventController::class);
 $router->resource("/api/categories", CategoryController::class);
 $router->resource("/api/tickets", TicketController::class);
