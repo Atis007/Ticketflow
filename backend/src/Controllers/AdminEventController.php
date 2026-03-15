@@ -13,6 +13,7 @@ use App\Services\AdminAuditService;
 use App\Services\AiServiceClient;
 use App\Services\EventChangeLogService;
 use App\Services\EventSeatService;
+use App\Services\EventSectionService;
 use App\Services\LayoutVersionService;
 use Exception;
 use PDO;
@@ -236,45 +237,9 @@ final class AdminEventController
 
             $pdo->beginTransaction();
 
-            // Create sections in DB
-            // event_sections.type enum is 'seated' | 'standing'
-            $typeMap = [
-                'standard' => 'seated',
-                'vip' => 'seated',
-                'balcony' => 'seated',
-                'standing' => 'standing',
-                'seated' => 'seated',
-            ];
-
-            $sectionStmt = $pdo->prepare(
-                'INSERT INTO event_sections (event_id, name, type, capacity, price, x_position, y_position, source)
-                 VALUES (:event_id, :name, :type, :capacity, :price, :x_pos, :y_pos, :source)
-                 RETURNING id'
-            );
-
-            $sectionsWithIds = [];
-            foreach ($layout['sections'] as $i => $section) {
-                $rawType = strtolower((string) ($section['type'] ?? 'seated'));
-                $dbType = $typeMap[$rawType] ?? 'seated';
-                $sectionCapacity = 0;
-                foreach (($section['rows'] ?? []) as $row) {
-                    $sectionCapacity += (int) ($row['seat_count'] ?? $row['seatCount'] ?? 0);
-                }
-
-                $sectionStmt->execute([
-                    ':event_id'  => $eventId,
-                    ':name'      => $section['name'] ?? 'Section ' . ($i + 1),
-                    ':type'      => $dbType,
-                    ':capacity'  => $sectionCapacity > 0 ? $sectionCapacity : 1,
-                    ':price'     => 0,
-                    ':x_pos'     => 0,
-                    ':y_pos'     => $i,
-                    ':source'    => 'ai',
-                ]);
-                $sectionId = (int) $sectionStmt->fetchColumn();
-                $section['section_id'] = $sectionId;
-                $sectionsWithIds[] = $section;
-            }
+            // Create sections in DB using shared service
+            $sectionService = new EventSectionService();
+            $sectionsWithIds = $sectionService->createSectionsFromLayout($pdo, $eventId, $layout['sections']);
 
             // Generate seats from layout
             $seatService = new EventSeatService();

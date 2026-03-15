@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import AnimatedOutlet from "@/components/AnimatedOutlet";
 
 import { useAuth } from "@/auth/context/AuthContext";
 
@@ -9,7 +10,6 @@ const navigation = [
     items: [
       { label: "Dashboard", path: "/admin/dashboard", icon: "dashboard" },
       { label: "Analytics", path: "/admin/analytics", icon: "bar_chart" },
-      { label: "AI Assistant", path: "/admin/ai", icon: "smart_toy" },
     ],
   },
   {
@@ -106,7 +106,7 @@ export default function AdminLayout() {
         <div className="sticky top-20 z-[var(--admin-z-sticky)] border-b border-[var(--admin-border)] bg-[var(--admin-bg-base)] px-4 py-4 lg:px-6 2xl:px-8">
           <p className="font-[var(--admin-font-display)] text-[var(--admin-text-subheading)] text-[var(--admin-text-primary)]">{title}</p>
         </div>
-        <Outlet />
+        <AnimatedOutlet />
       </main>
     </div>
   );

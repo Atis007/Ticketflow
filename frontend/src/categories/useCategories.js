@@ -1,12 +1,26 @@
-import { useContext } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { CategoryContext } from "./categoryContext.shared";
+import { fetchCategories } from "./category.api";
+
+function sortCategories(data) {
+  return [...data].sort((a, b) => {
+    if (a.slug === "other") return 1;
+    if (b.slug === "other") return -1;
+    return a.name.localeCompare(b.name);
+  });
+}
 
 export function useCategories() {
-  const context = useContext(CategoryContext);
-  if (!context) {
-    throw new Error("useCategories must be used within a CategoryProvider");
-  }
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategories,
+    staleTime: 5 * 60_000,
+    select: sortCategories,
+  });
 
-  return context;
+  return {
+    categories: data ?? [],
+    loading: isLoading,
+    error: error ? "Failed to load categories: " + error.message : null,
+  };
 }

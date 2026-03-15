@@ -30,8 +30,4 @@ export const adminQueryKeys = {
   analytics: {
     sales: (days) => ["admin", "analytics", "sales", days],
   },
-  ai: {
-    history: (params = {}) => ["admin", "ai", "history", params],
-    evalResults: (params = {}) => ["admin", "ai", "eval-results", params],
-  },
 };

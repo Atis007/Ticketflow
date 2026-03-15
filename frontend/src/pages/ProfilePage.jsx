@@ -1,5 +1,5 @@
-import { useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import AsyncState from "@/components/AsyncState";
 import { useAuth } from "@/auth/context/AuthContext";
@@ -13,7 +13,16 @@ import QuickActions from "@/profile/components/QuickActions";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, isVerified, token, user, logout, resendVerification } = useAuth();
+
+  useEffect(() => {
+    if (location.hash) {
+      const el = document.querySelector(location.hash);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location.hash]);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState(null);
   const [verificationError, setVerificationError] = useState(null);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
@@ -22,8 +31,13 @@ export default function ProfilePage() {
   const purchasesQuery = usePurchases(token, isAuthenticated && isVerified);
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/");
+    setLoggingOut(true);
+    try {
+      await logout();
+      navigate("/");
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const handleResendVerification = async () => {
@@ -47,7 +61,9 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-2 pt-4 pb-6 sm:px-4 lg:px-6">
-      <ProfileHeader user={user} onLogout={handleLogout} />
+      <div id="account" className="scroll-mt-24">
+        <ProfileHeader user={user} onLogout={handleLogout} loggingOut={loggingOut} />
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <Link
@@ -107,7 +123,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-6">
-          <ProfileSection title="Favorites">
+          <ProfileSection id="favorites" title="Favorites">
             {!isVerified ? <AsyncState message="Favorites are available after email verification." /> : null}
             {isVerified && favoritesQuery.isPending ? <AsyncState message="Loading favorites..." /> : null}
             {isVerified && favoritesQuery.isError ? <AsyncState type="error" message={favoritesQuery.error?.message || "Failed to load favorites."} onRetry={() => favoritesQuery.refetch()} /> : null}

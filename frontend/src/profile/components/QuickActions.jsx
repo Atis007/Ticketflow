@@ -9,12 +9,12 @@ const actions = [
   {
     label: "Saved Favorites",
     icon: "favorite",
-    to: "/profile",
+    to: "/profile#favorites",
   },
   {
     label: "Account Settings",
     icon: "settings",
-    to: "/profile",
+    to: "/profile#account",
   },
   {
     label: "Create Event",

@@ -24,7 +24,7 @@ function getInitials(name) {
     .join("");
 }
 
-export default function ProfileHeader({ user, onLogout }) {
+export default function ProfileHeader({ user, onLogout, loggingOut }) {
   const { token, updateUser } = useAuth();
   const [imageFailed, setImageFailed] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -163,10 +163,20 @@ export default function ProfileHeader({ user, onLogout }) {
         <button
           type="button"
           onClick={onLogout}
-          className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-text-soft transition-colors hover:border-danger hover:text-danger"
+          disabled={loggingOut}
+          className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-text-soft transition-colors hover:border-danger hover:text-danger disabled:opacity-50 disabled:pointer-events-none"
         >
-          <span className="material-symbols-outlined text-lg">logout</span>
-          Logout
+          {loggingOut ? (
+            <>
+              <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+              Logging out...
+            </>
+          ) : (
+            <>
+              <span className="material-symbols-outlined text-lg">logout</span>
+              Logout
+            </>
+          )}
         </button>
       </div>
     </section>

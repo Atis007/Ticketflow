@@ -16,7 +16,7 @@ export function useNotifications() {
     queryFn: () => getNotifications(token),
     enabled: isAuthenticated,
     refetchInterval: 30_000,
-    staleTime: 20_000,
+    staleTime: 30_000,
   });
 }
 

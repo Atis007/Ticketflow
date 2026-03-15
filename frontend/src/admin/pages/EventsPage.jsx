@@ -21,7 +21,7 @@ import {
   ToolbarRow,
   useDataGridState,
 } from "../components";
-import AIContentEnhancer from "../components/AIContentEnhancer";
+import ContentEnhancer from "@/components/ContentEnhancer";
 import VenueLayoutGenerator from "../components/VenueLayoutGenerator";
 
 function toDateTimeLocal(value) {
@@ -711,7 +711,7 @@ export default function EventsPage() {
               </div>
             )}
             {showEnhancer && (
-              <AIContentEnhancer
+              <ContentEnhancer
                 title={eventForm.title}
                 description={eventForm.description}
                 token={token}

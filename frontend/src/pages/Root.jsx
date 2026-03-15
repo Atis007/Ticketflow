@@ -1,5 +1,6 @@
-import { Outlet, useNavigation } from "react-router-dom";
+import { useNavigation } from "react-router-dom";
 import MainNavigation from "../components/MainNavigation.jsx";
+import AnimatedOutlet from "../components/AnimatedOutlet.jsx";
 
 export default function RootLayout() {
   const navigation = useNavigation();
@@ -24,9 +25,7 @@ export default function RootLayout() {
               Syncing events...
             </div>
           )}
-          <div className="w-full">
-            <Outlet />
-          </div>
+          <AnimatedOutlet className="w-full" keyDepth={1} />
         </main>
 
         <footer className="relative z-10 border-t border-white/10 px-6 py-6 text-center text-sm text-gray-400">

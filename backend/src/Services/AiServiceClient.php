@@ -53,22 +53,6 @@ final class AiServiceClient
     }
 
     /**
-     * Sends a chat message to the AI admin assistant.
-     *
-     * @param array<int, array{role: string, content: string}> $messages
-     * @return array<string, mixed>|null
-     */
-    public function chat(array $messages, ?string $adminToken = null): ?array
-    {
-        $payload = ['messages' => $messages];
-        if ($adminToken !== null) {
-            $payload['admin_token'] = $adminToken;
-        }
-
-        return $this->post('/api/chat', $payload);
-    }
-
-    /**
      * @return array<string, mixed>|null
      */
     private function post(string $path, array $body): ?array

@@ -6,16 +6,13 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "./index.css";
 import App from "./App.jsx";
 import { AuthProvider } from "./auth/context/AuthContext.jsx";
-import { CategoryProvider } from "./categories/CategoryContext";
 import { queryClient } from "./query/queryClient";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CategoryProvider>
-          <App />
-        </CategoryProvider>
+        <App />
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
