@@ -1,96 +1,87 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Constants from "expo-constants";
+import axios from "axios";
 
-const baseUrl = Constants.expoConfig?.extra?.API_BASE_URL || "";
+const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+
+// Auth API uses a raw axios instance (no auth interceptor, no auto-unwrap)
+// because login/register happen before a token exists and callers
+// expect the full { success, data, error } response shape.
+const authHttp = axios.create({
+  baseURL,
+  timeout: 15000,
+  headers: {
+    "Content-Type": "application/json",
+    "X-Platform": "mobile",
+    Host: "ticketflow-local",
+  },
+});
 
 async function handleResponse(response) {
-  const data = await response.json().catch(() => ({}));
-  
-  if (!response.ok) {
-    if (data && typeof data.success === "boolean") {
-      return data;
-    }
+  const data = response.data;
 
-    return {
-      success: false,
-      error: data?.message || data?.error || `Request failed with ${response.status}`,
-      data: null,
-    };
+  if (data && typeof data.success === "boolean") {
+    return data;
   }
+
+  return { success: true, data, error: null };
+}
+
+function handleError(error) {
+  const data = error.response?.data;
 
   if (data && typeof data.success === "boolean") {
     return data;
   }
 
   return {
-    success: true,
-    data,
-    error: null,
+    success: false,
+    error: data?.message || data?.error || error.message || "Network error",
+    data: null,
   };
 }
 
 export async function login(payload) {
-  const response = await fetch(`${baseUrl}auth/user/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return handleResponse(response);
+  try {
+    const response = await authHttp.post("auth/user/login", payload);
+    return handleResponse(response);
+  } catch (error) {
+    return handleError(error);
+  }
 }
 
 export async function register(payload) {
-  const response = await fetch(`${baseUrl}auth/user/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  
-  return handleResponse(response);
+  try {
+    const response = await authHttp.post("auth/user/register", payload);
+    return handleResponse(response);
+  } catch (error) {
+    return handleError(error);
+  }
 }
 
 export async function loginAdmin(payload) {
-  const response = await fetch(`${baseUrl}auth/admin/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return handleResponse(response);
+  try {
+    const response = await authHttp.post("auth/admin/login", payload);
+    return handleResponse(response);
+  } catch (error) {
+    return handleError(error);
+  }
 }
 
 export async function forgotPassword(email) {
-  const response = await fetch(`${baseUrl}auth/forgot-password`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email }),
-  });
-
-  // Do not leak existence; just ensure request was accepted
-  if (!response.ok) {
+  try {
+    await authHttp.post("auth/forgot-password", { email });
+  } catch {
     throw new Error("Failed to send forgot password email");
   }
 }
 
 export async function logout(token) {
   try {
-    await fetch(`${baseUrl}auth/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+    await authHttp.post("auth/logout", null, {
+      headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    // fire-and-forget — local session is cleared regardless
+    // fire-and-forget
   }
 }
 
@@ -100,7 +91,7 @@ const EXPIRATION_KEY = "auth_expiration";
 export function getTokenDuration() {
   return AsyncStorage.getItem(EXPIRATION_KEY).then((storedExpiration) => {
     if (!storedExpiration) return -1;
-    
+
     const expirationDate = new Date(storedExpiration);
     const now = new Date();
     return expirationDate.getTime() - now.getTime();

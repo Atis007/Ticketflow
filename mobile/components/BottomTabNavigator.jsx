@@ -1,7 +1,9 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 import EventListScreen from "../pages/EventListScreen";
+import EventSearchScreen from "../pages/EventSearchScreen";
 import MyTicketsScreen from "../pages/MyTicketsScreen";
 import ProfileScreen from "../pages/ProfileScreen";
 
@@ -21,14 +23,21 @@ export default function BottomTabNavigator() {
         tabBarIcon: ({ color, size }) => {
           const icons = {
             Events: "calendar",
-            MyTickets: "ticket",
+            Search: "search",
+            MyTickets: "tag",
             Profile: "user",
           };
           return <Feather name={icons[route.name] ?? "circle"} size={size} color={color} />;
         },
       })}
+      screenListeners={{
+        tabPress: () => {
+          Haptics.selectionAsync();
+        },
+      }}
     >
       <Tab.Screen name="Events" component={EventListScreen} />
+      <Tab.Screen name="Search" component={EventSearchScreen} />
       <Tab.Screen
         name="MyTickets"
         component={MyTicketsScreen}

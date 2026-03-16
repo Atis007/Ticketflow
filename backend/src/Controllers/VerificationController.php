@@ -59,6 +59,44 @@ final class VerificationController
     }
 
     /**
+     * Handles GET /verify-email?token=... from email links.
+     */
+    public function confirmVerificationGet(Request $request, array $params = []): void
+    {
+        $token = trim((string) ($_GET['token'] ?? ''));
+        if ($token === '') {
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<h1>Missing verification token</h1>';
+            exit;
+        }
+
+        try {
+            $pdo = Database::getConnection();
+            $this->verificationService->confirmToken(
+                $pdo,
+                $token,
+                $request->header('user-agent'),
+                (new ClientIpResolver())->resolve($request),
+                $request
+            );
+
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body style="font-family:sans-serif;text-align:center;padding:60px;">'
+                . '<h1 style="color:#22c55e;">Email Verified!</h1>'
+                . '<p>Your email has been verified successfully. You can now log in.</p>'
+                . '</body></html>';
+            exit;
+        } catch (Exception $e) {
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<html><body style="font-family:sans-serif;text-align:center;padding:60px;">'
+                . '<h1 style="color:#ef4444;">Verification Failed</h1>'
+                . '<p>' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</p>'
+                . '</body></html>';
+            exit;
+        }
+    }
+
+    /**
      * Handles confirm verification.
      */
     public function confirmVerification(Request $request, array $params = []): void

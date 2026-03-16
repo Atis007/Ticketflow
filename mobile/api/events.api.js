@@ -1,33 +1,29 @@
-import Constants from "expo-constants";
-
-const baseUrl = Constants.expoConfig?.extra?.API_BASE_URL || "";
-
-async function handleResponse(response) {
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const message = data?.error || data?.message || `Request failed with ${response.status}`;
-    throw new Error(message);
-  }
-
-  if (data && data.success === false) {
-    throw new Error(data.error || "Request failed");
-  }
-
-  if (data && Object.prototype.hasOwnProperty.call(data, "data")) {
-    return data.data;
-  }
-
-  return data;
-}
+import http from "./http";
 
 export async function getEvents({ page = 1, pageSize = 20 } = {}) {
-  const url = `${baseUrl}api/events?page=${page}&pageSize=${pageSize}`;
-  const response = await fetch(url);
-  return handleResponse(response);
+  return http.get("events", { params: { page, pageSize } });
 }
 
 export async function getEventById(id) {
-  const response = await fetch(`${baseUrl}api/events/${id}`);
-  return handleResponse(response);
+  return http.get(`events/${id}`);
+}
+
+export async function searchEvents({ page = 1, pageSize = 20, category, city, month } = {}) {
+  const params = { page, pageSize };
+  if (category) params.category = category;
+  if (city) params.city = city;
+  if (month) params.month = month;
+  return http.get("events", { params });
+}
+
+export async function getCategories() {
+  return http.get("categories");
+}
+
+export async function getEventSeats(eventId) {
+  return http.get(`events/${eventId}/seats`);
+}
+
+export async function reserveSeats(eventId, seatIds) {
+  return http.post(`events/${eventId}/seats/reserve`, { seatIds });
 }

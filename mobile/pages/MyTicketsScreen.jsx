@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, ActivityIndicator, RefreshControl, Pressable } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useState } from "react";
+import { View, Text, FlatList, RefreshControl, Pressable, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import QRCode from "react-native-qrcode-svg";
+import { Feather } from "@expo/vector-icons";
 import { getPurchases } from "../api/profile.api";
+import { SkeletonList } from "../components/Skeleton";
 
 const STATUS_COLOR = {
   paid: "text-green-400",
@@ -11,7 +14,7 @@ const STATUS_COLOR = {
   cancelled: "text-slate-400",
 };
 
-function TicketQr({ qrCode }) {
+function TicketQr({ qrCode, eventName, onEntryMode }) {
   return (
     <View className="mt-3 items-center gap-2">
       <View className="rounded-xl bg-white p-3">
@@ -20,11 +23,19 @@ function TicketQr({ qrCode }) {
       <Text className="text-[10px] text-slate-500 text-center px-2" numberOfLines={2}>
         {qrCode}
       </Text>
+      <TouchableOpacity
+        onPress={onEntryMode}
+        className="mt-1 flex-row items-center rounded-lg bg-indigo-600 px-4 py-2"
+        activeOpacity={0.7}
+      >
+        <Feather name="maximize" size={14} color="#fff" />
+        <Text className="text-white text-xs font-medium ml-1.5">Entry Mode</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
-function PurchaseCard({ item }) {
+function PurchaseCard({ item, navigation }) {
   const [expanded, setExpanded] = useState(false);
   const statusColor = STATUS_COLOR[item.status] ?? "text-slate-400";
   const amount = parseFloat(item.amount || 0).toFixed(2);
@@ -59,7 +70,17 @@ function PurchaseCard({ item }) {
           {item.tickets.map((ticket, idx) => (
             <View key={ticket.id} className="items-center">
               <Text className="text-xs text-slate-400 mb-1">Ticket #{idx + 1}</Text>
-              <TicketQr qrCode={ticket.qrCode} />
+              <TicketQr
+                qrCode={ticket.qrCode}
+                eventName={item.eventName}
+                onEntryMode={() =>
+                  navigation.navigate("EntryMode", {
+                    qrCode: ticket.qrCode,
+                    eventTitle: item.eventName,
+                    seatLabel: ticket.seatLabel ?? null,
+                  })
+                }
+              />
             </View>
           ))}
         </View>
@@ -69,41 +90,23 @@ function PurchaseCard({ item }) {
 }
 
 export default function MyTicketsScreen() {
-  const [purchases, setPurchases] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const navigation = useNavigation();
+  const queryClient = useQueryClient();
 
-  const fetchPurchases = useCallback(async (refreshing = false) => {
-    if (refreshing) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    setError(null);
+  const { data, isLoading, error, isRefetching } = useQuery({
+    queryKey: ["purchases"],
+    queryFn: () => getPurchases(),
+  });
 
-    try {
-      const token = await AsyncStorage.getItem("auth_token");
-      if (!token) throw new Error("Not authenticated");
-
-      const data = await getPurchases(token);
-      setPurchases(data?.purchases ?? data?.items ?? data ?? []);
-    } catch (err) {
-      setError(err.message || "Failed to load purchases");
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPurchases();
-  }, [fetchPurchases]);
+  const purchases = data?.purchases ?? data?.items ?? (Array.isArray(data) ? data : []);
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-950">
-        <ActivityIndicator size="large" color="#6366f1" />
+      <View className="flex-1 bg-slate-950">
+        <View className="px-4 pt-14 pb-4">
+          <Text className="text-2xl font-bold text-white">My Tickets</Text>
+        </View>
+        <SkeletonList count={4} />
       </View>
     );
   }
@@ -116,17 +119,17 @@ export default function MyTicketsScreen() {
 
       {error ? (
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-slate-400">{error}</Text>
+          <Text className="text-center text-slate-400">{error.message}</Text>
         </View>
       ) : (
         <FlatList
           data={purchases}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => <PurchaseCard item={item} />}
+          renderItem={({ item }) => <PurchaseCard item={item} navigation={navigation} />}
           refreshControl={
             <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={() => fetchPurchases(true)}
+              refreshing={isRefetching}
+              onRefresh={() => queryClient.invalidateQueries({ queryKey: ["purchases"] })}
               tintColor="#6366f1"
             />
           }

@@ -8,6 +8,7 @@ import {
   forgotPasswordService,
 } from "../util/auth.service";
 import { logout as logoutApi } from "../util/auth.api";
+import { registerForPushNotifications, unregisterPushToken } from "../../notifications/pushSetup";
 
 const AuthContext = createContext(null);
 
@@ -21,7 +22,10 @@ export function AuthProvider({ children }) {
 
   // Load stored auth state on mount
   useEffect(() => {
-    loadStoredAuth();
+    loadStoredAuth().then(() => {
+      // Register push token for returning users
+      registerForPushNotifications().catch(() => {});
+    });
   }, []);
 
   async function loadStoredAuth() {
@@ -65,6 +69,7 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(true);
       setUser(userPayload);
       await saveAuthState(response?.data?.token || "authenticated", userPayload);
+      registerForPushNotifications().catch(() => {});
     }
 
     return response;
@@ -92,6 +97,11 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
+    try {
+      await unregisterPushToken();
+    } catch {
+      // best-effort
+    }
     try {
       const token = await AsyncStorage.getItem(TOKEN_KEY);
       if (token) {
