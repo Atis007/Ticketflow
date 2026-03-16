@@ -10,7 +10,7 @@ export default function RequireGuest({ children }) {
     if (!isLoading && isAuthenticated) {
       navigation.reset({
         index: 0,
-        routes: [{ name: "Home" }],
+        routes: [{ name: "MainTabs" }],
       });
     }
   }, [isAuthenticated, isLoading, navigation]);

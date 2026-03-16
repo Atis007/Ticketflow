@@ -62,6 +62,7 @@ $router->post('/api/profile/avatar', [$user, 'uploadAvatar'], [AuthMiddleware::a
 $router->post("/api/auth/verify-email/send", [$verification, "sendVerification"]);
 $router->post("/api/auth/verify-email/resend", [$verification, "resendVerification"]);
 $router->post("/api/auth/verify-email/confirm", [$verification, "confirmVerification"]);
+$router->get("/verify-email", [$verification, "confirmVerificationGet"]);
 
 // Public category route, no authentication required
 $router->get("/api/categories", [$category, "index"]);

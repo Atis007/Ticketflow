@@ -13,13 +13,13 @@ export async function createPayment({ eventId, quantity, currency = "RSD", seatI
     body.quantity = quantity;
   }
 
-  return http.post("api/payments", body);
+  return http.post("payments", body);
 }
 
 export async function getPayment(paymentId) {
-  return http.get(`api/payments/${paymentId}`);
+  return http.get(`payments/${paymentId}`);
 }
 
 export async function confirmPayment(paymentId) {
-  return http.post(`api/payments/${paymentId}/confirm`);
+  return http.post(`payments/${paymentId}/confirm`);
 }

@@ -24,7 +24,7 @@ export default function BottomTabNavigator() {
           const icons = {
             Events: "calendar",
             Search: "search",
-            MyTickets: "ticket",
+            MyTickets: "tag",
             Profile: "user",
           };
           return <Feather name={icons[route.name] ?? "circle"} size={size} color={color} />;

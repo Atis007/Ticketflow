@@ -97,10 +97,14 @@ export default function AuthForm({ mode, ...props }) {
       }
 
       if (response?.success) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Home" }],
-        });
+        if (mode === "register") {
+          navigation.navigate("Login", { registered: true });
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "MainTabs" }],
+          });
+        }
       } else {
         setErrorMessage(response?.error ?? "Authentication failed.");
       }

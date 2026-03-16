@@ -1,9 +1,9 @@
 import http from "./http";
 
 export async function getEventTickets(eventId) {
-  return http.get(`api/checkin/event/${eventId}/tickets`);
+  return http.get(`checkin/event/${eventId}/tickets`);
 }
 
 export async function syncScans(scans) {
-  return http.post("api/checkin/sync", scans);
+  return http.post("checkin/sync", scans);
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { getEventById } from "../api/events.api";
-import { addFavorite, removeFavorite } from "../api/favorites.api";
+import { addFavorite, removeFavorite, getFavorites } from "../api/favorites.api";
 import { SkeletonText } from "../components/Skeleton";
 
 export default function EventDetailScreen() {
@@ -23,16 +23,34 @@ export default function EventDetailScreen() {
     enabled: Boolean(eventId),
   });
 
+  const { data: favData } = useQuery({
+    queryKey: ["favorites"],
+    queryFn: () => getFavorites({ pageSize: 50 }),
+  });
+
   const queryClient = useQueryClient();
   const event = data?.event ?? data ?? null;
 
-  const [isFavorited, setIsFavorited] = useState(false);
+  // Derive favorite status from server data
+  const serverFavorited = useMemo(() => {
+    if (!favData || !eventId) return false;
+    const favList = favData?.favorites ?? (Array.isArray(favData) ? favData : []);
+    const eid = Number(eventId);
+    return favList.some((f) => Number(f.id) === eid || Number(f.event_id) === eid);
+  }, [favData, eventId]);
+
+  // Track local optimistic override during mutation
+  const [optimisticOverride, setOptimisticOverride] = useState(null);
+  const isFavorited = optimisticOverride !== null ? optimisticOverride : serverFavorited;
 
   const favMutation = useMutation({
     mutationFn: () => (isFavorited ? removeFavorite(eventId) : addFavorite(eventId)),
-    onMutate: () => setIsFavorited((prev) => !prev),
-    onError: () => setIsFavorited((prev) => !prev),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+    onMutate: () => setOptimisticOverride(!isFavorited),
+    onError: () => setOptimisticOverride(null),
+    onSettled: () => {
+      setOptimisticOverride(null);
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+    },
   });
 
   if (isLoading) {

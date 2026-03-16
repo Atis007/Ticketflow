@@ -7,27 +7,25 @@ export default function AuthFooter({ mode }) {
   return (
     <View className="items-center mt-4">
       {mode === "login" && (
-        <Text className="text-sm text-slate-400">
-          Don't have an account?{" "}
-          <Text
-            className="text-white underline"
-            onPress={() => navigation.navigate("Register")}
-          >
-            Register
+        <View className="flex-row items-center">
+          <Text className="text-sm text-slate-400">
+            Don't have an account?{" "}
           </Text>
-        </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+            <Text className="text-sm text-white underline">Register</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {mode === "register" && (
-        <Text className="text-sm text-slate-400">
-          Already have an account?{" "}
-          <Text
-            className="text-white underline"
-            onPress={() => navigation.navigate("Login")}
-          >
-            Log in
+        <View className="flex-row items-center">
+          <Text className="text-sm text-slate-400">
+            Already have an account?{" "}
           </Text>
-        </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <Text className="text-sm text-white underline">Log in</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {mode === "admin-login" && (

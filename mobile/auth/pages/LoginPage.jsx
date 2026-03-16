@@ -1,8 +1,12 @@
 import { View, Text } from "react-native";
+import { useRoute } from "@react-navigation/native";
 
 import AuthForm from "../components/AuthForm";
 
 export default function LoginPage() {
+  const route = useRoute();
+  const registered = route.params?.registered;
+
   return (
     <View className="flex-1 justify-center px-6 py-12">
         <View className="mb-8">
@@ -15,6 +19,14 @@ export default function LoginPage() {
 
         <View className="bg-slate-800/80 rounded-3xl p-6 border border-white/10">
           <View className="h-1 bg-purple-600 rounded-full mb-6 opacity-60" />
+
+          {registered && (
+            <View className="p-4 mb-4 rounded-lg bg-green-500/20 border border-green-500/50">
+              <Text className="text-sm text-green-400">
+                Registration successful! Please verify your email, then log in.
+              </Text>
+            </View>
+          )}
 
           <AuthForm
             mode="login"

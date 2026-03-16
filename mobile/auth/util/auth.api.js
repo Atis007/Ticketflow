@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL || "";
+const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
 // Auth API uses a raw axios instance (no auth interceptor, no auto-unwrap)
 // because login/register happen before a token exists and callers
@@ -9,7 +9,11 @@ const baseURL = process.env.EXPO_PUBLIC_API_URL || "";
 const authHttp = axios.create({
   baseURL,
   timeout: 15000,
-  headers: { "Content-Type": "application/json", "X-Platform": "mobile" },
+  headers: {
+    "Content-Type": "application/json",
+    "X-Platform": "mobile",
+    Host: "ticketflow-local",
+  },
 });
 
 async function handleResponse(response) {

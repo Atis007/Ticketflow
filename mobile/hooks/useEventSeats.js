@@ -7,6 +7,6 @@ export function useEventSeats(eventId, enabled = true) {
     queryKey: eventsKeys.seats(eventId),
     queryFn: () => getEventSeats(eventId),
     enabled: Boolean(eventId && enabled),
-    staleTime: 30_000,
+    staleTime: 30000,
   });
 }

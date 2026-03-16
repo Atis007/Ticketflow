@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CommonActions } from "@react-navigation/native";
 import { navigationRef } from "../navigationRef";
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL || "";
+const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
 const http = axios.create({
   baseURL,
@@ -11,6 +11,7 @@ const http = axios.create({
   headers: {
     "Content-Type": "application/json",
     "X-Platform": "mobile",
+    Host: "ticketflow-local",
   },
 });
 

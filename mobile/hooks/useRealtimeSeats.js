@@ -11,7 +11,9 @@ function recalcSummary(seats) {
 }
 
 function applyRealtimeChange(old, payload) {
-  const { eventType, new: newRow, old: oldRow } = payload;
+  const { eventType } = payload;
+  const newRow = payload["new"];
+  const oldRow = payload["old"];
   let seats = old.seats ?? [];
 
   if (eventType === "UPDATE") {
