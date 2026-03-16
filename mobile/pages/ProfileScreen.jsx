@@ -31,6 +31,35 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        onPress={() => navigation.navigate("Favorites")}
+        className="rounded-xl bg-slate-800 p-4 mb-3 flex-row items-center justify-between"
+        activeOpacity={0.8}
+      >
+        <Text className="text-white font-medium">Favorites</Text>
+        <Text className="text-slate-400">→</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Archive")}
+        className="rounded-xl bg-slate-800 p-4 mb-3 flex-row items-center justify-between"
+        activeOpacity={0.8}
+      >
+        <Text className="text-white font-medium">Past Events</Text>
+        <Text className="text-slate-400">→</Text>
+      </TouchableOpacity>
+
+      {user?.role === "admin" ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate("CheckInHome")}
+          className="rounded-xl bg-slate-800 p-4 mb-3 flex-row items-center justify-between"
+          activeOpacity={0.8}
+        >
+          <Text className="text-white font-medium">Check-In Mode</Text>
+          <Text className="text-slate-400">→</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      <TouchableOpacity
         onPress={logout}
         className="mt-4 h-12 w-full rounded-full bg-red-600 items-center justify-center"
         activeOpacity={0.8}

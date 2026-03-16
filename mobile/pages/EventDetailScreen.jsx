@@ -1,58 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
   ScrollView,
-  ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Feather } from "@expo/vector-icons";
 import { getEventById } from "../api/events.api";
+import { addFavorite, removeFavorite } from "../api/favorites.api";
+import { SkeletonText } from "../components/Skeleton";
 
 export default function EventDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { eventId } = route.params ?? {};
 
-  const [event, setEvent] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["events", eventId],
+    queryFn: () => getEventById(eventId),
+    enabled: Boolean(eventId),
+  });
 
-  useEffect(() => {
-    if (!eventId) {
-      setError("No event specified.");
-      setIsLoading(false);
-      return;
-    }
+  const queryClient = useQueryClient();
+  const event = data?.event ?? data ?? null;
 
-    let cancelled = false;
+  const [isFavorited, setIsFavorited] = useState(false);
 
-    (async () => {
-      try {
-        const data = await getEventById(eventId);
-        if (!cancelled) {
-          setEvent(data?.event ?? data ?? null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.message || "Failed to load event.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [eventId]);
+  const favMutation = useMutation({
+    mutationFn: () => (isFavorited ? removeFavorite(eventId) : addFavorite(eventId)),
+    onMutate: () => setIsFavorited((prev) => !prev),
+    onError: () => setIsFavorited((prev) => !prev),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+  });
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-950">
-        <ActivityIndicator size="large" color="#6366f1" />
+      <View className="flex-1 bg-slate-950 px-4 pt-14">
+        <SkeletonText width="40%" height={12} className="mb-4" />
+        <SkeletonText width="80%" height={22} className="mb-3" />
+        <SkeletonText width="50%" height={14} className="mb-2" />
+        <SkeletonText width="45%" height={14} className="mb-2" />
+        <SkeletonText width="35%" height={12} className="mb-6" />
+        <SkeletonText width="100%" height={60} className="rounded-xl" />
       </View>
     );
   }
@@ -60,7 +51,7 @@ export default function EventDetailScreen() {
   if (error || !event) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-950 px-6">
-        <Text className="text-center text-slate-400">{error || "Event not found."}</Text>
+        <Text className="text-center text-slate-400">{error?.message || "Event not found."}</Text>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           className="mt-4 rounded-lg bg-slate-700 px-6 py-3"
@@ -76,9 +67,12 @@ export default function EventDetailScreen() {
   return (
     <View className="flex-1 bg-slate-950">
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        <View className="px-4 pt-14 pb-2 flex-row items-center">
+        <View className="px-4 pt-14 pb-2 flex-row items-center justify-between">
           <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3">
             <Text className="text-indigo-400 text-base">← Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => favMutation.mutate()} className="p-2" activeOpacity={0.6}>
+            <Feather name="heart" size={22} color={isFavorited ? "#f87171" : "#64748b"} />
           </TouchableOpacity>
         </View>
 
@@ -113,6 +107,23 @@ export default function EventDetailScreen() {
           <TouchableOpacity
             className="h-14 rounded-full bg-indigo-600 items-center justify-center"
             activeOpacity={0.8}
+            onPress={() => {
+              if (event.is_seated) {
+                navigation.navigate("SeatSelection", {
+                  eventId,
+                  eventTitle: event.title,
+                  eventPrice: event.price,
+                });
+              } else {
+                // Non-seated: go directly to payment
+                navigation.navigate("Payment", {
+                  eventId,
+                  eventTitle: event.title,
+                  seatIds: [],
+                  totalAmount: parseFloat(event.price || 0),
+                });
+              }
+            }}
           >
             <Text className="text-white font-semibold text-base">Get Tickets</Text>
           </TouchableOpacity>
