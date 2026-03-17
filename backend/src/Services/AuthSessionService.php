@@ -61,7 +61,8 @@ final class AuthSessionService
     public function authenticateToken(PDO $pdo, string $token): ?array
     {
         $stmt = $pdo->prepare(
-            'SELECT s.id AS session_id, s.user_id, u.email, u.role, u.is_active AS is_verified
+            'SELECT s.id AS session_id, s.user_id, u.email, u.role,
+                    (u.email_verified_at IS NOT NULL) AS is_verified
              FROM auth_sessions s
              JOIN users u ON u.id = s.user_id
              WHERE s.token_hash = :token_hash

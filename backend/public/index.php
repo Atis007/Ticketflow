@@ -95,7 +95,7 @@ $router->get('/api/checkin/event/{id:\d+}/tickets', [$mobile, 'checkinTickets'],
 $router->post('/api/checkin/sync', [$mobile, 'checkinSync'], [AuthMiddleware::auth()]);
 
 $router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware::verified()]);
-$router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::verified()]);
+$router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::auth()]);
 $router->post('/api/favorites/{eventId:\d+}', [$profile, 'addFavorite'], [AuthMiddleware::auth()]);
 $router->delete('/api/favorites/{eventId:\d+}', [$profile, 'removeFavorite'], [AuthMiddleware::auth()]);
 
