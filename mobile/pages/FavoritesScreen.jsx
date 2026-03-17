@@ -1,6 +1,6 @@
-import { View, Text, FlatList, RefreshControl, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, RefreshControl, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { getFavorites, removeFavorite } from "../api/favorites.api";
 import { SkeletonList } from "../components/Skeleton";
@@ -15,22 +15,27 @@ export default function FavoritesScreen() {
     queryFn: () => getFavorites({ page: 1, pageSize: 50 }),
   });
 
-  const events = data?.items ?? (Array.isArray(data) ? data : []);
+  const favorites = data?.favorites ?? (Array.isArray(data) ? data : []);
+  // Map backend favorites shape to EventCard-compatible shape
+  const events = favorites.map((f) => ({
+    ...f,
+    starts_at: f.date ?? f.starts_at,
+    venue: f.location ?? f.venue,
+  }));
 
-  const removeMutation = useMutation({
-    mutationFn: (eventId) => removeFavorite(eventId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
-    },
-  });
+  const handleRemove = (eventId) => {
+    removeFavorite(eventId)
+      .then(() => queryClient.invalidateQueries({ queryKey: ["favorites"] }))
+      .catch(() => {});
+  };
 
   if (isLoading) {
     return (
       <View className="flex-1 bg-slate-950">
         <View className="px-4 pt-14 pb-2 flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Pressable onPress={() => navigation.goBack()}>
             <Text className="text-indigo-400 text-base">← Back</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
         <View className="px-4 mt-2 mb-4">
           <Text className="text-2xl font-bold text-white">Favorites</Text>
@@ -43,9 +48,9 @@ export default function FavoritesScreen() {
   return (
     <View className="flex-1 bg-slate-950">
       <View className="px-4 pt-14 pb-2 flex-row items-center">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Pressable onPress={() => navigation.goBack()}>
           <Text className="text-indigo-400 text-base">← Back</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <View className="px-4 mt-2 mb-4">
@@ -68,13 +73,13 @@ export default function FavoritesScreen() {
                   onPress={() => navigation.navigate("EventDetail", { eventId: item.id })}
                 />
               </View>
-              <TouchableOpacity
-                onPress={() => removeMutation.mutate(item.id)}
-                className="mr-4 p-2"
-                activeOpacity={0.6}
+              <Pressable
+                onPress={() => handleRemove(item.id)}
+                hitSlop={16}
+                className="mr-4"
               >
                 <Feather name="heart" size={20} color="#f87171" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           )}
           refreshControl={

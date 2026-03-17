@@ -139,6 +139,8 @@ final class ProfileController
                     e.image,
                     e.city,
                     e.venue,
+                    e.price,
+                    e.is_free,
                     TO_CHAR(timezone(:tz, e.starts_at), 'YYYY-MM-DD HH24:MI:SS') AS event_date,
                     e.slug AS event_slug,
                     COALESCE(s.slug, c.slug) AS scope_slug
@@ -179,6 +181,8 @@ final class ProfileController
                     'title' => (string) ($row['title'] ?? ''),
                     'date' => (string) ($row['event_date'] ?? ''),
                     'location' => $location,
+                    'price' => (string) ($row['price'] ?? '0'),
+                    'is_free' => (bool) ($row['is_free'] ?? false),
                     'imageUrl' => (string) ($row['image'] ?? ''),
                     'eventPath' => $eventPath,
                 ];

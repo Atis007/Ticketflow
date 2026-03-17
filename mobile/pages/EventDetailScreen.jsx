@@ -1,12 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { getEventById } from "../api/events.api";
 import { addFavorite, removeFavorite, getFavorites } from "../api/favorites.api";
@@ -16,6 +16,7 @@ export default function EventDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { eventId } = route.params ?? {};
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["events", eventId],
@@ -28,30 +29,32 @@ export default function EventDetailScreen() {
     queryFn: () => getFavorites({ pageSize: 50 }),
   });
 
-  const queryClient = useQueryClient();
   const event = data?.event ?? data ?? null;
 
-  // Derive favorite status from server data
-  const serverFavorited = useMemo(() => {
-    if (!favData || !eventId) return false;
+  // Simple local toggle state, initialized from server
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    if (!favData || !eventId) return;
     const favList = favData?.favorites ?? (Array.isArray(favData) ? favData : []);
     const eid = Number(eventId);
-    return favList.some((f) => Number(f.id) === eid || Number(f.event_id) === eid);
+    const found = favList.some((f) => Number(f.id) === eid || Number(f.event_id) === eid);
+    setIsFavorited(found);
   }, [favData, eventId]);
 
-  // Track local optimistic override during mutation
-  const [optimisticOverride, setOptimisticOverride] = useState(null);
-  const isFavorited = optimisticOverride !== null ? optimisticOverride : serverFavorited;
+  const toggleFavorite = () => {
+    const next = !isFavorited;
+    setIsFavorited(next);
 
-  const favMutation = useMutation({
-    mutationFn: () => (isFavorited ? removeFavorite(eventId) : addFavorite(eventId)),
-    onMutate: () => setOptimisticOverride(!isFavorited),
-    onError: () => setOptimisticOverride(null),
-    onSettled: () => {
-      setOptimisticOverride(null);
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
-    },
-  });
+    const action = next ? addFavorite(eventId) : removeFavorite(eventId);
+    action
+      .then(() => queryClient.invalidateQueries({ queryKey: ["favorites"] }))
+      .catch((err) => {
+        // 409 = already favorited — keep the toggled state
+        if (err.status === 409) return;
+        setIsFavorited(!next); // revert on real failure
+      });
+  };
 
   if (isLoading) {
     return (
@@ -70,12 +73,12 @@ export default function EventDetailScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-slate-950 px-6">
         <Text className="text-center text-slate-400">{error?.message || "Event not found."}</Text>
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigation.goBack()}
           className="mt-4 rounded-lg bg-slate-700 px-6 py-3"
         >
           <Text className="text-white font-medium">Go Back</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -86,12 +89,12 @@ export default function EventDetailScreen() {
     <View className="flex-1 bg-slate-950">
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <View className="px-4 pt-14 pb-2 flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3">
+          <Pressable onPress={() => navigation.goBack()} className="mr-3">
             <Text className="text-indigo-400 text-base">← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => favMutation.mutate()} className="p-2" activeOpacity={0.6}>
+          </Pressable>
+          <Pressable onPress={toggleFavorite} hitSlop={16}>
             <Feather name="heart" size={22} color={isFavorited ? "#f87171" : "#64748b"} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View className="px-4 mt-2">
@@ -122,9 +125,8 @@ export default function EventDetailScreen() {
 
       {!event.is_free && (
         <View className="absolute bottom-0 left-0 right-0 px-4 pb-8 pt-3 bg-slate-950">
-          <TouchableOpacity
+          <Pressable
             className="h-14 rounded-full bg-indigo-600 items-center justify-center"
-            activeOpacity={0.8}
             onPress={() => {
               if (event.is_seated) {
                 navigation.navigate("SeatSelection", {
@@ -133,7 +135,6 @@ export default function EventDetailScreen() {
                   eventPrice: event.price,
                 });
               } else {
-                // Non-seated: go directly to payment
                 navigation.navigate("Payment", {
                   eventId,
                   eventTitle: event.title,
@@ -144,7 +145,7 @@ export default function EventDetailScreen() {
             }}
           >
             <Text className="text-white font-semibold text-base">Get Tickets</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       )}
     </View>
