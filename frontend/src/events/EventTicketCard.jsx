@@ -7,7 +7,7 @@ import { useAuth } from "@/auth/context/AuthContext";
 import { useSimulatePurchase } from "@/purchases/hooks/useSimulatePurchase";
 import PaymentQR from "@/purchases/PaymentQR";
 import { eventsKeys } from "./events.queryKeys";
-import SeatMap from "./SeatMap";
+import SeatMapModal from "./SeatMapModal";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -34,6 +34,7 @@ export default function EventTicketCard({ tickets, purchase }) {
     return featured?.id ?? tickets?.[0]?.id ?? "";
   });
   const [feedback, setFeedback] = useState(null);
+  const [seatModalOpen, setSeatModalOpen] = useState(false);
 
   const eventId = useMemo(() => {
     const rawId = purchase?.eventId;
@@ -145,19 +146,40 @@ export default function EventTicketCard({ tickets, purchase }) {
       ))}
 
       {isSeated && !isFree && !feedback?.success && (
-        <>
-          <SeatMap
+        <div className="mb-5">
+          <button
+            type="button"
+            onClick={() => setSeatModalOpen(true)}
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-background-dark px-4 py-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="material-symbols-outlined text-xl">event_seat</span>
+              </span>
+              <div>
+                <span className="text-sm font-semibold text-white">
+                  {selectedSeatIds.length > 0 ? "Change Seats" : "Select Seats"}
+                </span>
+                <p className="text-xs text-text-muted mt-0.5">
+                  {selectedSeatIds.length > 0
+                    ? `${selectedSeatIds.length} of ${quantity} seat${quantity !== 1 ? "s" : ""} selected`
+                    : "Tap to open the seat map"}
+                </p>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-text-muted">chevron_right</span>
+          </button>
+
+          <SeatMapModal
+            open={seatModalOpen}
+            onClose={() => setSeatModalOpen(false)}
+            onConfirm={(ids) => setSelectedSeatIds(ids)}
             eventId={eventId}
-            onSelectionChange={setSelectedSeatIds}
             maxSelectable={quantity}
             disabled={isSubmitting}
           />
-          {selectedSeatIds.length > 0 && (
-            <p className="text-xs text-cyan-300 mb-4">
-              {selectedSeatIds.length} of {quantity} seat{quantity !== 1 ? "s" : ""} selected
-            </p>
-          )}
-        </>
+        </div>
       )}
 
       {feedback ? (
@@ -200,7 +222,7 @@ export default function EventTicketCard({ tickets, purchase }) {
       ) : null}
 
       {isFree ? (
-        <AsyncState message="This event is free and ticketless." className="mb-4" />
+        <AsyncState type="notice" message="This event is free and ticketless." className="mb-4" />
       ) : (
         <>
           <div className="flex items-center justify-between mb-4 border-t border-white/10 pt-6">

@@ -40,7 +40,10 @@ final class EventController
         $cityFilter = trim((string) ($request->query['city'] ?? ''));
         $monthFilter = trim((string) ($request->query['month'] ?? ''));
 
-        $where = ['e.is_active = TRUE'];
+        $where = [
+            'e.is_active = TRUE',
+            '((e.ends_at IS NOT NULL AND e.ends_at > NOW()) OR (e.ends_at IS NULL AND e.starts_at > NOW()))',
+        ];
         $bind = [];
 
         if ($categoryFilter !== '') {
@@ -299,8 +302,14 @@ final class EventController
             $eventId = (int) $stmt->fetchColumn();
 
             if ($isSeated && $capacity !== null && $capacity > 0) {
-                $layoutJson = $this->nullableString($data['layout'] ?? null);
-                $layoutData = $layoutJson !== null ? json_decode($layoutJson, true) : null;
+                $layoutRaw = $data['layout'] ?? null;
+                if (is_array($layoutRaw)) {
+                    $layoutData = $layoutRaw;
+                } elseif (is_string($layoutRaw) && $layoutRaw !== '') {
+                    $layoutData = json_decode($layoutRaw, true);
+                } else {
+                    $layoutData = null;
+                }
 
                 if (is_array($layoutData) && isset($layoutData['sections']) && $layoutData['sections'] !== []) {
                     $sectionService = new EventSectionService();
@@ -331,9 +340,15 @@ final class EventController
                 );
             }
 
+            $catStmt = $pdo->prepare('SELECT slug FROM categories WHERE id = :id LIMIT 1');
+            $catStmt->execute([':id' => $categoryId]);
+            $catSlug = $catStmt->fetchColumn();
+
             Json::success([
-                'id' => $eventId,
-                'message' => 'Event created successfully',
+                'id'            => $eventId,
+                'slug'          => $slug,
+                'category_slug' => is_string($catSlug) ? $catSlug : '',
+                'message'       => 'Event created successfully',
             ], 201);
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {
@@ -569,7 +584,16 @@ final class EventController
             $oldCapacity = isset($existing['capacity']) ? (int) $existing['capacity'] : null;
 
             if ($isNowSeated && $newCapacity !== null && $newCapacity > 0 && (!$wasSeated || $newCapacity !== $oldCapacity)) {
-                (new EventSeatService())->generateSeats($pdo, $id, $newCapacity);
+                $existingSectionStmt = $pdo->prepare(
+                    'SELECT id FROM event_sections WHERE event_id = :event_id LIMIT 1'
+                );
+                $existingSectionStmt->execute([':event_id' => $id]);
+                $existingSectionId = $existingSectionStmt->fetchColumn();
+
+                (new EventSeatService())->generateSeats(
+                    $pdo, $id, $newCapacity,
+                    $existingSectionId !== false ? (int) $existingSectionId : null
+                );
             }
 
             $trackedFields = [
@@ -660,7 +684,8 @@ final class EventController
                  INNER JOIN subcategories s ON s.id = e.subcategory_id
                  INNER JOIN categories c ON c.id = e.category_id
                  WHERE (c.slug = :scope_slug OR s.slug = :scope_slug)
-                   AND e.is_active = TRUE"
+                   AND e.is_active = TRUE
+                   AND ((e.ends_at IS NOT NULL AND e.ends_at > NOW()) OR (e.ends_at IS NULL AND e.starts_at > NOW()))"
             );
             $countStmt->execute([':scope_slug' => $scopeSlug]);
             $total = (int) $countStmt->fetchColumn();
@@ -686,6 +711,7 @@ final class EventController
                  INNER JOIN categories c ON c.id = e.category_id
                  WHERE (c.slug = :scope_slug OR s.slug = :scope_slug)
                     AND e.is_active = TRUE
+                    AND ((e.ends_at IS NOT NULL AND e.ends_at > NOW()) OR (e.ends_at IS NULL AND e.starts_at > NOW()))
                  ORDER BY e.starts_at ASC
                  LIMIT :limit OFFSET :offset"
             );

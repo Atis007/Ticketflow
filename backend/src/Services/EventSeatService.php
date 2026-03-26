@@ -10,28 +10,50 @@ final class EventSeatService
 {
     /**
      * Generates GA seats for a seated event.
+     * When $sectionId is null a default "General Admission" section is created first.
      * Safe to re-call on capacity changes — uses ON CONFLICT DO NOTHING.
      */
-    public function generateSeats(PDO $pdo, int $eventId, int $capacity): void
+    public function generateSeats(PDO $pdo, int $eventId, int $capacity, ?int $sectionId = null): void
     {
         if ($capacity <= 0) {
             return;
         }
 
+        if ($sectionId === null) {
+            $secStmt = $pdo->prepare(
+                "INSERT INTO event_sections (event_id, name, type, capacity, price, x_position, y_position, source)
+                 VALUES (:event_id, 'General Admission', 'seated', :capacity, 0, 0, 0, 'manual')
+                 RETURNING id"
+            );
+            $secStmt->execute([':event_id' => $eventId, ':capacity' => $capacity]);
+            $sectionId = (int) $secStmt->fetchColumn();
+        }
+
         $stmt = $pdo->prepare(
-            'INSERT INTO event_seats (event_id, row_label, seat_label, position_x, position_y)
-             VALUES (:event_id, :row_label, :seat_label, :pos_x, :pos_y)
+            'INSERT INTO event_seats (event_id, section_id, row_label, seat_label, position_x, position_y)
+             VALUES (:event_id, :section_id, :row_label, :seat_label, :pos_x, :pos_y)
              ON CONFLICT DO NOTHING'
         );
 
-        for ($i = 1; $i <= $capacity; $i++) {
-            $stmt->execute([
-                ':event_id'    => $eventId,
-                ':row_label'   => 'GA',
-                ':seat_label'  => (string) $i,
-                ':pos_x'       => $i,
-                ':pos_y'       => 0,
-            ]);
+        $seatsPerRow = 20;
+        $totalRows   = (int) ceil($capacity / $seatsPerRow);
+        $seatIndex   = 0;
+
+        for ($r = 0; $r < $totalRows; $r++) {
+            $rowLabel     = self::rowLetter($r);
+            $seatsInRow   = min($seatsPerRow, $capacity - $seatIndex);
+
+            for ($s = 1; $s <= $seatsInRow; $s++) {
+                $stmt->execute([
+                    ':event_id'    => $eventId,
+                    ':section_id'  => $sectionId,
+                    ':row_label'   => $rowLabel,
+                    ':seat_label'  => (string) $s,
+                    ':pos_x'       => $s,
+                    ':pos_y'       => $r,
+                ]);
+                $seatIndex++;
+            }
         }
     }
 
@@ -94,12 +116,17 @@ final class EventSeatService
         $placeholders = implode(',', array_fill(0, count($seatIds), '?'));
         $params = $seatIds;
         $params[] = $eventId;
+        $params[] = $userId;
 
         $stmt = $pdo->prepare(
             "SELECT id FROM event_seats
              WHERE id IN ({$placeholders})
                AND event_id = ?
-               AND (status = 'available' OR (status = 'locked' AND locked_at < NOW() - INTERVAL '{$timeoutMinutes} minutes'))
+               AND (
+                   status = 'available'
+                   OR (status = 'locked' AND reserved_by = ?)
+                   OR (status = 'locked' AND locked_at < NOW() - INTERVAL '{$timeoutMinutes} minutes')
+               )
              FOR UPDATE SKIP LOCKED"
         );
         $stmt->execute($params);
@@ -151,7 +178,7 @@ final class EventSeatService
              FROM event_seats
              WHERE event_id = :event_id
                AND status = \'available\'
-             ORDER BY seat_label ASC
+             ORDER BY position_y ASC, position_x ASC
              LIMIT :quantity
              FOR UPDATE SKIP LOCKED'
         );
@@ -186,5 +213,17 @@ final class EventSeatService
                 ':seat_id'   => $seatId,
             ]);
         }
+    }
+
+    private static function rowLetter(int $index): string
+    {
+        $label = '';
+        $i = $index + 1;
+        while ($i > 0) {
+            $i--;
+            $label = chr(65 + ($i % 26)) . $label;
+            $i = intdiv($i, 26);
+        }
+        return $label;
     }
 }

@@ -23,6 +23,7 @@ import {
 } from "../components";
 import ContentEnhancer from "@/components/ContentEnhancer";
 import VenueLayoutGenerator from "../components/VenueLayoutGenerator";
+import VenueLayoutGeneratorPreview from "@/components/VenueLayoutGenerator";
 
 function toDateTimeLocal(value) {
   if (!value) {
@@ -49,6 +50,7 @@ function initialEventForm() {
     price: "",
     isSeated: "false",
     isActive: "true",
+    layout: null,
   };
 }
 
@@ -115,6 +117,7 @@ export default function EventsPage() {
   const [eventForm, setEventForm] = useState(() => initialEventForm());
   const [eventFormErrors, setEventFormErrors] = useState({});
   const [showEnhancer, setShowEnhancer] = useState(false);
+  const [showLayoutGenerator, setShowLayoutGenerator] = useState(false);
   const [layoutModal, setLayoutModal] = useState({ open: false, event: null });
 
   useEffect(() => {
@@ -236,6 +239,7 @@ export default function EventsPage() {
     setEventForm(initialEventForm());
     setEventFormErrors({});
     setShowEnhancer(false);
+    setShowLayoutGenerator(false);
   }, []);
 
   const openCreateEventModal = useCallback(() => {
@@ -313,6 +317,9 @@ export default function EventsPage() {
     if (eventModal.mode === "create") {
       payload.categoryId = Number(eventForm.categoryId);
       payload.subcategoryId = Number(eventForm.subcategoryId);
+      if (eventForm.isSeated === "true" && eventForm.layout) {
+        payload.layout = eventForm.layout;
+      }
     } else {
       if (eventForm.categoryId) {
         payload.categoryId = Number(eventForm.categoryId);
@@ -689,6 +696,55 @@ export default function EventsPage() {
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </AdminSelect>
+
+          {/* Inline layout generator for create mode when seated */}
+          {eventModal.mode === "create" && eventForm.isSeated === "true" && (
+            <div className="md:col-span-2 space-y-3">
+              {!eventForm.layout && !showLayoutGenerator && eventForm.capacity && Number(eventForm.capacity) > 0 && (
+                <AdminButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowLayoutGenerator(true)}
+                  icon={<span className="material-symbols-outlined text-base">stadium</span>}
+                  iconPosition="left"
+                >
+                  Generate Venue Layout
+                </AdminButton>
+              )}
+              {showLayoutGenerator && !eventForm.layout && (
+                <VenueLayoutGeneratorPreview
+                  venueName={eventForm.venue}
+                  capacity={eventForm.capacity}
+                  token={token}
+                  onAccept={(layout) => {
+                    setEventForm((prev) => ({ ...prev, layout }));
+                    setShowLayoutGenerator(false);
+                  }}
+                  onClose={() => setShowLayoutGenerator(false)}
+                />
+              )}
+              {eventForm.layout && (
+                <div className="rounded-lg border border-white/20 bg-surface-mid p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-white">Layout applied — {eventForm.layout.sections?.length ?? 0} sections</span>
+                    <button
+                      type="button"
+                      onClick={() => setEventForm((prev) => ({ ...prev, layout: null }))}
+                      className="text-xs text-text-muted hover:text-danger transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <p className="text-xs text-text-muted">
+                    {eventForm.layout.sections?.reduce(
+                      (sum, s) => sum + (s.rows ?? []).reduce((r, row) => r + (row.seatCount || row.seat_count || 0), 0),
+                      0
+                    ) ?? 0} total seats
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="md:col-span-2">
             <AdminTextarea

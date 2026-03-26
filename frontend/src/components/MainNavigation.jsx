@@ -8,17 +8,12 @@ import NotificationDropdown from "../notifications/NotificationDropdown";
 import SidebarMenu from "@/components/SidebarMenu";
 
 function MainNavigation() {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
 
   const { isAuthenticated, isAdmin } = useAuth();
   const { data: notifData } = useNotifications();
   const unreadCount = notifData?.unread_count ?? 0;
-
-  function toggleExpand() {
-    setIsExpanded(!isExpanded);
-  }
 
   return (
     <>
@@ -49,38 +44,6 @@ function MainNavigation() {
           <div className="ml-auto flex items-center gap-4">
             {isAuthenticated && (
               <>
-                <div
-                  className={`w-40 max-w-2xl overflow-hidden transition-opacity duration-500 ease-in-out ${
-                    isExpanded ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  <form
-                    className="group relative flex items-center w-full h-16 rounded-full bg-surface-dark border border-white/10 shadow-xl focus-within:border-accent-purple/50 focus-within:ring-2 focus-within:ring-accent-purple/20 transition-colors overflow-hidden"
-                    aria-label="Search for events"
-                  >
-                    <input
-                      type="search"
-                      className="flex-1 bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4 text-base"
-                      placeholder="Search for events..."
-                      aria-label="Search for events"
-                    />
-                  </form>
-                </div>
-
-                <button
-                  type="button"
-                  className="cursor-pointer hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-gray-300 hover:bg-white/10 transition-colors"
-                  aria-label="Search"
-                  onClick={toggleExpand}
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                  >
-                    search
-                  </span>
-                </button>
-
                 <div className="relative">
                   <button
                     type="button"

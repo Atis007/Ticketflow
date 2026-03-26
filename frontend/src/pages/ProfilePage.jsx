@@ -10,6 +10,7 @@ import ProfileSection from "@/profile/components/ProfileSection";
 import PurchasesList from "@/profile/components/PurchasesList";
 import FavoritesList from "@/profile/components/FavoritesList";
 import QuickActions from "@/profile/components/QuickActions";
+import { updateProfile, changePassword } from "@/profile/profile.api";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -29,6 +30,65 @@ export default function ProfilePage() {
 
   const favoritesQuery = useFavorites(token, isAuthenticated && isVerified);
   const purchasesQuery = usePurchases(token, isAuthenticated && isVerified);
+
+  const [nameValue, setNameValue] = useState("");
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameError, setNameError] = useState(null);
+  const [nameSuccess, setNameSuccess] = useState(false);
+
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState(null);
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) setNameValue(user.fullName || user.fullname || user.name || "");
+  }, [user]);
+
+  async function handleNameSave(e) {
+    e.preventDefault();
+    const trimmed = nameValue.trim();
+    if (!trimmed) return;
+    setNameSaving(true);
+    setNameError(null);
+    setNameSuccess(false);
+    try {
+      await updateProfile(token, { fullname: trimmed });
+      setNameSuccess(true);
+      setTimeout(() => setNameSuccess(false), 3000);
+    } catch (err) {
+      setNameError(err.message || "Failed to update name.");
+    } finally {
+      setNameSaving(false);
+    }
+  }
+
+  async function handlePasswordChange(e) {
+    e.preventDefault();
+    if (pwForm.next !== pwForm.confirm) {
+      setPwError("New passwords do not match.");
+      return;
+    }
+    if (pwForm.next.length < 8) {
+      setPwError("New password must be at least 8 characters.");
+      return;
+    }
+    setPwSaving(true);
+    setPwError(null);
+    setPwSuccess(false);
+    try {
+      await changePassword(token, { currentPassword: pwForm.current, newPassword: pwForm.next });
+      setPwSuccess(true);
+      setPwForm({ current: "", next: "", confirm: "" });
+      setPwOpen(false);
+      setTimeout(() => setPwSuccess(false), 4000);
+    } catch (err) {
+      setPwError(err.message || "Failed to change password.");
+    } finally {
+      setPwSaving(false);
+    }
+  }
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -61,9 +121,7 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-2 pt-4 pb-6 sm:px-4 lg:px-6">
-      <div id="account" className="scroll-mt-24">
-        <ProfileHeader user={user} onLogout={handleLogout} loggingOut={loggingOut} />
-      </div>
+      <ProfileHeader user={user} onLogout={handleLogout} loggingOut={loggingOut} />
 
       <div className="flex flex-wrap gap-2">
         <Link
@@ -123,6 +181,81 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-6">
+          <ProfileSection id="account" title="Account Settings">
+            <form onSubmit={handleNameSave} className="space-y-3">
+              <label className="block text-sm font-semibold text-text-soft">Display Name</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={nameValue}
+                  onChange={(e) => setNameValue(e.target.value)}
+                  maxLength={100}
+                  className="flex-1 rounded-lg border border-white/10 bg-surface-mid px-3 py-2 text-sm text-white placeholder-text-muted focus:border-primary/50 focus:outline-none transition-colors"
+                  placeholder="Your display name"
+                />
+                <button
+                  type="submit"
+                  disabled={nameSaving || !nameValue.trim()}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {nameSaving ? "Saving..." : "Save"}
+                </button>
+              </div>
+              {nameError ? <p className="text-xs text-danger">{nameError}</p> : null}
+              {nameSuccess ? <p className="text-xs text-accent-green">Name updated.</p> : null}
+            </form>
+
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-text-soft">Password</span>
+                <button
+                  type="button"
+                  onClick={() => { setPwOpen((v) => !v); setPwError(null); }}
+                  className="text-sm text-primary hover:text-accent-cyan transition-colors"
+                >
+                  {pwOpen ? "Cancel" : "Change password"}
+                </button>
+              </div>
+              {pwSuccess ? <p className="mt-2 text-xs text-accent-green">Password changed successfully.</p> : null}
+              {pwOpen ? (
+                <form onSubmit={handlePasswordChange} className="mt-3 space-y-3">
+                  <input
+                    type="password"
+                    placeholder="Current password"
+                    value={pwForm.current}
+                    onChange={(e) => setPwForm((f) => ({ ...f, current: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-surface-mid px-3 py-2 text-sm text-white placeholder-text-muted focus:border-primary/50 focus:outline-none transition-colors"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="New password (min 8 characters)"
+                    value={pwForm.next}
+                    onChange={(e) => setPwForm((f) => ({ ...f, next: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-surface-mid px-3 py-2 text-sm text-white placeholder-text-muted focus:border-primary/50 focus:outline-none transition-colors"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={pwForm.confirm}
+                    onChange={(e) => setPwForm((f) => ({ ...f, confirm: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-surface-mid px-3 py-2 text-sm text-white placeholder-text-muted focus:border-primary/50 focus:outline-none transition-colors"
+                    required
+                  />
+                  {pwError ? <p className="text-xs text-danger">{pwError}</p> : null}
+                  <button
+                    type="submit"
+                    disabled={pwSaving}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {pwSaving ? "Saving..." : "Update password"}
+                  </button>
+                </form>
+              ) : null}
+            </div>
+          </ProfileSection>
+
           <ProfileSection id="favorites" title="Favorites">
             {!isVerified ? <AsyncState message="Favorites are available after email verification." /> : null}
             {isVerified && favoritesQuery.isPending ? <AsyncState message="Loading favorites..." /> : null}

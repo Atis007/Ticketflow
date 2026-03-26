@@ -7,16 +7,6 @@ const actions = [
     to: "/events",
   },
   {
-    label: "Saved Favorites",
-    icon: "favorite",
-    to: "/profile#favorites",
-  },
-  {
-    label: "Account Settings",
-    icon: "settings",
-    to: "/profile#account",
-  },
-  {
     label: "Create Event",
     icon: "add_circle",
     to: "/create-event",

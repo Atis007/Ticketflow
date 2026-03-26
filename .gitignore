@@ -63,6 +63,7 @@ backend/.phpunit.result.cache
 backend/uploads/
 backend/SPEC.MD
 backend/REMAINING.md
+backend/public/.htaccess.local
 
 # Composer / PHP cache
 composer.lock

@@ -5,6 +5,12 @@ const stylesByType = {
     icon: "progress_activity",
     iconClass: "animate-spin text-accent-cyan",
   },
+  notice: {
+    container: "border-white/10 bg-surface-dark text-gray-400",
+    button: "border-white/20 text-white hover:bg-white/10",
+    icon: "info",
+    iconClass: "text-text-muted",
+  },
   error: {
     container: "border-danger/30 bg-danger/10 text-danger-soft",
     button: "border-danger/40 text-danger-soft hover:bg-danger/10",

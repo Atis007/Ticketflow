@@ -77,7 +77,7 @@ function SeatRect({ x, y, seat, isSelected, onClick }) {
   );
 }
 
-export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1, disabled = false }) {
+export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1, disabled = false, modalMode = false }) {
   const seatsQuery = useEventSeats(eventId, Boolean(eventId));
   useRealtimeSeats(eventId);
   const { token } = useAuth();
@@ -110,7 +110,7 @@ export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1,
         return next;
       });
 
-      if (isAdding && token) {
+      if (isAdding && token && !modalMode) {
         try {
           await reserveSeat.mutateAsync({ seatIds: [seatId], token });
         } catch {
@@ -123,7 +123,7 @@ export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1,
         }
       }
     },
-    [isInteractive, disabled, maxSelectable, selectedIds, token, reserveSeat],
+    [isInteractive, disabled, maxSelectable, selectedIds, token, reserveSeat, modalMode],
   );
 
   const activeSelectedIds = useMemo(() => {
@@ -231,17 +231,25 @@ export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1,
     return <AsyncState type="error" message="Failed to load seats." />;
   }
 
-  if (!seatsQuery.data?.isSeated || sections.length === 0) {
+  if (!seatsQuery.data?.isSeated) {
     return null;
+  }
+
+  if (sections.length === 0) {
+    return (
+      <div className="mb-6 rounded-lg border border-white/5 bg-black/20 px-4 py-8 text-center text-sm text-text-muted">
+        Seat map is being configured for this event. Check back soon.
+      </div>
+    );
   }
 
   let runningY = SVG_PADDING;
 
   return (
-    <div className="mb-6">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-white">Seat Map</span>
-        <div className="flex items-center gap-3">
+    <div className={modalMode ? "h-full flex flex-col" : "mb-6"}>
+      <div className={`flex items-center justify-between ${modalMode ? "mb-2 px-1" : "mb-3"}`}>
+        {!modalMode && <span className="text-sm font-semibold text-white">Seat Map</span>}
+        <div className={`flex items-center gap-3 ${modalMode ? "w-full justify-between" : ""}`}>
           {summary && (
             <span className="text-xs text-text-muted">
               <span className="text-emerald-300">{summary.available}</span> available ·{" "}
@@ -274,7 +282,7 @@ export default function SeatMap({ eventId, onSelectionChange, maxSelectable = 1,
 
       <div
         ref={containerRef}
-        className="overflow-auto rounded-lg border border-white/5 bg-black/20 pb-1 max-h-[400px] sm:max-h-[500px]"
+        className={`overflow-auto rounded-lg border border-white/5 bg-black/20 pb-1 ${modalMode ? "flex-1 min-h-0" : "max-h-[400px] sm:max-h-[500px]"}`}
         style={{ cursor: "grab" }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import SidebarMenu from "@/components/SidebarMenu";
 import AsyncState from "@/components/AsyncState";
@@ -11,20 +11,8 @@ import EventRelatedGrid from "@/events/EventRelatedGrid";
 import { useEventDetails } from "@/events/hooks/useEventDetails";
 import { useAuth } from "@/auth/context/AuthContext";
 import { getCategories, updateEvent } from "@/events/events.api";
-
-const FAVORITES_KEY = "ticketflow_favorites";
-
-function readFavorites() {
-  try {
-    return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function writeFavorites(ids) {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
-}
+import { useFavorites } from "@/profile/hooks/useFavorites";
+import { addFavorite, removeFavorite } from "@/profile/profile.api";
 
 function DetailCard({ icon, label, value, subValue }) {
   return (
@@ -259,27 +247,36 @@ export default function EventDetailsPage() {
   const detailsQuery = useEventDetails(categorySlug, eventSlug);
   const event = detailsQuery.event;
 
-  const [favoriteVersion, setFavoriteVersion] = useState(0);
+  const queryClient = useQueryClient();
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const favoritesQuery = useFavorites(token, isAuthenticated);
   const isFavorited = useMemo(() => {
-    if (!event?.id) return false;
-    return readFavorites().includes(String(event.id));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event?.id, favoriteVersion]);
+    if (!event?.id || !favoritesQuery.data) return false;
+    return favoritesQuery.data.some((f) => f.id === event.id);
+  }, [event?.id, favoritesQuery.data]);
 
   const tags = useMemo(() => {
     if (!event?.categoryBadges) return [];
     return event.categoryBadges.map((badge) => badge.label);
   }, [event]);
 
-  const isOwner = isAuthenticated && event?.createdBy && user?.id === event.createdBy;
+  const isOwner = isAuthenticated && event?.createdBy != null && Number(user?.id) === Number(event.createdBy);
 
-  function toggleFavorite() {
-    if (!event?.id) return;
-    const id = String(event.id);
-    const current = readFavorites();
-    const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
-    writeFavorites(next);
-    setFavoriteVersion((v) => v + 1);
+  async function toggleFavorite() {
+    if (!event?.id || !token || favoriteLoading) return;
+    setFavoriteLoading(true);
+    try {
+      if (isFavorited) {
+        await removeFavorite(token, event.id);
+      } else {
+        await addFavorite(token, event.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ["profile", "favorites"] });
+    } catch {
+      // silently ignore
+    } finally {
+      setFavoriteLoading(false);
+    }
   }
 
   async function handleShare() {
@@ -385,7 +382,8 @@ export default function EventDetailsPage() {
               <button
                 type="button"
                 onClick={toggleFavorite}
-                className="p-3 rounded-full bg-background-dark/60 backdrop-blur-sm border border-white/10 hover:border-primary/50 transition-colors"
+                disabled={favoriteLoading || !isAuthenticated}
+                className="p-3 rounded-full bg-background-dark/60 backdrop-blur-sm border border-white/10 hover:border-primary/50 transition-colors disabled:opacity-50"
                 aria-label={isFavorited ? "Remove from favorites" : "Save event"}
               >
                 <span className={`material-symbols-outlined ${isFavorited ? "text-primary" : "text-white/70"}`}>

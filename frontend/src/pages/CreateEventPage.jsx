@@ -76,6 +76,9 @@ function validate(form) {
   if (!form.isFree && (!form.price || Number(form.price) <= 0)) {
     errors.price = "Price must be greater than 0 for paid events.";
   }
+  if (form.isSeated && !form.layout) {
+    errors.layout = "A venue layout is required for seated events. Use the layout generator below.";
+  }
   return errors;
 }
 
@@ -442,6 +445,9 @@ export default function CreateEventPage() {
             </div>
 
             {/* Seated event: layout generation */}
+            {errors.layout && (
+              <p className="text-xs text-danger">{errors.layout}</p>
+            )}
             {form.isSeated && !form.layout && !showLayoutGenerator && form.capacity && Number(form.capacity) > 0 && (
               <button
                 type="button"

@@ -56,10 +56,12 @@ final class EventSeatController
             }
 
             $seatStmt = $pdo->prepare(
-                'SELECT id, section_id AS "sectionId", row_label AS "rowLabel", seat_label AS "seatLabel", status
-                 FROM event_seats
-                 WHERE event_id = :event_id
-                 ORDER BY row_label ASC, seat_label ASC'
+                'SELECT es.id, es.section_id AS "sectionId", sec.name AS "sectionName",
+                        es.row_label AS "rowLabel", es.seat_label AS "seatNumber", es.status
+                 FROM event_seats es
+                 LEFT JOIN event_sections sec ON sec.id = es.section_id
+                 WHERE es.event_id = :event_id
+                 ORDER BY sec.y_position ASC, es.position_y ASC, es.position_x ASC'
             );
             $seatStmt->bindValue(':event_id', $eventId, PDO::PARAM_INT);
             $seatStmt->execute();
