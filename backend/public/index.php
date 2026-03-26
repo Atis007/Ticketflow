@@ -72,10 +72,10 @@ $router->post('/api/events', [$event, 'store'], [AuthMiddleware::auth()]);
 $router->put('/api/events/{id:\d+}', [$event, 'update'], [AuthMiddleware::auth()]);
 $router->patch('/api/events/{id:\d+}', [$event, 'update'], [AuthMiddleware::auth()]);
 $router->get('/api/events/{category_slug}', [$event, 'indexBySubcategory']);
-$router->get('/api/events/{category_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug']);
 $eventSeat = new EventSeatController();
 $router->get('/api/events/{id:\d+}/seats', [$eventSeat, 'index']);
 $router->post('/api/events/{id:\d+}/seats/reserve', [$eventSeat, 'reserve'], [AuthMiddleware::auth()]);
+$router->get('/api/events/{category_slug}/{event_slug}', [$event, 'showBySubcategoryAndSlug']);
 $router->post('/api/purchases/simulate', [$purchase, 'simulate'], [AuthMiddleware::auth()]);
 
 $payment = new PaymentController();
@@ -98,6 +98,8 @@ $router->get('/api/profile/purchases', [$profile, 'purchases'], [AuthMiddleware:
 $router->get('/api/profile/favorites', [$profile, 'favorites'], [AuthMiddleware::auth()]);
 $router->post('/api/favorites/{eventId:\d+}', [$profile, 'addFavorite'], [AuthMiddleware::auth()]);
 $router->delete('/api/favorites/{eventId:\d+}', [$profile, 'removeFavorite'], [AuthMiddleware::auth()]);
+$router->patch('/api/profile/me', [$profile, 'updateMe'], [AuthMiddleware::auth()]);
+$router->patch('/api/profile/password', [$profile, 'changePassword'], [AuthMiddleware::auth()]);
 
 $notification = new NotificationController();
 $router->get('/api/notifications', [$notification, 'index'], [AuthMiddleware::auth()]);

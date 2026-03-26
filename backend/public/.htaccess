@@ -12,7 +12,7 @@ RewriteRule ^ index.php [L]
 # RewriteCond %{REQUEST_URI} ^/api/
 # RewriteCond %{REQUEST_FILENAME} !-f
 # RewriteCond %{REQUEST_FILENAME} !-d
-# RewriteRule ^api/(.*)$ api/index.php [L,QSA]
+# RewriteRule ^api/(.*)$ backend/public/index.php [L,QSA]
 
 # --- Frontend SPA: serve static assets as-is
 # RewriteCond %{REQUEST_FILENAME} -f [OR]

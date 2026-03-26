@@ -258,6 +258,89 @@ final class ProfileController
         Json::success([]);
     }
 
+    /**
+     * Updates the authenticated user's display name.
+     * PATCH /api/profile/me
+     */
+    public function updateMe(Request $request, array $params = []): void
+    {
+        $payload = AuthMiddleware::authenticatedPayload($request);
+        $userId = (int) ($payload['id'] ?? 0);
+
+        if ($userId <= 0) {
+            Json::error('Unauthorized', 401);
+        }
+
+        $body = $request->jsonBody();
+        $fullname = trim((string) ($body['fullname'] ?? ''));
+
+        if ($fullname === '') {
+            Json::error('fullname is required', 400);
+        }
+
+        if (mb_strlen($fullname) > 100) {
+            Json::error('fullname must be 100 characters or fewer', 422);
+        }
+
+        try {
+            $pdo = Database::getConnection();
+            $stmt = $pdo->prepare('UPDATE users SET fullname = :fullname WHERE id = :id');
+            $stmt->execute([':fullname' => $fullname, ':id' => $userId]);
+
+            Json::success(['fullname' => $fullname]);
+        } catch (Exception $e) {
+            Logger::error('Profile updateMe error: ' . $e->getMessage());
+            Json::error('Internal server error', 500);
+        }
+    }
+
+    /**
+     * Changes the authenticated user's password.
+     * PATCH /api/profile/password
+     */
+    public function changePassword(Request $request, array $params = []): void
+    {
+        $payload = AuthMiddleware::authenticatedPayload($request);
+        $userId = (int) ($payload['id'] ?? 0);
+
+        if ($userId <= 0) {
+            Json::error('Unauthorized', 401);
+        }
+
+        $body = $request->jsonBody();
+        $currentPassword = (string) ($body['currentPassword'] ?? '');
+        $newPassword = (string) ($body['newPassword'] ?? '');
+
+        if ($currentPassword === '' || $newPassword === '') {
+            Json::error('currentPassword and newPassword are required', 400);
+        }
+
+        if (mb_strlen($newPassword) < 8) {
+            Json::error('New password must be at least 8 characters', 422);
+        }
+
+        try {
+            $pdo = Database::getConnection();
+
+            $stmt = $pdo->prepare('SELECT password FROM users WHERE id = :id LIMIT 1');
+            $stmt->execute([':id' => $userId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!is_array($row) || !password_verify($currentPassword, (string) $row['password'])) {
+                Json::error('Current password is incorrect', 422);
+            }
+
+            $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+            $pdo->prepare('UPDATE users SET password = :password WHERE id = :id')
+                ->execute([':password' => $hashed, ':id' => $userId]);
+
+            Json::success(['message' => 'Password updated successfully']);
+        } catch (Exception $e) {
+            Logger::error('Profile changePassword error: ' . $e->getMessage());
+            Json::error('Internal server error', 500);
+        }
+    }
+
     private function appTimezone(): string
     {
         $value = (string) ($_ENV['TIMEZONE'] ?? 'Europe/Belgrade');

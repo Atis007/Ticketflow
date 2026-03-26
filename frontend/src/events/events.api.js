@@ -107,7 +107,7 @@ export async function createEvent(token, formData) {
 
 export async function updateEvent(token, id, formData) {
   const response = await fetch(endpoint(`events/${encodeURIComponent(id)}`), {
-    method: "PUT",
+    method: "PATCH",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },

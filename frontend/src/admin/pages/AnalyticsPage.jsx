@@ -13,7 +13,7 @@ const DAY_OPTIONS = [
 ];
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(value ?? 0);
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value ?? 0)} RSD`;
 }
 
 function RevenueBarChart({ data }) {

@@ -23,7 +23,7 @@ function applyRealtimeChange(old, payload) {
     const seat = {
       id: newRow.id,
       rowLabel: newRow.row_label,
-      seatNumber: newRow.seat_number,
+      seatNumber: newRow.seat_label,
       sectionId: newRow.section_id ?? null,
       sectionName: newRow.section_name ?? null,
       status: newRow.status,

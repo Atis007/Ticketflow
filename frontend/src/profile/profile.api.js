@@ -71,3 +71,51 @@ export async function getFavorites(token) {
 
   return handleResponse(response);
 }
+
+export async function updateProfile(token, { fullname }) {
+  const response = await fetch(endpoint("profile/me"), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ fullname }),
+  });
+
+  return handleResponse(response);
+}
+
+export async function changePassword(token, { currentPassword, newPassword }) {
+  const response = await fetch(endpoint("profile/password"), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  return handleResponse(response);
+}
+
+export async function addFavorite(token, eventId) {
+  const response = await fetch(endpoint(`favorites/${encodeURIComponent(eventId)}`), {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  return handleResponse(response);
+}
+
+export async function removeFavorite(token, eventId) {
+  const response = await fetch(endpoint(`favorites/${encodeURIComponent(eventId)}`), {
+    method: "DELETE",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  return handleResponse(response);
+}
