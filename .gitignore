@@ -134,8 +134,8 @@ ai-evals/runners/eval-results.txt
 # DOCS / AGENT NOTES
 ###############################################
 
-docs/
 !docs/Tóth-Attila-dokumentáció.docx
+docs/
 agents/
 .agents/
 .claude/
