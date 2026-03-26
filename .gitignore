@@ -135,6 +135,7 @@ ai-evals/runners/eval-results.txt
 ###############################################
 
 docs/
+!docs/Tóth-Attila-dokumentáció.docx
 agents/
 .agents/
 .claude/
