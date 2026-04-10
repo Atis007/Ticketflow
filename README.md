@@ -2,7 +2,10 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-A university project for the Integrated Web Systems and Advanced Web Programming courses.
+A full-stack event ticketing platform built across three layers — a PHP 8.4 REST API, a React web frontend, and a React Native mobile app — with a separate FastAPI AI microservice running local LLM inference via Ollama.
+
+Most university ticketing projects stop at CRUD and a login form. Ticketflow goes further: NBS IPS QR code payment integration, real-time seat availability, offline-first mobile check-in with sync-on-reconnect, role-based access across all three platforms, and an AI service that can generate venue seating layouts, enhance event descriptions, and serve as an admin chat assistant with tool-calling capabilities. The whole thing is backed by a PostgreSQL schema with 15 tables, 19 API controllers, and 22 business logic services.
+Built for two university courses (Integrated Web Systems and Advanced Web Programming).
 
 ## Overview
 
